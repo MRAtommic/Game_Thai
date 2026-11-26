@@ -1129,25 +1129,102 @@ export class IsaanWorld {
     this.scene.add(jar);
     this.addBox(this.scene, 0.65, 0.08, 0.65, '#e2e8f0', -50.2, 0.74, -0.95);
 
-    // 2) Pork Butcher Stall (-44.0)
+    // 2) Pork Butcher Stall (-44.0): round chopping block + meat cleaver + layered pork belly slabs + overhead hanging hook bar!
     buildStallStructure(-44.0, paintSignTex('#7f1d1d', '#facc15', '#fef9c3', 'เขียงหมูเฮียตี๋'), '#69442a', 0.88);
-    const block = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.32, 0.18, 12), new THREE.MeshStandardMaterial({ color: '#c49664' }));
-    block.position.set(-44.4, 0.96, -1.08);
+    const block = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.34, 0.2, 14), new THREE.MeshStandardMaterial({ color: '#c49664', roughness: 0.75 }));
+    block.position.set(-44.55, 0.98, -1.08);
     this.scene.add(block);
-    this.addBox(this.scene, 0.55, 0.08, 0.3, '#b91c1c', -43.4, 0.92, -1.08);
-
-    // 3) Fish & Amphibian Tub Stall (-36.0)
-    buildStallStructure(-36.0, paintSignTex('#0c4a6e', '#bae6fd', '#f0f9ff', 'แผงปลา-กบ ป้าบัว'), '#475569', 0.78);
-    [-36.85, -35.15].forEach((tx) => {
-      const tub = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.36, 0.32, 14), new THREE.MeshStandardMaterial({ color: '#0284c7', roughness: 0.4 }));
-      tub.position.set(tx, 0.94, -1.1);
-      this.scene.add(tub);
+    // Meat cleaver blade + handle resting on chopping block
+    this.addBox(this.scene, 0.22, 0.03, 0.14, '#cbd5e1', -44.5, 1.09, -1.06, 0.25);
+    this.addBox(this.scene, 0.14, 0.04, 0.05, '#78350f', -44.34, 1.09, -1.06, 0.7);
+    // Layered pork belly cuts (สามชั้น & สันคอ) on metal tray
+    this.addBox(this.scene, 0.95, 0.04, 0.52, '#cbd5e1', -43.55, 0.9, -1.08, 0.3);
+    [-43.82, -43.38].forEach((mx) => {
+      this.addBox(this.scene, 0.36, 0.08, 0.28, '#dc2626', mx, 0.95, -1.08, 0.45);
+      this.addBox(this.scene, 0.36, 0.04, 0.28, '#fecdd3', mx, 1.01, -1.08, 0.5); // fat layer!
+    });
+    // Overhead steel hook bar with hanging pork cuts
+    this.addBox(this.scene, 2.2, 0.04, 0.04, '#94a3b8', -44.0, 1.95, -1.25, 0.3);
+    [-44.5, -43.5].forEach((hx) => {
+      this.addBox(this.scene, 0.03, 0.22, 0.03, '#cbd5e1', hx, 1.84, -1.25, 0.3);
+      this.addBox(this.scene, 0.18, 0.34, 0.12, '#b91c1c', hx, 1.62, -1.25, 0.45);
     });
 
-    // 4) Herb, Garlic & Jujube Thorns Stall (-28.0)
+    // 3) Fish & Amphibian Tub Stall (-36.0): water tubs filled with whole silver fish & green frogs + woven dried-fish tray!
+    buildStallStructure(-36.0, paintSignTex('#0c4a6e', '#bae6fd', '#f0f9ff', 'แผงปลา-กบ ป้าบัว'), '#475569', 0.78);
+    [-36.9, -35.2].forEach((tx, ti) => {
+      const tub = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.35, 0.32, 14), new THREE.MeshStandardMaterial({ color: ti === 0 ? '#0284c7' : '#0369a1', roughness: 0.4 }));
+      tub.position.set(tx, 0.94, -1.1);
+      this.scene.add(tub);
+      // Water disk inside tub
+      const water = new THREE.Mesh(new THREE.CircleGeometry(0.41, 14), new THREE.MeshStandardMaterial({ color: '#38bdf8', roughness: 0.15, metalness: 0.4 }));
+      water.rotation.x = -Math.PI / 2;
+      water.position.set(tx, 1.08, -1.1);
+      this.scene.add(water);
+      if (ti === 0) {
+        // 3 Whole silver fish (pla chon / pla nin) with tail fins!
+        [-0.16, 0.04, 0.18].forEach((fx, fi) => {
+          const fBody = new THREE.Mesh(new THREE.SphereGeometry(0.11, 8, 6), new THREE.MeshStandardMaterial({ color: fi === 1 ? '#e2e8f0' : '#94a3b8', metalness: 0.45, roughness: 0.25 }));
+          fBody.scale.set(1.65, 0.55, 0.65);
+          fBody.position.set(tx + fx, 1.1, -1.1 + (fi % 2) * 0.12);
+          fBody.rotation.y = fi * 0.5;
+          this.scene.add(fBody);
+        });
+      } else {
+        // 3 Plump green frogs sitting in right tub
+        [-0.14, 0.08, -0.02].forEach((gx, gi) => {
+          const frog = new THREE.Mesh(new THREE.SphereGeometry(0.08, 8, 6), new THREE.MeshStandardMaterial({ color: '#4d7c0f', roughness: 0.5 }));
+          frog.scale.set(1.1, 0.85, 1.2);
+          frog.position.set(tx + gx, 1.11, -1.18 + gi * 0.14);
+          this.scene.add(frog);
+        });
+      }
+    });
+    // Bamboo woven tray (กระด้ง) in center with mackerel fish
+    const fishTray = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.28, 0.06, 12), new THREE.MeshStandardMaterial({ color: '#a16207', roughness: 0.85 }));
+    fishTray.position.set(-36.05, 0.81, -0.98);
+    this.scene.add(fishTray);
+    [-36.14, -35.96].forEach((mx) => {
+      const mack = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.03, 0.28, 8), new THREE.MeshStandardMaterial({ color: '#cbd5e1', metalness: 0.5 }));
+      mack.rotation.z = Math.PI / 2;
+      mack.position.set(mx, 0.86, -0.98);
+      this.scene.add(mack);
+    });
+
+    // 4) Herb, Garlic & Jujube Thorns Stall (-28.0): round woven baskets with leaf bundles, garlic bulbs, and spiky thorn branches!
     buildStallStructure(-28.0, paintSignTex('#14532d', '#eab308', '#f0fdf4', 'สมุนไพร & หนามพุทรา'), '#593722', 0.85);
-    [-28.85, -28.0, -27.15].forEach((hx, hi) => {
-      this.addBox(this.scene, 0.52, 0.22, 0.52, hi === 2 ? '#854d0e' : '#15803d', hx, 0.96, -1.1);
+    [-28.9, -28.0, -27.1].forEach((hx, hi) => {
+      // Round bamboo Kra-dong tray (กระจาดสาน)
+      const basket = new THREE.Mesh(new THREE.CylinderGeometry(0.36, 0.28, 0.14, 14), new THREE.MeshStandardMaterial({ color: '#a16207', roughness: 0.88 }));
+      basket.position.set(hx, 0.92, -1.08);
+      this.scene.add(basket);
+      if (hi === 0) {
+        // Green herb leaf bundles (ห่อว่านใบหนาด & ตะไคร้)
+        [-0.1, 0.08].forEach((lx) => {
+          const herb = new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.34, 7), new THREE.MeshStandardMaterial({ color: '#15803d', roughness: 0.75 }));
+          herb.rotation.z = lx > 0 ? -0.5 : 0.45;
+          herb.rotation.x = 0.5;
+          herb.position.set(hx + lx, 1.02, -1.06);
+          this.scene.add(herb);
+        });
+      } else if (hi === 1) {
+        // White garlic bulbs piled in woven basket (กระเทียม & หอมแดง)
+        [[-0.12, 0.02], [0.06, -0.04], [0.14, 0.08], [-0.02, 0.1]].forEach(([gx, gz], gi) => {
+          const bulb = new THREE.Mesh(
+            new THREE.SphereGeometry(0.085, 8, 8),
+            new THREE.MeshStandardMaterial({ color: gi === 3 ? '#be185d' : '#f8fafc', roughness: 0.6 })
+          );
+          bulb.position.set(hx + gx, 1.01, -1.08 + gz);
+          this.scene.add(bulb);
+        });
+      } else {
+        // Tangled spiky Jujube thorn branches (กิ่งหนามพุทรา) sticking cleanly out of basket!
+        for (let b = -2; b <= 2; b++) {
+          const branch = this.addBox(this.scene, 0.52, 0.035, 0.035, '#713f12', hx + b * 0.05, 1.03 + Math.abs(b % 2) * 0.04, -1.08, 0.9);
+          branch.rotation.z = b * 0.26;
+          branch.rotation.y = b * 0.35;
+        }
+      }
     });
   }
 

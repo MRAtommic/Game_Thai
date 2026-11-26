@@ -671,9 +671,99 @@ export function buildExpandedVillageLife(scene: THREE.Scene, awningMat: THREE.Ma
     const vendor = makeVillagerFigure(['#fb923c', '#22c55e', '#c084fc', '#38bdf8'][idx], '#1e293b');
     vendor.position.set(st.x, 0, -1.78);
     scene.add(vendor);
-    // Props on table
-    addPart(scene, 0.45, 0.22, 0.4, idx === 0 ? '#ca8a04' : idx === 1 ? '#16a34a' : idx === 2 ? '#db2777' : '#38bdf8', st.x - 0.5, 0.92, -1.08);
-    addPart(scene, 0.42, 0.24, 0.38, idx === 0 ? '#dc2626' : '#facc15', st.x + 0.55, 0.94, -1.08);
+
+    // Real recognizable Thai market merchandise on each stall counter (no plain square cubes!)
+    if (idx === 0) {
+      // Somtam & Grilled Chicken: Wooden Mortar & Pestle (ครกสาก), Kratib sticky rice basket, charcoal chicken grill!
+      const mortar = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.13, 0.28, 12), new THREE.MeshStandardMaterial({ color: '#92400e', roughness: 0.8 }));
+      mortar.position.set(st.x - 0.82, 0.96, -1.06);
+      scene.add(mortar);
+      const pestle = addPart(scene, 0.05, 0.32, 0.05, '#d97706', st.x - 0.78, 1.14, -1.06, 0.7);
+      pestle.rotation.z = -0.45;
+      // Kratib bamboo sticky-rice basket
+      const kratib = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.12, 0.2, 10), new THREE.MeshStandardMaterial({ color: '#ca8a04', roughness: 0.85 }));
+      kratib.position.set(st.x - 0.35, 0.92, -1.04);
+      scene.add(kratib);
+      // Charcoal grill with glowing embers + golden roasted chicken skewers!
+      addPart(scene, 0.88, 0.14, 0.42, '#334155', st.x + 0.55, 0.89, -1.08, 0.7);
+      addPart(scene, 0.78, 0.04, 0.34, '#ea580c', st.x + 0.55, 0.97, -1.08, 0.4);
+      [-0.22, 0.0, 0.22].forEach((gx) => {
+        const chick = new THREE.Mesh(new THREE.SphereGeometry(0.09, 8, 6), new THREE.MeshStandardMaterial({ color: '#b45309', roughness: 0.45 }));
+        chick.scale.set(1.4, 0.75, 0.9);
+        chick.position.set(st.x + 0.55 + gx, 1.02, -1.08);
+        scene.add(chick);
+      });
+    } else if (idx === 1) {
+      // Fresh Fruits & Vegetables: Hanging yellow banana hands, green watermelons, red papaya/tomato tray!
+      addPart(scene, 0.8, 0.04, 0.04, '#cbd5e1', st.x - 0.75, 1.98, -0.75);
+      [-0.95, -0.58].forEach((bx) => {
+        for (let b = 0; b < 4; b++) {
+          const ban = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.025, 0.2, 6), new THREE.MeshStandardMaterial({ color: '#facc15', roughness: 0.5 }));
+          ban.rotation.z = -0.3 + b * 0.2;
+          ban.position.set(st.x + bx + b * 0.045, 1.82, -0.75);
+          scene.add(ban);
+        }
+      });
+      // Striped round watermelons + woven basket with red chilies/tomatoes + cabbages
+      [-0.65, -0.32].forEach((wx) => {
+        const melon = new THREE.Mesh(new THREE.SphereGeometry(0.16, 10, 8), new THREE.MeshStandardMaterial({ color: '#15803d', roughness: 0.4 }));
+        melon.position.set(st.x + wx, 0.98, -1.08);
+        scene.add(melon);
+      });
+      const vegTray = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.25, 0.1, 12), new THREE.MeshStandardMaterial({ color: '#a16207', roughness: 0.85 }));
+      vegTray.position.set(st.x + 0.52, 0.87, -1.08);
+      scene.add(vegTray);
+      [[-0.1, '#ef4444'], [0.06, '#ef4444'], [0.16, '#84cc16'], [-0.02, '#f97316']].forEach(([ox, col], vi) => {
+        const veg = new THREE.Mesh(new THREE.SphereGeometry(0.08, 8, 8), new THREE.MeshStandardMaterial({ color: col as string, roughness: 0.5 }));
+        veg.position.set(st.x + 0.52 + (ox as number), 0.96, -1.08 + (vi % 2) * 0.08);
+        scene.add(veg);
+      });
+    } else if (idx === 2) {
+      // Pha Khao Ma & Marigold/Jasmine Garlands: Stacked colorful cylindrical fabric bolts + hanging circular flower garlands!
+      ['#dc2626', '#2563eb', '#9333ea', '#16a34a'].forEach((fc, fi) => {
+        const roll = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.11, 0.55, 10), new THREE.MeshStandardMaterial({ color: fc, roughness: 0.75 }));
+        roll.rotation.z = Math.PI / 2;
+        roll.position.set(st.x - 0.6 + (fi % 2) * 0.06, 0.93 + Math.floor(fi / 2) * 0.18, -1.08);
+        scene.add(roll);
+      });
+      // Garland display rack with marigold & white jasmine rings!
+      addPart(scene, 0.95, 0.04, 0.04, '#78350f', st.x + 0.55, 1.52, -1.06);
+      [-0.3, 0.0, 0.3].forEach((gx) => {
+        addPart(scene, 0.05, 0.68, 0.05, '#78350f', st.x + 0.55 + gx, 1.16, -1.06);
+        const garland = new THREE.Mesh(
+          new THREE.TorusGeometry(0.12, 0.042, 8, 14),
+          new THREE.MeshStandardMaterial({ color: gx === 0 ? '#f8fafc' : '#facc15', roughness: 0.4 })
+        );
+        garland.position.set(st.x + 0.55 + gx, 1.32, -1.02);
+        scene.add(garland);
+      });
+    } else {
+      // Ancient Iced Coffee & Shaved Ice: Stainless coffee boiler pots, iced orange Cha Yen cups with straws, syrup bottles & shaved-ice bowls!
+      [-0.78, -0.48].forEach((px) => {
+        const pot = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.36, 12), new THREE.MeshStandardMaterial({ color: '#e2e8f0', metalness: 0.7, roughness: 0.25 }));
+        pot.position.set(st.x + px, 1.0, -1.12);
+        scene.add(pot);
+      });
+      // Glasses of Cha Yen (orange Thai tea) & O-Liang (dark iced coffee) with straws!
+      [[-0.08, '#f97316'], [0.18, '#292524']].forEach(([cx, col]) => {
+        const cup = new THREE.Mesh(new THREE.CylinderGeometry(0.065, 0.05, 0.18, 10), new THREE.MeshStandardMaterial({ color: col as string, roughness: 0.3 }));
+        cup.position.set(st.x + (cx as number), 0.91, -0.96);
+        scene.add(cup);
+        const straw = addPart(scene, 0.015, 0.14, 0.015, '#facc15', st.x + (cx as number) + 0.02, 1.03, -0.96);
+        straw.rotation.z = -0.22;
+      });
+      // Shaved ice cone bowl + red & green Hale's syrup bottles!
+      const bowl = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.08, 0.09, 12), new THREE.MeshStandardMaterial({ color: '#f8fafc' }));
+      bowl.position.set(st.x + 0.62, 0.86, -1.04);
+      const iceDome = new THREE.Mesh(new THREE.ConeGeometry(0.13, 0.22, 10), new THREE.MeshStandardMaterial({ color: '#f43f5e', roughness: 0.35 }));
+      iceDome.position.set(st.x + 0.62, 1.01, -1.04);
+      scene.add(bowl, iceDome);
+      [0.92, 1.08].forEach((bx, bi) => {
+        const bot = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.045, 0.28, 8), new THREE.MeshStandardMaterial({ color: bi === 0 ? '#dc2626' : '#16a34a', roughness: 0.2 }));
+        bot.position.set(st.x + bx, 0.96, -1.16);
+        scene.add(bot);
+      });
+    }
   });
 
   // 4) Staggering Village Drunkard ("ลุงทิดขี้เมา") near Pak Soi (-77 .. -65)
