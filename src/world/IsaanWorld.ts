@@ -14,8 +14,22 @@ import {
   createZincRoofTexture,
 } from '../art/TextureFactory';
 
-export const CH2_MIN_X = -56.0;
-export const CH2_MAX_X = 80.0;
+import {
+  animateIsaanWorldLife,
+  buildExpandedVillageLife,
+  buildRotHaeSystem,
+  buildSongthaewSystem,
+  buildTempleFairZone,
+  buildTrafficAndParkedVehicles,
+  MovingVehicle,
+  RotHaeController,
+  RuralActorsController,
+  SongthaewController,
+  TempleFairController,
+} from './IsaanFestivalsAndTraffic';
+
+export const CH2_MIN_X = -105.0;
+export const CH2_MAX_X = 120.0;
 
 export type Ch2RoomId = 'outside' | 'stilt_house' | 'temple_sala' | 'kuti';
 
@@ -328,7 +342,14 @@ export class IsaanWorld {
 
   private rainLines: THREE.LineSegments;
   private rainPositions: Float32Array;
-  private rainCount = 420;
+  private rainCount = 620;
+
+  // Expanded Isaan village traffic, Rot Hae, Songthaew, Temple Fair & Rural actors
+  private rotHaeCtrl!: RotHaeController;
+  private songthaewCtrl!: SongthaewController;
+  private trafficVehicles: MovingVehicle[] = [];
+  private templeFairCtrl!: TempleFairController;
+  private ruralActorsCtrl!: RuralActorsController;
 
   private charFrames: Record<Ch2CharacterKind, THREE.CanvasTexture[]> = {
     noom: [],
@@ -423,6 +444,18 @@ export class IsaanWorld {
     this.buildLargeTempleAndCemetery();
     this.buildSaiSinCircle();
 
+    // Expanded village attractions, vehicles, Rot Hae, Songthaew, Temple Fair & Takian Shrine
+    const extAwningMat = new THREE.MeshStandardMaterial({
+      map: createMarketAwningTexture(),
+      roughness: 0.85,
+      side: THREE.DoubleSide,
+    });
+    this.rotHaeCtrl = buildRotHaeSystem(this.scene);
+    this.songthaewCtrl = buildSongthaewSystem(this.scene);
+    this.trafficVehicles = buildTrafficAndParkedVehicles(this.scene);
+    this.templeFairCtrl = buildTempleFairZone(this.scene);
+    this.ruralActorsCtrl = buildExpandedVillageLife(this.scene, extAwningMat);
+
     const extObjs = this.scene.children.slice(preExt);
     extObjs.forEach((o) => this.exteriorGroup.add(o));
     this.scene.add(this.exteriorGroup);
@@ -461,11 +494,11 @@ export class IsaanWorld {
     this.krasueLight = new THREE.PointLight('#a3e635', 0, 8.5, 1.3);
     this.scene.add(this.krasueLight);
 
-    // Rain particles
+    // Rain particles spanning expanded -115 .. +130 world
     this.rainPositions = new Float32Array(this.rainCount * 6);
     const rGeo = new THREE.BufferGeometry();
     for (let i = 0; i < this.rainCount; i++) {
-      const rx = -65 + Math.random() * 155;
+      const rx = -115 + Math.random() * 245;
       const ry = Math.random() * 18;
       const rz = 1.5 + Math.random() * 4.5;
       this.rainPositions[i * 6] = rx;
@@ -713,12 +746,16 @@ export class IsaanWorld {
   }
 
   private buildLandscapeAndRiceFields(): void {
-    // Rural laterite earthen village road + wide lush paddy soil
-    this.addBox(this.scene, 175, 0.4, 8.5, '#4b3b2c', 12, -0.2, 1.45, 0.92);
-    this.addBox(this.scene, 175, 0.36, 15.5, '#23381f', 12, -0.22, -8.5, 0.95);
+    // Rural laterite earthen sidewalk + wide 2-lane village asphalt highway + lush paddy soil across -120..+135
+    this.addBox(this.scene, 265, 0.4, 9.8, '#4b3b2c', 8, -0.2, 1.45, 0.92);
+    this.addBox(this.scene, 265, 0.36, 16.5, '#23381f', 8, -0.22, -8.8, 0.95);
+    this.addBox(this.scene, 265, 0.04, 2.7, '#272a30', 8, 0.015, 4.0, 0.9); // dark asphalt highway (z = 2.65..5.35)
+    for (let lx = -112; lx <= 128; lx += 5.0) {
+      this.addBox(this.scene, 2.4, 0.05, 0.1, '#facc15', lx, 0.022, 4.0, 0.6); // dashed yellow road line
+    }
 
-    // Distant Phuphan mountain silhouettes
-    for (let mx = -65; mx <= 98; mx += 20) {
+    // Distant Phuphan mountain silhouettes across expanded horizon
+    for (let mx = -115; mx <= 135; mx += 20) {
       const hill = new THREE.Mesh(
         new THREE.ConeGeometry(16, 10 + (Math.abs(mx) % 5), 5),
         new THREE.MeshBasicMaterial({ color: '#101826' })
@@ -728,12 +765,15 @@ export class IsaanWorld {
     }
 
     // Neighbor elevated stilt houses behind the village road & paddies
+    this.addBackgroundStiltHouse(-89.0, -5.2, '#4c2618', true);
+    this.addBackgroundStiltHouse(-73.5, -5.8, '#3d2c20', true);
     this.addBackgroundStiltHouse(-58.5, -4.5, '#4c2618', true);
     this.addBackgroundStiltHouse(-39.5, -5.6, '#3d2c20', true);
     this.addBackgroundStiltHouse(-31.0, -5.8, '#3f3024', true);
     this.addBackgroundStiltHouse(-22.5, -4.8, '#473022', true);
     this.addBackgroundStiltHouse(-15.5, -6.0, '#36261d', true);
     this.addBackgroundStiltHouse(14.0, -5.8, '#4c2618', true);
+    this.addBackgroundStiltHouse(98.0, -6.2, '#3d2c20', false);
 
     // Cozy Rice-Field Hut (เถียงนาอีสาน at x = -16.8, z = -3.8)
     [-17.8, -15.8].forEach((hx) => {
@@ -804,7 +844,7 @@ export class IsaanWorld {
 
     const bananaTex = createBananaTreeTexture();
     const streetTreeTex = createStreetTreeTexture();
-    const treePositions = [-55.5, -21, -18.8, -14, -7.2, 7.2, 13.0, 16.0, 59.5, 64.0, 70.5, 79.0];
+    const treePositions = [-103, -90, -77, -64, -60.5, -21, -18.8, -14, -7.2, 7.2, 13.0, 16.0, 93.8, 100.5, 106.0, 117.0];
     treePositions.forEach((tx, idx) => {
       const tr = this.addPlane(
         idx % 2 === 0 ? 3.5 : 2.9,
@@ -836,15 +876,15 @@ export class IsaanWorld {
       this.addBox(this.scene, 2.8, 0.08, 0.08, '#6b4c2e', rx, 0.55, -2.05);
     });
 
-    // Bamboo Clumps cleanly placed away from buildings & pond
-    [-20.5, -7.8, 25.0, 60.5].forEach((bx) => {
+    // Bamboo Clumps cleanly placed away from buildings, pond & bus shelters
+    [-20.5, -7.8, 94.4, 98.5].forEach((bx) => {
       for (let k = -1; k <= 1; k++) {
         const stalk = this.addBox(this.scene, 0.09, 5.2 + Math.abs(k) * 0.4, 0.09, '#3f6212', bx + k * 0.24, 2.6, -2.85);
         stalk.rotation.z = k * 0.06;
       }
     });
 
-    [-17.5, -9.2, 14.0, 68.0].forEach((px) => {
+    [-17.5, -9.2, 14.0, 96.5].forEach((px) => {
       this.addBox(this.scene, 0.24, 6.8, 0.24, '#473628', px, 3.4, -4.2);
       const crown = new THREE.Mesh(
         new THREE.ConeGeometry(1.5, 1.3, 6),
@@ -863,8 +903,8 @@ export class IsaanWorld {
     shrineCandle.position.set(17.5, 1.8, -0.55);
     this.scene.add(shrineCandle);
 
-    // Tall utility poles along z = -3.4 with high wires well clear of every roof!
-    const vPoles = [-48, -32, -16, 12, 27, 46, 65];
+    // Tall utility poles along z = -3.4 spanning the expanded 225m village (clear of Takian & Fair booths)!
+    const vPoles = [-92.5, -79, -64, -48, -32, -16, 12, 27, 46, 59.5, 93.0, 106];
     vPoles.forEach((px) => {
       this.addBox(this.scene, 0.22, 7.2, 0.22, '#4a3f35', px, 3.6, -3.4);
       this.addBox(this.scene, 0.1, 0.08, 1.4, '#475569', px, 6.7, -2.7);
@@ -1050,26 +1090,28 @@ export class IsaanWorld {
     this.scene.add(mSign);
 
     const buildStallStructure = (sx: number, signTex: THREE.CanvasTexture, counterCol: string, counterH: number) => {
-      // 4 grounded stall posts + top beams holding the awning & stall sign
+      // 4 grounded stall posts + top beams holding the awning cleanly ABOVE the shop sign!
       [-1.95, 1.95].forEach((dx) => {
-        this.addBox(this.scene, 0.11, 2.2, 0.11, '#593722', sx + dx, 1.1, -0.45); // front post
-        this.addBox(this.scene, 0.11, 3.1, 0.11, '#4f311c', sx + dx, 1.55, -2.05); // tall back post
-        const rafter = this.addBox(this.scene, 0.08, 0.08, 1.9, '#593722', sx + dx, 2.6, -1.25);
+        this.addBox(this.scene, 0.11, 2.35, 0.11, '#593722', sx + dx, 1.18, -0.45); // front post
+        this.addBox(this.scene, 0.11, 3.25, 0.11, '#4f311c', sx + dx, 1.62, -2.05); // tall back post
+        const rafter = this.addBox(this.scene, 0.08, 0.08, 1.9, '#593722', sx + dx, 2.75, -1.25);
         rafter.rotation.x = 0.52;
       });
-      this.addBox(this.scene, 4.05, 0.09, 0.09, '#593722', sx, 2.15, -0.45); // front eave beam
+      this.addBox(this.scene, 4.05, 0.09, 0.09, '#593722', sx, 2.3, -0.45); // front eave beam
       const awning = new THREE.Mesh(new THREE.PlaneGeometry(4.2, 2.2), awningMat);
-      awning.position.set(sx, 2.6, -1.25);
+      awning.position.set(sx, 2.76, -1.26);
       awning.rotation.x = -1.05;
       this.scene.add(awning);
 
       // Front counter table at z = -1.15 so merchants stand BEHIND it at z = -1.78!
       this.addBox(this.scene, 3.5, counterH, 0.88, counterCol, sx, counterH / 2, -1.15);
+      // Wooden backing panel + shop sign mounted strictly IN FRONT of awning lip (zero clipping!)
+      this.addBox(this.scene, 2.22, 0.68, 0.05, '#3b2416', sx, 2.04, -0.25);
       const sign = new THREE.Mesh(
-        new THREE.PlaneGeometry(2.15, 0.65),
+        new THREE.PlaneGeometry(2.15, 0.62),
         new THREE.MeshStandardMaterial({ map: signTex })
       );
-      sign.position.set(sx, 2.15, -0.38);
+      sign.position.set(sx, 2.04, -0.21);
       this.scene.add(sign);
     };
 
@@ -1233,18 +1275,18 @@ export class IsaanWorld {
         this.addBox(this.scene, 2.4, 0.95, 0.06, '#991b1b', wx + 1.75, 1.12, -3.79); // recessed red/gold border panel
       }
     }
-    // Front Kamphaeng Kaew Low Balustrade Wall (กำแพงแก้วด้านหน้า: ฐานขาว + ลูกกรงช่องลมแดงทอง + เสาหัวบัวตูมสีทอง!)
-    this.addBox(this.scene, 34.4, 0.24, 0.32, '#d6d3d1', 44.0, 0.12, 2.75);
-    this.addBox(this.scene, 34.4, 0.26, 0.24, '#f5f0e6', 44.0, 0.36, 2.75);
-    this.addBox(this.scene, 34.4, 0.14, 0.3, '#991b1b', 44.0, 0.56, 2.75);
+    // Front Kamphaeng Kaew Low Balustrade Wall (กำแพงแก้วด้านหน้า z = 2.25 — เคลียร์ถนนรถวิ่งด้านหน้า!)
+    this.addBox(this.scene, 34.4, 0.24, 0.32, '#d6d3d1', 44.0, 0.12, 2.25);
+    this.addBox(this.scene, 34.4, 0.26, 0.24, '#f5f0e6', 44.0, 0.36, 2.25);
+    this.addBox(this.scene, 34.4, 0.14, 0.3, '#991b1b', 44.0, 0.56, 2.25);
     [29.5, 33.0, 36.5, 40.0, 43.5, 47.0, 50.5, 54.0, 57.5].forEach((wx) => {
-      this.addBox(this.scene, 0.36, 0.88, 0.36, '#f5f0e6', wx, 0.44, 2.75);
-      this.addBox(this.scene, 0.42, 0.12, 0.42, '#eab308', wx, 0.9, 2.75);
+      this.addBox(this.scene, 0.36, 0.88, 0.36, '#f5f0e6', wx, 0.44, 2.25);
+      this.addBox(this.scene, 0.42, 0.12, 0.42, '#eab308', wx, 0.9, 2.25);
       const lotusFront = new THREE.Mesh(
         new THREE.ConeGeometry(0.14, 0.32, 8),
         new THREE.MeshStandardMaterial({ color: '#facc15', metalness: 0.6, roughness: 0.3 })
       );
-      lotusFront.position.set(wx, 1.12, 2.75);
+      lotusFront.position.set(wx, 1.12, 2.25);
       this.scene.add(lotusFront);
     });
 
@@ -1346,21 +1388,21 @@ export class IsaanWorld {
     kutiLight.position.set(54.5, 2.9, 0.3);
     this.scene.add(kutiLight);
 
-    // Cemetery Archway Exit Gate (ประตูสู่ป่าช้าหลังวัด at x = +61.5)
+    // Cemetery Archway Exit Gate past Temple Fair Plaza (ประตูสู่ป่าช้าหลังวัด at x = +95.5)
     [-2.2, 2.65].forEach((gz) => {
-      this.addBox(this.scene, 0.55, 3.8, 0.55, '#94a3b8', 61.5, 1.9, gz);
+      this.addBox(this.scene, 0.55, 3.8, 0.55, '#94a3b8', 95.5, 1.9, gz);
     });
-    this.addBox(this.scene, 0.68, 0.5, 5.4, '#475569', 61.5, 3.85, 0.22);
+    this.addBox(this.scene, 0.68, 0.5, 5.4, '#475569', 95.5, 3.85, 0.22);
 
-    // 4) Thai Bone-Urn Cemetery (สุสานไทย & โกศบรรจุอัฐิ at +64 .. +79)
+    // 4) Thai Bone-Urn Cemetery (สุสานไทย & โกศบรรจุอัฐิ at +98 .. +115, Urn #4 at +110.5!)
     const cSign = new THREE.Mesh(
       new THREE.PlaneGeometry(2.4, 0.75),
       new THREE.MeshStandardMaterial({ map: paintSignTex('#1e293b', '#94a3b8', '#f1f5f9', 'เขตป่าช้า โกศอัฐิ') })
     );
-    cSign.position.set(63.4, 2.1, -1.2);
+    cSign.position.set(97.5, 2.1, -1.2);
     this.scene.add(cSign);
 
-    [65.5, 68.8, 72.0, 74.8, 77.6].forEach((ux, idx) => {
+    [100.5, 103.8, 107.2, 110.5, 113.8].forEach((ux, idx) => {
       const hScale = idx === 3 ? 1.35 : 0.95 + (idx % 2) * 0.2;
       const tone = idx === 3 ? '#9ca3af' : '#d6d3d1';
       this.addBox(this.scene, 1.3 * hScale, 0.45, 1.3 * hScale, '#64748b', ux, 0.22, -1.65);
@@ -1379,8 +1421,8 @@ export class IsaanWorld {
       this.scene.add(finial);
       this.addBox(this.scene, 0.42, 0.52, 0.08, '#1e293b', ux, 0.85, -1.14);
     });
-    const cemLight = new THREE.PointLight('#84cc16', 2.4, 14, 1.3);
-    cemLight.position.set(74.8, 2.4, 0.4);
+    const cemLight = new THREE.PointLight('#84cc16', 2.8, 16, 1.3);
+    cemLight.position.set(110.5, 2.4, 0.4);
     this.scene.add(cemLight);
   }
 
@@ -1820,6 +1862,17 @@ export class IsaanWorld {
     this.sunMoonLight.intensity = sun;
 
     const isDay = h >= 7.0 && h < 17.5;
+    animateIsaanWorldLife(
+      dt,
+      this.animClock,
+      isDay,
+      this.rotHaeCtrl,
+      this.songthaewCtrl,
+      this.trafficVehicles,
+      this.templeFairCtrl,
+      this.ruralActorsCtrl
+    );
+
     for (const vl of this.villageLights) {
       vl.light.intensity = isDay ? vl.base * 0.18 : vl.base;
     }
@@ -1836,7 +1889,7 @@ export class IsaanWorld {
         this.rainPositions[idx] -= 2.2 * dt;
         this.rainPositions[idx + 1] -= 16 * dt;
         if (this.rainPositions[idx + 1] < 0) {
-          this.rainPositions[idx] = -65 + Math.random() * 155;
+          this.rainPositions[idx] = -115 + Math.random() * 245;
           this.rainPositions[idx + 1] = 17 + Math.random() * 2;
         }
         this.rainPositions[idx + 3] = this.rainPositions[idx] - 0.15;
@@ -1870,6 +1923,18 @@ export class IsaanWorld {
     this.camera.fov = baseFov;
     this.camera.aspect = aspect;
     this.camera.updateProjectionMatrix();
+  }
+
+  public getRotHaeX(): number {
+    return this.rotHaeCtrl.x;
+  }
+
+  public getSongthaewX(): number {
+    return this.songthaewCtrl.x;
+  }
+
+  public getDrunkWalkerX(): number {
+    return this.ruralActorsCtrl.drunkX;
   }
 
   public resize(): void {

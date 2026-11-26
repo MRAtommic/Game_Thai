@@ -10,6 +10,8 @@ export class SoundEngine {
   private initialized = false;
   private cricketTimer = 0;
   private ruralTimer = 2.5;
+  private rotHaeBeatTimer = 0;
+  private rotHaeStep = 0;
   private howlTimer = 8;
   private heartbeatTimer = 0;
   private chaseStepTimer = 0;
@@ -757,5 +759,102 @@ export class SoundEngine {
       osc.start(t);
       osc.stop(t + 0.2);
     });
+  }
+
+  public playVehicleHorn(): void {
+    if (!this.ctx || !this.masterGain) return;
+    const now = this.ctx.currentTime;
+    [392, 493.88].forEach((freq) => {
+      if (!this.ctx || !this.masterGain) return;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(freq, now);
+      const filter = this.ctx.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.value = 1100;
+      gain.gain.setValueAtTime(0.001, now);
+      gain.gain.linearRampToValueAtTime(0.04, now + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.22);
+      osc.connect(filter);
+      filter.connect(gain);
+      gain.connect(this.masterGain);
+      osc.start(now);
+      osc.stop(now + 0.24);
+    });
+  }
+
+  /**
+   * Plays lively procedural Isaan Rot Hae (หมอลำ/ลูกทุ่งรถแห่) beat whose volume scales by distance from the truck.
+   */
+  public updateRotHaeMusic(dt: number, distanceToTruck: number, isOutside: boolean, isChasing: boolean): void {
+    if (!this.ctx || !this.masterGain || !this.initialized || !isOutside || isChasing || this.muted) return;
+    const proximity = Math.max(0, 1 - distanceToTruck / 36);
+    if (proximity <= 0.02) return;
+
+    // ~132 BPM eighth-note steps
+    this.rotHaeBeatTimer -= dt;
+    if (this.rotHaeBeatTimer > 0) return;
+    this.rotHaeBeatTimer = 0.227;
+
+    const now = this.ctx.currentTime;
+    const step = this.rotHaeStep % 16;
+    this.rotHaeStep++;
+    const vol = proximity * proximity;
+
+    // Punchy Rot Hae sub-bass kick on beats 0, 2, 4, 6...
+    if (step % 2 === 0) {
+      const kick = this.ctx.createOscillator();
+      const kGain = this.ctx.createGain();
+      kick.type = 'sine';
+      kick.frequency.setValueAtTime(118, now);
+      kick.frequency.exponentialRampToValueAtTime(38, now + 0.14);
+      kGain.gain.setValueAtTime(0.001, now);
+      kGain.gain.linearRampToValueAtTime(0.16 * vol, now + 0.01);
+      kGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.16);
+      kick.connect(kGain);
+      kGain.connect(this.masterGain);
+      kick.start(now);
+      kick.stop(now + 0.17);
+    }
+
+    // Crisp off-beat snare / hi-hat rattle (จังหวะสามช่า/ลำซิ่ง)
+    if (step % 4 === 2) {
+      const len = Math.floor(this.ctx.sampleRate * 0.06);
+      const buf = this.ctx.createBuffer(1, len, this.ctx.sampleRate);
+      const arr = buf.getChannelData(0);
+      for (let i = 0; i < len; i++) arr[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2);
+      const src = this.ctx.createBufferSource();
+      src.buffer = buf;
+      const hp = this.ctx.createBiquadFilter();
+      hp.type = 'highpass';
+      hp.frequency.value = 1800;
+      const sGain = this.ctx.createGain();
+      sGain.gain.setValueAtTime(0.07 * vol, now);
+      src.connect(hp);
+      hp.connect(sGain);
+      sGain.connect(this.masterGain);
+      src.start(now);
+    }
+
+    // Pentatonic Isaan Phin / Khaen melody riff (Am pentatonic: A4, C5, D5, E5, G5, A5)
+    const phinNotes = [440, 523.25, 587.33, 659.25, 587.33, 523.25, 440, 392, 440, 587.33, 659.25, 783.99, 659.25, 587.33, 523.25, 440];
+    const freq = phinNotes[step];
+    const phin = this.ctx.createOscillator();
+    const pFilter = this.ctx.createBiquadFilter();
+    const pGain = this.ctx.createGain();
+    phin.type = step % 3 === 0 ? 'sawtooth' : 'triangle';
+    phin.frequency.setValueAtTime(freq, now);
+    pFilter.type = 'bandpass';
+    pFilter.frequency.value = freq * 1.8;
+    pFilter.Q.value = 1.6;
+    pGain.gain.setValueAtTime(0.001, now);
+    pGain.gain.linearRampToValueAtTime(0.052 * vol, now + 0.015);
+    pGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.19);
+    phin.connect(pFilter);
+    pFilter.connect(pGain);
+    pGain.connect(this.masterGain);
+    phin.start(now);
+    phin.stop(now + 0.2);
   }
 }

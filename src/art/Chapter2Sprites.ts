@@ -544,6 +544,15 @@ export function drawCh2ItemIconDataUrl(itemId: string): string {
     ctx.stroke();
     ctx.fillStyle = '#78350f';
     ctx.fillRect(15, 16, 7, 3);
+  } else if (itemId === 'takian_charm') {
+    // 7-color Takian sacred cloth ribbon charm (ผ้าเจ็ดสี)
+    const cols = ['#ef4444', '#f97316', '#facc15', '#22c55e', '#3b82f6', '#a855f7', '#ec4899'];
+    cols.forEach((col, i) => {
+      ctx.fillStyle = col;
+      ctx.fillRect(10 + i * 4, 15, 4, 24 - (i % 2) * 4);
+    });
+    ctx.fillStyle = '#fef08a';
+    ctx.fillRect(9, 12, 30, 5);
   } else {
     // sacred_knife (มีดหมอลงอาคม)
     ctx.fillStyle = '#cbd5e1';

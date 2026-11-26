@@ -31,6 +31,10 @@ interface Ch2Flags {
   comfortedSisterCrisis: boolean;
   banishedKrasue: boolean;
   endingReached: EndingType | null;
+  talkedDrunk?: boolean;
+  inspectedTakian?: boolean;
+  visitedFair?: boolean;
+  ateSomtam?: boolean;
 }
 
 interface Ch2SaveState {
@@ -50,6 +54,7 @@ interface Ch2Interactable {
   label: string;
   room?: Ch2RoomId;
   x: number;
+  getX?: () => number;
   range?: number;
   getLabel?: () => string;
   onInteract: () => void;
@@ -534,10 +539,68 @@ export class Chapter2Engine {
       },
       {
         id: 'ch2_cemetery',
-        x: 74.8,
+        x: 110.5,
         range: 2.8,
         label: 'ตรวจดูโกศบรรจุอัฐิหมายเลข 4 ท้ายป่าช้าวัด',
         onInteract: () => this.interactBoneUrnCemetery(),
+      },
+      {
+        id: 'ch2_takian',
+        x: -96.5,
+        range: 2.6,
+        label: 'กราบขอพรและตรวจดูศาลเจ้าแม่ตะเคียนคู่ผูกผ้าเจ็ดสี',
+        onInteract: () => this.interactTakianShrine(),
+      },
+      {
+        id: 'ch2_busstop_west',
+        x: -82.0,
+        range: 2.3,
+        label: 'โบกขึ้นรถสองแถวสายบ้านทุ่ง (เดินทางข้ามโซน)',
+        onInteract: () => this.openSongthaewTransitModal(),
+      },
+      {
+        id: 'ch2_busstop_market',
+        x: -24.5,
+        range: 2.1,
+        label: 'ขึ้นรถสองแถวหน้าตลาดใหญ่บ้านทุ่ง (เดินทางข้ามโซน)',
+        onInteract: () => this.openSongthaewTransitModal(),
+      },
+      {
+        id: 'ch2_busstop_temple',
+        x: 61.4,
+        range: 2.3,
+        label: 'ขึ้นรถสองแถวหน้าลานงานวัดป่า (เดินทางข้ามโซน)',
+        onInteract: () => this.openSongthaewTransitModal(),
+      },
+      {
+        id: 'ch2_drunk',
+        x: -71.0,
+        getX: () => this.world.getDrunkWalkerX(),
+        range: 2.3,
+        label: 'คุยกับลุงทิดขี้เมาหน้าปากซอย',
+        onInteract: () => this.interactDrunkVillager(),
+      },
+      {
+        id: 'ch2_somtam',
+        x: -57.8,
+        range: 2.1,
+        label: 'แวะร้านส้มตำครกไม้-ไก่ย่าง แม่ลำไย',
+        onInteract: () => this.interactSomtamStall(),
+      },
+      {
+        id: 'ch2_temple_fair',
+        x: 76.0,
+        range: 4.5,
+        label: 'เดินเที่ยวงานวัดป่า (ชิงช้าสวรรค์ / ปาลูกโป่ง / เวทีรำวง)',
+        onInteract: () => this.interactTempleFair(),
+      },
+      {
+        id: 'ch2_rothae',
+        x: -18.0,
+        getX: () => this.world.getRotHaeX(),
+        range: 3.4,
+        label: 'ทักทายขบวนรถแห่บ้านทุ่ง (ฟังหมอลำซิ่งเพิ่มสติ)',
+        onInteract: () => this.interactRotHae(),
       },
 
       // INSIDE STILT HOUSE ('stilt_house')
@@ -1441,6 +1504,11 @@ export class Chapter2Engine {
       this.removeItem('herbal_pouch');
       return this.showToast('เปิดห่อว่านใบหนาดสูดกลิ่นข่มขวัญ (+40 สติ)');
     }
+    if (itemId === 'takian_charm') {
+      this.adjustSanity(45);
+      this.removeItem('takian_charm');
+      return this.showToast('ยกผ้าเจ็ดสีเจ้าแม่ตะเคียนอธิษฐานข่มขวัญ (+45 สติ)');
+    }
     if (itemId === 'bicycle') {
       this.toggleBicycle();
       return;
@@ -1561,7 +1629,8 @@ export class Chapter2Engine {
     for (const item of this.interactables) {
       if ((item.room ?? 'outside') !== this.currentRoom) continue;
       if (item.id === 'ch2_bicycle' && this.state.inventory.includes('bicycle')) continue;
-      const d = Math.abs(this.state.x - item.x);
+      const ix = item.getX ? item.getX() : item.x;
+      const d = Math.abs(this.state.x - ix);
       if (d <= (item.range ?? 1.8) && d < bestD) {
         best = item;
         bestD = d;
@@ -1674,11 +1743,134 @@ export class Chapter2Engine {
     this.openModal(
       'แผนผังบ้านทุ่ง (Chapter 2)',
       `
-      <div class="map-floor"><strong>ฝั่งซ้าย (-56 .. -24): ตลาดสดบ้านทุ่ง</strong><div style="font-size:0.84rem;color:#9fa6b8;margin-top:4px">บ้านยายสาย (-52) • เขียงหมูเฮียตี๋ (-44) • แผงปลา (-36) • แผงสมุนไพร & หนามพุทรา (-28)</div></div>
-      <div class="map-floor"><strong>ตรงกลาง (0 .. +20): บ้านไม้ยกสูง, ทุ่งนา & ศาลปู่ตา</strong><div style="font-size:0.84rem;color:#9fa6b8;margin-top:4px">ใต้ถุนบ้าน • บันไดเรือนพบแม่คำ & น้องแก้ว • นาข้าว & หนองน้ำ (+15) • ศาลปู่ตา (+17.5)</div></div>
-      <div class="map-floor"><strong>ฝั่งขวา (+26.5 .. +80): วัดป่าขนาดใหญ่, วงสายสิญจน์ & สุสาน</strong><div style="font-size:0.84rem;color:#9fa6b8;margin-top:4px">ซุ้มประตูโขง (+26.5) • วงสายสิญจน์ (+31.8) • พระอุโบสถเข้าด้านในได้ (+40.5) • กุฏิหลวงพี่ (+54.5) • โกศหมายเลข 4 (+75)</div></div>
+      <div class="map-floor"><strong>โค้งต้นตะเคียน & ปากหมู่บ้าน (-105 .. -62): สิ่งลี้ลับ & ท่ารถ</strong><div style="font-size:0.84rem;color:#9fa6b8;margin-top:4px">ศาลเจ้าแม่ตะเคียนคู่ผูกผ้าเจ็ดสี (-96.5) • ท่ารถสองแถว (-82) • ลุงทิดขี้เมาเดินโซเซ</div></div>
+      <div class="map-floor"><strong>ตลาดใหญ่บ้านทุ่ง (-60 .. -24): ของกิน, ชาวบ้านเดินจับจ่าย & สืบคดี</strong><div style="font-size:0.84rem;color:#9fa6b8;margin-top:4px">ส้มตำแม่ลำไย (-56.5) • บ้านยายสาย (-52) • ผักสด • เขียงหมู (-44) • ผ้าขาวม้า • ป้าบัว (-36) • น้ำแข็งไส • ตาชม (-28)</div></div>
+      <div class="map-floor"><strong>ตรงกลาง (-20 .. +25): บ้านไม้ยกสูง, ทุ่งนา, ควาย & ท่าน้ำหว่านแห</strong><div style="font-size:0.84rem;color:#9fa6b8;margin-top:4px">ใต้ถุนบ้าน • บันไดเรือนพบแม่คำ & น้องแก้ว • นาข้าว • ศาลปู่ตา (+17.5) • ท่าน้ำ (+20.4) • ป้ายรถวัดป่า (+25.2)</div></div>
+      <div class="map-floor"><strong>วัดป่าบ้านทุ่ง (+26.5 .. +59): เขตอภัยทาน & วงสายสิญจน์</strong><div style="font-size:0.84rem;color:#9fa6b8;margin-top:4px">ซุ้มมณฑป (+26.5) • วงสายสิญจน์ (+31.8) • พระอุโบสถเข้าด้านในได้ (+40.5) • กุฏิหลวงพี่ (+54.5)</div></div>
+      <div class="map-floor"><strong>ลานงานวัด & สุสาน (+62 .. +115): ชิงช้าสวรรค์ & โกศหมายเลข 4</strong><div style="font-size:0.84rem;color:#9fa6b8;margin-top:4px">ปาลูกโป่ง (+65.5) • ชิงช้าสวรรค์ (+76) • เวทีรำวงหมอลำ (+87.8) • ซุ้มประตูป่าช้า (+95.5) • โกศหมายเลข 4 (+110.5)</div></div>
       `
     );
+  }
+
+  private interactTakianShrine(): void {
+    this.sound.playClueChime();
+    if (!this.state.flags.inspectedTakian) {
+      this.state.flags.inspectedTakian = true;
+      this.addClue('takian_clue');
+      this.addItem('takian_charm');
+      this.startDialogue([
+        {
+          speaker: 'เสียงกระซิบจากใต้ต้นตะเคียนคู่',
+          role: 'สิ่งลี้ลับปากหมู่บ้าน',
+          portrait: 'narrator',
+          text: 'ลมเย็นยะเยือกพัดผ้าเจ็ดสีปลิวไสว กลิ่นดอกมะลิปนธูปโบราณโชยมา... ใต้โคนไม้มีผ้าเจ็ดสีพันม้วนเล็กๆ วางอยู่ พร้อมภาพนิมิตแวบหนึ่งถึงคืนที่หมอตำแยแก่แอบทำพิธีมืดตรงโกศอัฐิหลังวัด',
+        },
+        {
+          speaker: 'หนุ่ม',
+          role: 'ลูกชายคนโต',
+          portrait: 'player',
+          text: 'เจ้าแม่ตะเคียนทองกำลังเตือนเราแน่ๆ... เก็บผ้าเจ็ดสีนี้ติดตัวไว้คุ้มกันสติ แล้วรีบเช็กโกศหมายเลข 4 หลังงานวัดป่าให้ได้!',
+        },
+      ]);
+    } else {
+      this.showToast('พวงมาลัยและผ้าเจ็ดสีปลิวไหวเบาๆ เหมือนกำลังคุ้มครองคุณอยู่');
+    }
+  }
+
+  private openSongthaewTransitModal(): void {
+    this.sound.playVehicleHorn();
+    this.openModal(
+      'ขึ้นรถสองแถวสายบ้านทุ่ง (เดินทางข้ามหมู่บ้าน)',
+      `
+      <p style="color:#d6d3d1;margin-top:0">เลือกป้ายปลายทางที่ต้องการลง (ฟรีสำหรับคนในหมู่บ้าน!):</p>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-top:10px">
+        <button class="secondary-btn" data-bus="-82">🚌 ท่ารถปากหมู่บ้าน & ศาลเจ้าแม่ตะเคียน (-82 ม.)</button>
+        <button class="secondary-btn" data-bus="-24.5">🚌 หน้าตลาดใหญ่บ้านทุ่ง — ส้มตำ เขียงหมู สมุนไพร (-24 ม.)</button>
+        <button class="secondary-btn" data-bus="0">🚌 หน้าบ้านไม้ยกสูงของหนุ่ม (0 ม.)</button>
+        <button class="secondary-btn" data-bus="26.5">🚌 หน้าซุ้มประตูวัดป่า & วงสายสิญจน์ (+26 ม.)</button>
+        <button class="secondary-btn" data-bus="61.4">🎡 ป้ายรถวัดป่า & ลานงานวัดชิงช้าสวรรค์ (+61 ม.)</button>
+      </div>
+      `
+    );
+    document.querySelectorAll<HTMLButtonElement>('[data-bus]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const dest = Number(btn.dataset.bus);
+        this.ridingBike = false;
+        this.touchBike.textContent = '🚲';
+        this.touchBike.classList.remove('active');
+        this.renderInventory();
+        this.state.x = dest;
+        this.sound.playVehicleHorn();
+        this.closeModal();
+        this.updateHUD();
+        this.saveGame();
+        this.showToast('นั่งรถสองแถวมาถึงจุดหมายเรียบร้อย!');
+      });
+    });
+  }
+
+  private interactDrunkVillager(): void {
+    this.sound.playUIClick();
+    this.state.flags.talkedDrunk = true;
+    this.addClue('drunk_witness');
+    this.startDialogue([
+      {
+        speaker: 'ลุงทิดขี้เมา',
+        role: 'ชาวบ้านปากซอย (เมาเหล้าขาว)',
+        portrait: 'uncle',
+        text: 'อึ้ก... ไอ้หนุ่มกลับมาบ้านเรอะ! เมื่อคืนข้านั่งก๊งอยู่ตรงท่ารถ รอรถสองแถว... รถแห่ขับช้าๆ ผ่านไปปุ๊บ ข้าเห็นหัวคนมีไส้เขียวๆ ลอยสวนไฟหน้ารถเข้าไปทางบ้านเรือนไทยเลยเว้ย!',
+      },
+      {
+        speaker: 'หนุ่ม',
+        role: 'ลูกชายคนโต',
+        portrait: 'player',
+        text: 'ลุงเห็นจริงๆ เหรอครับ? งั้นแสดงว่าไม่ใช่แค่คนลือ — ระวังตัวด้วยนะครับลุงทิด รีบเข้าบ้านก่อนดึกนะ!',
+      },
+    ]);
+  }
+
+  private interactSomtamStall(): void {
+    this.sound.playUIClick();
+    if (!this.state.flags.ateSomtam) {
+      this.state.flags.ateSomtam = true;
+      this.adjustSanity(25);
+      this.startDialogue([
+        {
+          speaker: 'แม่ลำไย',
+          role: 'แม่ค้าส้มตำครกไม้-ไก่ย่าง',
+          portrait: 'vendor',
+          text: 'อ้าวหนุ่ม! กลับจากกรุงเทพฯ แล้วเหรอ มาๆ กินส้มตำปูปลาร้ากับไก่ย่างร้อนๆ ให้หายเหนื่อย แม่แถมข้าวเหนียวห่อนึงเลย (+25 สติ) ช่วงนี้ตลาดคึกคักแต่อย่าเดินเลยไปแถวบ้านยายสายตอนมืดล่ะ!',
+        },
+      ]);
+    } else {
+      this.showToast('แม่ลำไยตำส้มตำครกไม้เสียงดังโป๊กๆ กลิ่นไก่ย่างหอมฟุ้งไปทั่วตลาด');
+    }
+  }
+
+  private interactTempleFair(): void {
+    this.sound.playUIClick();
+    if (!this.state.flags.visitedFair) {
+      this.state.flags.visitedFair = true;
+      this.adjustSanity(15);
+      this.addClue('fair_rumor');
+      this.startDialogue([
+        {
+          speaker: 'โฆษกงานวัด & ชาวบ้าน',
+          role: 'ลานงานบุญวัดป่าบ้านทุ่ง',
+          portrait: 'tom',
+          text: 'ม่วนซื่นโฮแซว! มาปาลูกโป่งสอยดาวขึ้นชิงช้าสวรรค์กันจ้า! (เดินชมงานวัดใจชื้นขึ้น +15 สติ)... แต่ขอเตือนนะหนุ่ม พอเลยสี่ทุ่มไฟเวทีหมอลำเบาลง อย่าเดินข้ามซุ้มประตูไปป่าช้าหลังวัดคนเดียวเด็ดขาด!',
+        },
+      ]);
+    } else {
+      this.adjustSanity(5);
+      this.showToast('แสงไฟชิงช้าสวรรค์และเสียงกลองรำวงช่วยให้ใจชื้นขึ้น (+5 สติ) — ด้านขวาเลยไปคือซุ้มประตูป่าช้า');
+    }
+  }
+
+  private interactRotHae(): void {
+    this.sound.playUIClick();
+    this.adjustSanity(10);
+    this.showToast('🔊 เสียงหมอลำรถแห่บ้านทุ่งกระหึ่ม! ชาวบ้านเต้นตามขบวนอย่างสนุกสนาน (+10 สติ)');
   }
 
   private getNavigationGuide(): { text: string; direction: string } {
@@ -1853,8 +2045,8 @@ export class Chapter2Engine {
       }
     } else {
       targetRoom = 'outside';
-      targetX = 74.8;
-      text = 'เดินไปโกศบรรจุอัฐิหมายเลข 4 หลังวัดเพื่อทำพิธีตัดขาดทายาทกระสือ';
+      targetX = 110.5;
+      text = 'เดินผ่านงานวัดป่าไปโกศบรรจุอัฐิหมายเลข 4 หลังวัดเพื่อทำพิธีตัดขาดทายาทกระสือ';
     }
 
     let direction = '';
@@ -2028,6 +2220,12 @@ export class Chapter2Engine {
 
       this.sound.updateAmbience(dt, this.state.weather, period, this.state.sanity, 0 as FloorIndex, this.krasueChase);
       this.sound.updateIsaanAmbience(dt, period, this.currentRoom === 'outside', this.krasueChase);
+      this.sound.updateRotHaeMusic(
+        dt,
+        Math.abs(this.state.x - this.world.getRotHaeX()),
+        this.currentRoom === 'outside',
+        this.krasueChase
+      );
 
       this.world.update(
         dt,
