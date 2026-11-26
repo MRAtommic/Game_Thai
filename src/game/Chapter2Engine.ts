@@ -2,6 +2,7 @@ import { drawCh2CharacterCanvas, drawCh2ItemIconDataUrl } from '../art/Chapter2S
 import { SoundEngine } from '../audio/SoundEngine';
 import { CH2_CLUES, CH2_ITEMS, CH2_RULES, CH2_ZONE_NAMES } from '../data/chapter2Data';
 import { DialogueLine, EndingType, FloorIndex, TimePeriod, WeatherType } from '../types';
+import { renderSharedInventoryBar } from '../ui/InventoryBar';
 import { bindCameraZoomControls } from '../ui/mobileZoom';
 import { CH2_MAX_X, CH2_MIN_X, Ch2RoomId, IsaanWorld, VillageMood } from '../world/IsaanWorld';
 
@@ -40,6 +41,11 @@ interface Ch2Flags {
   inspectedTani?: boolean;
   wonFairPrize?: boolean;
   checkedChickenCoopDay2?: boolean;
+  checkedClinic?: boolean;
+  checkedSchool?: boolean;
+  gaveAlmsMorning?: boolean;
+  boughtFromTan?: boolean;
+  soldFishToBua?: boolean;
 }
 
 interface Ch2SaveState {
@@ -52,6 +58,9 @@ interface Ch2SaveState {
   inventory: string[];
   clues: string[];
   flags: Ch2Flags;
+  baht?: number;
+  battery?: number;
+  photos?: string[];
 }
 
 interface Ch2Interactable {
@@ -110,6 +119,11 @@ export class Chapter2Engine {
   private ridingBike = false;
   private codes = new Set<string>();
   private touchMoveDir: -1 | 0 | 1 = 0;
+  private isSprintingTouch = false;
+  private stamina = 100;
+  private lastRoosterDay = -1;
+  private dogHowlCooldown = 0;
+  private hudExtraTimer = 0;
   private stepTimer = 0;
   private autoSaveTimer = 5;
 
@@ -163,6 +177,9 @@ export class Chapter2Engine {
   private touchDown = document.getElementById('touch-down')!;
   private touchFlashlight = document.getElementById('touch-flashlight')!;
   private touchBike = document.getElementById('touch-bike')!;
+  private touchSprint = document.getElementById('touch-sprint');
+  private touchPhoto = document.getElementById('touch-photo');
+  private hudExtra = document.getElementById('hud-extra');
 
   constructor(canvas: HTMLCanvasElement, sound: SoundEngine, onExitToMenu: () => void) {
     this.world = new IsaanWorld(canvas);
@@ -181,9 +198,12 @@ export class Chapter2Engine {
       x: 1.5,
       sanity: 100,
       flashlightOn: false,
-      inventory: ['inhaler'],
+      inventory: ['inhaler', 'camera'],
       clues: [],
       flags: DEFAULT_CH2_FLAGS(),
+      baht: 120,
+      battery: 100,
+      photos: [],
     };
   }
 
@@ -220,15 +240,22 @@ export class Chapter2Engine {
       const raw = localStorage.getItem(CH2_SAVE_KEY);
       if (raw) {
         const parsed = JSON.parse(raw) as Ch2SaveState;
+        const mergedInv = Array.isArray(parsed.inventory) ? [...parsed.inventory] : ['inhaler'];
+        if (!mergedInv.includes('camera')) mergedInv.push('camera');
         this.state = {
           ...this.createNewState(),
           ...parsed,
+          inventory: mergedInv,
+          baht: parsed.baht ?? 120,
+          battery: parsed.battery ?? 100,
+          photos: Array.isArray(parsed.photos) ? parsed.photos : [],
           flags: { ...DEFAULT_CH2_FLAGS(), ...(parsed.flags || {}) },
         };
       }
     } catch {
       this.state = this.createNewState();
     }
+    this.stamina = 100;
     this.currentRoom = 'outside';
     this.beginPlay();
     this.showToast('โหลด Chapter 2 เรียบร้อย');
@@ -237,19 +264,24 @@ export class Chapter2Engine {
   private beginPlay(): void {
     document.getElementById('title-screen')?.classList.add('hidden');
     this.hudTop.classList.remove('hidden');
+    this.hudExtra?.classList.remove('hidden');
     this.invBar.classList.remove('hidden');
     this.touchUp.classList.add('hidden');
     this.touchDown.classList.add('hidden');
     this.touchFlashlight.classList.add('hidden');
     this.touchBike.classList.add('hidden');
+    this.touchSprint?.classList.add('hidden');
+    this.touchPhoto?.classList.add('hidden');
     this.chaseBanner.querySelector('span:last-child')!.textContent =
-      'ผีกระสือกำลังลอยไล่ตามมา! รีบวิ่งหนีเข้า "วงสายสิญจน์ลานวัด" พระอุโบสถ หรือขึ้นบ้านไม้ยกสูง';
+      'ผีกระสือกำลังลอยไล่ตามมา! รีบวิ่งหนีเข้า "วงสายสิญจน์ลานวัด" ที่หลบตุ่มมังกร หรือขึ้นบ้านไม้ยกสูง';
 
     const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0 || window.innerWidth <= 900;
     if (isTouch) {
       this.mobileControls.classList.remove('hidden');
       this.touchFlashlight.classList.remove('hidden'); // ไฟฉายแสดงตลอดในโหมดสัมผัส
       this.touchFlashlight.textContent = this.state.flashlightOn ? '🔦✓' : '🔦';
+      this.touchSprint?.classList.remove('hidden');
+      this.touchPhoto?.classList.remove('hidden');
       if (this.state.inventory.includes('bicycle')) {
         this.touchBike.classList.remove('hidden');
         this.touchBike.textContent = this.ridingBike ? '🚲✓' : '🚲';
@@ -278,6 +310,9 @@ export class Chapter2Engine {
     document.getElementById('touch-shoot')?.classList.add('hidden');
     this.touchFlashlight.classList.add('hidden');
     this.touchBike.classList.add('hidden');
+    this.touchSprint?.classList.add('hidden');
+    this.touchPhoto?.classList.add('hidden');
+    this.hudExtra?.classList.add('hidden');
     this.interactPrompt.classList.add('hidden');
     this.dialogueBox.classList.add('hidden');
     this.modalBackdrop.classList.add('hidden');
@@ -304,7 +339,10 @@ export class Chapter2Engine {
       const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0 || window.innerWidth <= 900;
       this.mobileControls.classList.toggle('hidden', !isTouch);
       this.touchFlashlight.classList.toggle('hidden', !isTouch);
+      this.touchSprint?.classList.toggle('hidden', !isTouch);
+      this.touchPhoto?.classList.toggle('hidden', !isTouch);
       this.touchBike.classList.toggle('hidden', !(isTouch && this.state.inventory.includes('bicycle')));
+      this.renderInventory();
     };
     window.addEventListener('resize', handleResize, sig);
     window.addEventListener('orientationchange', () => setTimeout(handleResize, 120), sig);
@@ -312,6 +350,8 @@ export class Chapter2Engine {
     window.addEventListener('blur', () => {
       this.codes.clear();
       this.touchMoveDir = 0;
+      this.isSprintingTouch = false;
+      this.touchSprint?.classList.remove('pressed');
     }, sig);
 
     bindCameraZoomControls(
@@ -345,6 +385,9 @@ export class Chapter2Engine {
           this.tryInteract();
         } else if (code === 'KeyF') {
           this.toggleFlashlight();
+        } else if (code === 'KeyC') {
+          e.preventDefault();
+          this.takeEvidencePhoto();
         } else if (code === 'KeyB') {
           if (this.state.inventory.includes('bicycle')) this.toggleBicycle();
           else this.showToast('ยังไม่มีจักรยาน — ลองเก็บจักรยานที่จอดอยู่ข้างบ้านไม้ยกสูง (ซ้ายมือ)');
@@ -440,6 +483,31 @@ export class Chapter2Engine {
       this.sound.init();
       if (this.state.inventory.includes('bicycle')) this.toggleBicycle();
     }, sig);
+    // ปุ่มวิ่งไว [Shift] & กล้องมือถือ [C]
+    if (this.touchSprint) {
+      let sprintPtr: number | null = null;
+      const startSprint = (ev: PointerEvent) => {
+        ev.preventDefault();
+        sprintPtr = ev.pointerId;
+        this.isSprintingTouch = true;
+        this.touchSprint?.classList.add('pressed');
+        try { this.touchSprint?.setPointerCapture(ev.pointerId); } catch {}
+      };
+      const endSprint = (ev: PointerEvent) => {
+        if (sprintPtr !== null && ev.pointerId !== sprintPtr) return;
+        ev.preventDefault();
+        sprintPtr = null;
+        this.isSprintingTouch = false;
+        this.touchSprint?.classList.remove('pressed');
+      };
+      this.touchSprint.addEventListener('pointerdown', startSprint as EventListener, sig);
+      this.touchSprint.addEventListener('pointerup', endSprint as EventListener, sig);
+      this.touchSprint.addEventListener('pointercancel', endSprint as EventListener, sig);
+    }
+    this.touchPhoto?.addEventListener('click', () => {
+      this.sound.init();
+      this.takeEvidencePhoto();
+    }, sig);
     this.interactPrompt.addEventListener('click', () => {
       this.sound.init();
       if (this.activeDialogue.length === 0 && !this.modalOpen) this.tryInteract();
@@ -450,7 +518,7 @@ export class Chapter2Engine {
     this.interactables = [
       {
         id: 'ch2_bicycle',
-        x: -3.4,
+        x: -6.5,
         range: 1.9,
         label: 'เก็บจักรยานบ้านทุ่ง (ปั่นเดินทางเร็ว)',
         onInteract: () => {
@@ -468,13 +536,58 @@ export class Chapter2Engine {
       },
       {
         id: 'stilt_stairs',
-        x: 5.0,
-        range: 1.9,
+        x: 5.9,
+        range: 2.0,
         label: 'ขึ้นบันไดบ้านไม้ยกสูงไปหาแม่คำ & น้องแก้ว',
         onInteract: () => {
           this.sound.playDoorCreak();
-          this.enterRoom('stilt_house', 5.0);
+          this.enterRoom('stilt_house', 5.9);
         },
+      },
+      {
+        id: 'ch2_hide_jar1',
+        x: 4.0,
+        range: 1.8,
+        getLabel: () => (this.krasueChase ? 'รีบหลบหลังตุ่มมังกรคู่ข้างเรือน! (หนีกระสือ)' : 'แอบดูหลังตุ่มมังกรคู่หน้าเรือน'),
+        label: 'ตุ่มมังกรคู่หน้าเรือน',
+        onInteract: () => this.interactHideSpot('ตุ่มมังกรคู่หน้าเรือน'),
+      },
+      {
+        id: 'ch2_hide_jar2',
+        x: 23.5,
+        range: 2.0,
+        getLabel: () => (this.krasueChase ? 'รีบซ่อนตัวในพุ่มกอไผ่ริมสะพานหนองน้ำ! (หนีกระสือ)' : 'จุดหลบภัยในกอไผ่ริมสะพานไม้'),
+        label: 'กอไผ่ริมสะพานหนองน้ำ',
+        onInteract: () => this.interactHideSpot('พุ่มกอไผ่ริมสะพานไม้'),
+      },
+      {
+        id: 'ch2_morning_monk',
+        x: 0,
+        getX: () => this.world.getMorningMonkX(),
+        range: 2.6,
+        label: 'ใส่บาตรพระยามเช้า (05:30 - 07:45 น.)',
+        onInteract: () => this.interactMorningMonk(),
+      },
+      {
+        id: 'ch2_school',
+        x: -112.0,
+        range: 2.8,
+        label: 'สำรวจโรงเรียนประถมบ้านทุ่ง & ชิงช้าโบราณ',
+        onInteract: () => this.interactSchool(),
+      },
+      {
+        id: 'ch2_showhuay',
+        x: -89.5,
+        range: 2.4,
+        label: 'แวะร้านชำเจ๊แตน (ซื้อถ่านไฟฉาย / ยาดม / น้ำแดง & ตู้บุญเติม)',
+        onInteract: () => this.interactShowHuayShop(),
+      },
+      {
+        id: 'ch2_clinic',
+        x: 96.0,
+        range: 2.6,
+        label: 'ตรวจอนามัยบ้านทุ่ง & บอร์ดข่าวสาธารณสุข',
+        onInteract: () => this.interactClinic(),
       },
       {
         id: 'ch2_paddy_shrine',
@@ -544,7 +657,7 @@ export class Chapter2Engine {
       },
       {
         id: 'ch2_cemetery',
-        x: 110.5,
+        x: 120.5,
         range: 2.8,
         label: 'ตรวจดูโกศบรรจุอัฐิหมายเลข 4 ท้ายป่าช้าวัด',
         onInteract: () => this.interactBoneUrnCemetery(),
@@ -616,7 +729,7 @@ export class Chapter2Engine {
       },
       {
         id: 'ch2_pa_tower',
-        x: -9.6,
+        x: -8.6,
         range: 2.3,
         label: 'ฟังประกาศจากหอกระจายข่าวผู้ใหญ่บ้าน',
         onInteract: () => this.interactPaTower(),
@@ -647,8 +760,8 @@ export class Chapter2Engine {
       {
         id: 'house_exit',
         room: 'stilt_house',
-        x: -4.6,
-        range: 1.5,
+        x: -6.8,
+        range: 1.6,
         label: 'เดินลงบันไดบ้านไม้ยกสูง',
         onInteract: () => this.exitRoom(),
       },
@@ -680,9 +793,9 @@ export class Chapter2Engine {
       {
         id: 'house_sleep',
         room: 'stilt_house',
-        x: 4.0,
-        range: 1.6,
-        label: 'พักผ่อน / นอนรอเวลา / เซฟเกม',
+        x: 4.8,
+        range: 1.8,
+        label: 'พักผ่อน / นอนรอเวลา / ชาร์จไฟฉาย & เซฟเกม',
         onInteract: () => this.openSleepModal(),
       },
 
@@ -745,7 +858,7 @@ export class Chapter2Engine {
     }
     this.outsideReturnX = returnX;
     this.currentRoom = room;
-    this.state.x = room === 'temple_sala' ? -4.8 : -3.8;
+    this.state.x = room === 'temple_sala' ? -4.8 : room === 'stilt_house' ? -6.8 : -3.8;
     this.playerZ = 0.65;
     this.facing = 1;
     this.updateHUD();
@@ -826,6 +939,9 @@ export class Chapter2Engine {
       this.state.day += 1;
       this.state.gameMinutes = 8 * 60 + 30; // Peaceful morning of Day 2!
       this.state.sanity = 100;
+      this.state.battery = 100;
+      this.state.baht = (this.state.baht ?? 120) + 50;
+      this.sound.playCoinJingle();
       this.startDialogue([
         {
           speaker: 'หนุ่ม',
@@ -1099,6 +1215,17 @@ export class Chapter2Engine {
           text: 'อ้าวหนุ่ม กลับมาอยู่บ้านกับแม่คำแล้วเรอะลูก! เอานี่ปลาช่อนสดๆ ไปฝากแม่ทำแกงต้มส้มสิ... แต่ช่วงนี้เดินกลางคืนแถวคันนาระวังหน่อยนะลูก ชาวบ้านชอบเห็นแสงไฟสีเขียววาบๆ แถวป่าช้าหลังวัด',
         },
       ]);
+      this.saveGame();
+      return;
+    }
+
+    if (f.finishedDay1Dinner && this.state.inventory.includes('fresh_fish')) {
+      this.removeItem('fresh_fish');
+      this.state.baht = (this.state.baht ?? 120) + 60;
+      this.state.flags.soldFishToBua = true;
+      this.sound.playCoinJingle();
+      this.updateExtraHud();
+      this.showToast('ขายปลาช่อนสดให้ป้าบัวแผงปลาได้เงิน +60 ฿!');
       this.saveGame();
       return;
     }
@@ -1393,7 +1520,7 @@ export class Chapter2Engine {
     }
 
     this.krasueShowTimer = 12.0;
-    this.krasueX = 113.2;
+    this.krasueX = 123.0;
     this.sound.playScare();
 
     this.startDialogue([
@@ -1502,10 +1629,12 @@ export class Chapter2Engine {
         if (min <= this.state.gameMinutes) this.state.day += 1;
         this.state.gameMinutes = min;
         this.state.sanity = 100;
+        this.state.battery = 100;
+        this.stamina = 100;
         this.closeModal();
         this.updateHUD();
         this.saveGame();
-        this.showToast('พักผ่อนเต็มอิ่ม รู้สึกสดชื่นขึ้นมาก');
+        this.showToast('พักผ่อนเต็มอิ่ม ชาร์จแบตไฟฉายเต็ม 100% เรียบร้อย');
       });
     });
     document.getElementById('ch2-save-btn')?.addEventListener('click', () => this.saveGame(false));
@@ -1586,6 +1715,26 @@ export class Chapter2Engine {
       this.adjustSanity(40);
       this.removeItem('fair_amulet');
       return this.showToast('อาราธนาเหรียญหลวงพ่อวัดป่าเรียกขวัญกลับคืน (+40 สติ)');
+    }
+    if (itemId === 'battery_cell') {
+      if ((this.state.battery ?? 100) >= 98) return this.showToast('แบตไฟฉายยังเต็มอยู่ เก็บถ่านตรากบไว้ก่อน');
+      this.state.battery = Math.min(100, (this.state.battery ?? 0) + 85);
+      this.removeItem('battery_cell');
+      this.sound.playPickup();
+      this.updateExtraHud();
+      return this.showToast('ใส่ถ่านตรากบใหม่แล้ว! แบตเตอรี่ไฟฉายกลับมาสว่างจ้า');
+    }
+    if (itemId === 'red_soda') {
+      this.adjustSanity(30);
+      this.stamina = 100;
+      this.removeItem('red_soda');
+      this.sound.playPickup();
+      this.updateExtraHud();
+      return this.showToast('ดื่มน้ำแดงเย็นเจี๊ยบ! (+30 สติ & กำลังวิ่งเต็ม 100%)');
+    }
+    if (itemId === 'camera') {
+      this.takeEvidencePhoto();
+      return;
     }
     if (itemId === 'bicycle') {
       this.toggleBicycle();
@@ -1670,6 +1819,10 @@ export class Chapter2Engine {
   private toggleFlashlight(): void {
     this.sound.init();
     this.sound.playSwitchClick();
+    if (!this.state.flashlightOn && (this.state.battery ?? 100) <= 0) {
+      this.showToast('แบตไฟฉายหมด! ซื้อถ่านตรากบที่ร้านชำเจ๊แตน หรือนอนชาร์จบนเรือน', true);
+      return;
+    }
     this.state.flashlightOn = !this.state.flashlightOn;
     this.btnFlashlight.classList.toggle('active', this.state.flashlightOn);
     this.touchFlashlight.classList.toggle('active', this.state.flashlightOn);
@@ -1677,22 +1830,36 @@ export class Chapter2Engine {
   }
 
   private renderInventory(): void {
-    this.invBar.innerHTML = '';
-    this.state.inventory.forEach((id, idx) => {
-      const item = CH2_ITEMS[id];
-      if (!item) return;
-      let url = this.iconCache.get(id);
-      if (!url) {
-        url = drawCh2ItemIconDataUrl(id);
-        this.iconCache.set(id, url);
-      }
-      const btn = document.createElement('button');
-      btn.className = 'inv-slot';
-      if (id === 'bicycle' && this.ridingBike) btn.classList.add('active');
-      btn.title = `${item.name}: ${item.description}`;
-      btn.innerHTML = `<span class="inv-num">${idx + 1}</span><span class="inv-icon"><img class="inv-img" src="${url}" alt="${item.name}"/></span><span class="inv-name">${id === 'bicycle' && this.ridingBike ? 'กำลังปั่น [B]' : item.name}</span>`;
-      btn.addEventListener('click', () => this.useItem(id));
-      this.invBar.appendChild(btn);
+    renderSharedInventoryBar({
+      invBar: this.invBar,
+      modalBody: this.modalBody,
+      items: this.state.inventory,
+      getMeta: (id) => {
+        const item = CH2_ITEMS[id];
+        if (!item) return undefined;
+        return {
+          name: item.name,
+          description: item.description,
+          badgeText: id === 'bicycle' && this.ridingBike ? 'กำลังปั่น [B]' : item.name,
+          active: id === 'bicycle' && this.ridingBike,
+        };
+      },
+      getIconUrl: (id) => {
+        let url = this.iconCache.get(id);
+        if (!url) {
+          url = drawCh2ItemIconDataUrl(id);
+          this.iconCache.set(id, url);
+        }
+        return url;
+      },
+      onUse: (id) => this.useItem(id),
+      onReorder: (newOrder) => {
+        this.state.inventory = newOrder;
+        this.saveGame();
+      },
+      onOpenModal: (title, html) => this.openModal(title, html),
+      onCloseModal: () => this.closeModal(),
+      onPlayClick: () => this.sound.playUIClick(),
     });
   }
 
@@ -1711,6 +1878,7 @@ export class Chapter2Engine {
 
   private getNearestInteractable(): Ch2Interactable | null {
     const mood = this.getVillageMood();
+    const h = (this.state.gameMinutes % 1440) / 60;
     let best: Ch2Interactable | null = null;
     let bestD = Infinity;
     for (const item of this.interactables) {
@@ -1718,6 +1886,7 @@ export class Chapter2Engine {
       if (item.id === 'ch2_bicycle' && this.state.inventory.includes('bicycle')) continue;
       if (item.id === 'ch2_rothae' && mood !== 'festive') continue;
       if (item.id === 'ch2_drunk' && mood === 'lockdown') continue;
+      if (item.id === 'ch2_morning_monk' && (h < 5.5 || h > 7.75 || mood === 'lockdown')) continue;
       const ix = item.getX ? item.getX() : item.x;
       const d = Math.abs(this.state.x - ix);
       if (d <= (item.range ?? 1.8) && d < bestD) {
@@ -1824,7 +1993,17 @@ export class Chapter2Engine {
               return `<div class="clue-item"><div class="clue-title">${c.title}</div><div>${c.detail}</div></div>`;
             })
             .join('');
-    this.openModal(`สมุดสืบเรื่องผีกระสือ (${this.state.clues.length}/${Object.keys(CH2_CLUES).length})`, clues);
+    const photos = this.state.photos ?? [];
+    const photoHtml =
+      photos.length === 0
+        ? '<p style="color:#9fa6b8;font-size:0.85rem">ยังไม่มีภาพถ่ายหลักฐาน (กด [C] หรือปุ่ม 📷 ใกล้สิ่งผิดปกติ)</p>'
+        : photos
+            .map((p, idx) => `<div class="clue-item"><div class="clue-title">📷 ภาพหลักฐานที่ ${idx + 1}</div><div>${p}</div></div>`)
+            .join('');
+    this.openModal(
+      `สมุดสืบ & ภาพหลักฐาน (${this.state.clues.length}/${Object.keys(CH2_CLUES).length})`,
+      `${clues}<h4 style="color:#f6d594;margin:14px 0 6px">อัลบั้มภาพถ่ายมือถือ (${photos.length})</h4>${photoHtml}`
+    );
   }
 
   private openMapModal(): void {
@@ -1832,11 +2011,11 @@ export class Chapter2Engine {
     this.openModal(
       'แผนผังบ้านทุ่ง (Chapter 2)',
       `
-      <div class="map-floor"><strong>โค้งต้นตะเคียน & ปากหมู่บ้าน (-105 .. -62): สิ่งลี้ลับ, บั้งไฟ & ท่ารถ</strong><div style="font-size:0.84rem;color:#9fa6b8;margin-top:4px">ซุ้มบ้านทุ่งอีสาน (-101.5) • ศาลเจ้าแม่ตะเคียน (-96.5) • ท่ารถสองแถว (-82) • ลุงทิดขี้เมา (-71) • ซุ้มบุญบั้งไฟ (-67.5)</div></div>
-      <div class="map-floor"><strong>ตลาดใหญ่บ้านทุ่ง (-60 .. -24): ของกิน, ชาวบ้านเดินจับจ่าย & สืบคดี</strong><div style="font-size:0.84rem;color:#9fa6b8;margin-top:4px">ส้มตำแม่ลำไย (-57.8) • บ้านยายสาย (-52) • ผักสด • เขียงหมู (-44) • ผ้าขาวม้า • ป้าบัว (-36) • น้ำแข็งไส • ตาชม (-28)</div></div>
-      <div class="map-floor"><strong>ตรงกลาง (-20 .. +25): บ้านไม้ยกสูง, ทุ่งนา, ควาย & ท่าน้ำหว่านแห</strong><div style="font-size:0.84rem;color:#9fa6b8;margin-top:4px">ดงกล้วยตานี (-20.5) • หอกระจายข่าว (-9.6) • ยุ้งข้าว (-6.2) • ใต้ถุนบ้าน • เล้าไก่ (+10.2) • ศาลปู่ตา (+17.5) • ท่าน้ำ (+20.4)</div></div>
+      <div class="map-floor"><strong>เขตโรงเรียน & ร้านชำเจ๊แตน (-115 .. -62): ชิงช้าผีสิง, ตะเคียนคู่ & ท่ารถ</strong><div style="font-size:0.84rem;color:#9fa6b8;margin-top:4px">ร.ร.บ้านทุ่ง (-112) • ซุ้มหมู่บ้าน (-104.5) • ศาลเจ้าแม่ตะเคียน (-96.5) • ร้านชำเจ๊แตน (-89.5) • ท่ารถสองแถว (-82) • ลุงทิด (-71) • ซุ้มบั้งไฟ (-67.5)</div></div>
+      <div class="map-floor"><strong>ตลาดใหญ่บ้านทุ่ง (-60 .. -24): ของกิน, ชาวบ้านเดินจับจ่าย & สืบคดี</strong><div style="font-size:0.84rem;color:#9fa6b8;margin-top:4px">ส้มตำแม่ลำไย (-57.8) • บ้านยายสาย (-52) • เขียงหมู (-44) • ป้าบัว (-36) • ตาชม (-28) • ท่ารถตลาด (-24.5)</div></div>
+      <div class="map-floor"><strong>ย่านกลางทุ่ง (-20 .. +25): เรือนไม้หลังใหญ่, หอข่าว & สะพานหนองน้ำ</strong><div style="font-size:0.84rem;color:#9fa6b8;margin-top:4px">ดงกล้วยตานี (-20.5) • ยุ้งข้าว (-11.4) • หอกระจายข่าว (-8.6) • บ้านไม้ยกสูงของหนุ่ม (0 / บันได +5.9) • ตุ่มซ่อนตัว (+4.0) • เล้าไก่ (+10.2) • ศาลปู่ตา (+17.5) • ท่าน้ำ (+20.4) • สะพานไม้ & กอไผ่หลบภัย (+23.5)</div></div>
       <div class="map-floor"><strong>วัดป่าบ้านทุ่ง (+26.5 .. +59): เขตอภัยทาน & วงสายสิญจน์</strong><div style="font-size:0.84rem;color:#9fa6b8;margin-top:4px">ซุ้มมณฑป (+26.5) • วงสายสิญจน์ (+31.8) • พระอุโบสถเข้าด้านในได้ (+40.5) • กุฏิหลวงพี่ (+54.5)</div></div>
-      <div class="map-floor"><strong>ลานงานวัด & สุสาน (+62 .. +115): ชิงช้าสวรรค์ & โกศหมายเลข 4</strong><div style="font-size:0.84rem;color:#9fa6b8;margin-top:4px">ปาลูกโป่ง (+65.5) • ชิงช้าสวรรค์ (+76) • เวทีรำวงหมอลำ (+87.8) • ซุ้มประตูป่าช้า (+95.5) • โกศหมายเลข 4 (+110.5)</div></div>
+      <div class="map-floor"><strong>งานวัด, อนามัย & ป่าช้า (+62 .. +125): ชิงช้าสวรรค์, อนามัย & โกศหมายเลข 4</strong><div style="font-size:0.84rem;color:#9fa6b8;margin-top:4px">ปาลูกโป่ง (+65.5) • ชิงช้าสวรรค์ (+76) • เวทีรำวง (+87.8) • อนามัยบ้านทุ่ง (+96) • ซุ้มป่าช้า (+103.5) • โกศหมายเลข 4 (+120.5)</div></div>
       `
     );
   }
@@ -1950,9 +2129,13 @@ export class Chapter2Engine {
       this.showToast('ชาวบ้านกำลังหว่านแหจับปลาในหนองน้ำ — ขึ้นไปคุยกับแม่คำและน้องแก้วบนเรือนก่อนนะ');
       return;
     }
-    if (this.state.flags.caughtPondFishDay1) {
+    if (this.state.flags.caughtPondFishDay1 && (!this.state.flags.finishedDay1Dinner || this.state.inventory.includes('fresh_fish'))) {
       this.adjustSanity(10);
-      this.showToast('นั่งรับลมริมหนองน้ำดูชาวบ้านหว่านแหจับปลา (+10 สติ)');
+      this.showToast(
+        this.state.inventory.includes('fresh_fish')
+          ? 'มีปลาช่อนสดในกระเป๋าแล้ว เอาไปขายให้ป้าบัวที่ตลาดได้ (+60 ฿)!'
+          : 'นั่งรับลมริมหนองน้ำดูชาวบ้านหว่านแหจับปลา (+10 สติ)'
+      );
       return;
     }
     this.sound.playUIClick();
@@ -2146,18 +2329,186 @@ export class Chapter2Engine {
     this.showToast('🔊 เสียงหมอลำรถแห่บ้านทุ่งกระหึ่ม! ชาวบ้านเต้นตามขบวนอย่างสนุกสนาน (+10 สติ)');
   }
 
+  private interactSchool(): void {
+    const mood = this.getVillageMood();
+    const h = (this.state.gameMinutes % 1440) / 60;
+    const isNight = h >= 19.0 || h < 5.8;
+    if (!this.state.flags.checkedSchool) {
+      this.state.flags.checkedSchool = true;
+      this.addClue('school_diary');
+      if (isNight || mood !== 'festive') this.sound.playScare();
+      else this.sound.playClueChime();
+      this.startDialogue([
+        {
+          speaker: 'หนุ่ม',
+          role: 'หน้าอาคารเรียนเก่า ร.ร.บ้านทุ่งประชานุเคราะห์',
+          portrait: 'player',
+          text: isNight
+            ? 'ชิงช้าไม้หน้าโรงเรียนแกว่งเองทั้งที่ไม่มีลมพัด... ใต้กระดานดำศาลาริมสนามมีสมุดบันทึกครูเวรตกอยู่: "20 ปีก่อน มีเด็กหญิงหายตัวหลังเสียงหัวเราะหญิงแก่จากบ้านท้ายตลาด..."'
+            : 'โรงเรียนประถมบ้านทุ่งที่หนุ่มกับน้องแก้วเคยวิ่งเล่น... ใต้โต๊ะไม้มี "สมุดบันทึกครูเวรรุ่นเก่า" เขียนเล่าเหตุการณ์ประหลาดเมื่อ 20 ปีก่อนของบ้านท้ายตลาดเก็บไว้ด้วย',
+        },
+      ]);
+      this.saveGame();
+      return;
+    }
+    this.showToast(isNight ? 'ชิงช้าหน้าโรงเรียนแกว่งเอี๊ยดอ๊าดชวนขนลุกในความมืด...' : 'ลานเสาธงโรงเรียนบ้านทุ่ง — ร่มรื่นด้วยต้นไม้ใหญ่');
+  }
+
+  private interactClinic(): void {
+    if (!this.state.flags.checkedClinic) {
+      this.state.flags.checkedClinic = true;
+      this.addClue('clinic_record');
+      this.sound.playClueChime();
+      this.startDialogue([
+        {
+          speaker: 'หมออนามัยบ้านทุ่ง',
+          role: 'รพ.สต.บ้านทุ่ง (หน้าบอร์ดข่าวสาธารณสุข)',
+          portrait: 'vendor',
+          text: 'อ้าวหนุ่ม! กลับมาพอดีเลย ช่วงนี้มีชาวบ้านหลายรายเข้ามารับยาแก้ผวาและแจ้งพบคราบเมือกคล้ายน้ำเหลืองปนคาวเลือดตอนดึก ลุงกับหมอบันทึกรายงานไว้บนบอร์ดแล้ว แต่หมอว่าไม่น่าใช่โรคติดต่อทั่วไปนะ...',
+        },
+        {
+          speaker: 'หนุ่ม',
+          role: 'ดูแฟ้มตรวจและบอร์ดแจ้งเตือน',
+          portrait: 'player',
+          text: 'เก็บข้อมูล "บันทึกการเจ็บป่วยประหลาด" จากอนามัยไว้เชื่อมโยงกับสมุดสืบคดีแล้ว (+25 สติ พักตรวจสุขภาพฟรี)',
+        },
+      ]);
+      this.adjustSanity(25);
+      this.saveGame();
+      return;
+    }
+    this.adjustSanity(15);
+    this.showToast('หมออนามัย: "ดูแลสุขภาพและพกยาดมไว้เสมอนะหนุ่ม" (+15 สติ)');
+  }
+
+  private interactShowHuayShop(): void {
+    if (this.getVillageMood() === 'lockdown' && (this.state.gameMinutes % 1440) / 60 >= 20) {
+      this.showToast('ร้านชำเจ๊แตนปิดประตูล็อกแม่กุญแจแน่นหนาหลังสองทุ่ม! รีบหาจุดปลอดภัยหรือรอเช้า', true);
+      return;
+    }
+    const baht = this.state.baht ?? 120;
+    this.sound.playUIClick();
+    this.openModal(
+      `ร้านชำเจ๊แตน & ตู้บุญเติม (เงินติดตัว: ${baht} ฿)`,
+      `
+      <p style="margin-top:0">เจ๊แตนยิ้มต้อนรับหน้าร้าน: "เอาหยังล่ะหนุ่ม? มีทั้งถ่านไฟฉายตรากบ ยาดม และน้ำแดงเย็นๆ!"</p>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-top:10px">
+        <button class="primary-btn" data-buy="battery_cell" data-price="30">🔋 ถ่านไฟฉายตรากบ (30 ฿) — ฟื้นแบตไฟฉาย +85%</button>
+        <button class="secondary-btn" data-buy="inhaler" data-price="25">🌿 ยาดมสมุนไพร (25 ฿) — เรียกสติ +35%</button>
+        <button class="secondary-btn" data-buy="red_soda" data-price="20">🥤 น้ำแดงเย็น (20 ฿) — ฟื้นสติ +30% & กำลังวิ่งเต็ม 100%</button>
+      </div>
+      <p style="font-size:0.8rem;color:#9fa6b8;margin-top:10px">ทิป: จับปลาช่อนหนองน้ำมาขายป้าบัวที่ตลาดได้ตัวละ +60 ฿ หรือชาร์จแบตไฟฉายฟรีตอนนอนบนเรือน</p>
+      `
+    );
+    this.modalBody.querySelectorAll<HTMLButtonElement>('[data-buy]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const itemId = btn.dataset.buy!;
+        const price = Number(btn.dataset.price);
+        const cur = this.state.baht ?? 120;
+        if (cur < price) {
+          this.showToast(`เงินไม่พอ (ต้องใช้ ${price} ฿ — ตกปลาหนองน้ำขายป้าบัวได้ +60 ฿)`, true);
+          return;
+        }
+        this.state.baht = cur - price;
+        this.sound.playCoinJingle();
+        if (itemId === 'battery_cell' && this.state.inventory.includes('battery_cell')) {
+          this.state.battery = Math.min(100, (this.state.battery ?? 0) + 85);
+          this.showToast(`ซื้อและใส่ถ่านตรากบแล้ว! (-${price} ฿ / แบต ${Math.round(this.state.battery)}%)`);
+        } else if (itemId === 'red_soda' && this.state.inventory.includes('red_soda')) {
+          this.adjustSanity(30);
+          this.stamina = 100;
+          this.showToast(`ซื้อน้ำแดงดื่มหน้าร้านเจ๊แตนสดชื่น! (-${price} ฿)`);
+        } else {
+          this.addItem(itemId);
+        }
+        this.closeModal();
+        this.updateHUD();
+        this.saveGame();
+      });
+    });
+  }
+
+  private interactMorningMonk(): void {
+    const f = this.state.flags;
+    this.adjustSanity(40);
+    this.sound.playClueChime();
+    if (!f.gaveAlmsMorning) {
+      f.gaveAlmsMorning = true;
+      this.startDialogue([
+        {
+          speaker: 'หลวงพี่ (ออกบิณฑบาตยามเช้า)',
+          role: 'ถนนหน้าหมู่บ้านบ้านทุ่ง',
+          portrait: 'uncle',
+          text: 'สาธุ... บุญรักษาโยมหนุ่ม ตื่นเช้ามาใส่บาตรให้ใจผ่องใส (+40 สติ) แบ่งปันกุศลให้เจ้ากรรมนายเวรในบ้านทุ่งด้วยเถิดโยม',
+        },
+      ]);
+      this.saveGame();
+      return;
+    }
+    this.showToast('ใส่บาตรรับศีลรับพรจากหลวงพี่ยามเช้า (+40 สติ)');
+  }
+
+  private interactHideSpot(spotName: string): void {
+    if (!this.krasueChase) {
+      this.showToast(`${spotName} — จุดอับสายตาใช้หลบซ่อนตัวเวลาถูกผีกระสือไล่ตามในยามค่ำคืน`);
+      return;
+    }
+    this.krasueChase = false;
+    this.krasueCooldown = 14;
+    this.krasueShowTimer = 0;
+    this.chaseBanner.classList.add('hidden');
+    this.sound.playSwitchClick();
+    this.showToast(`กลั้นใจหลบซ่อนหลัง${spotName}ทันเวลา! ดวงไฟผีกระสือลอยผ่านเลยไปในความมืด`);
+  }
+
+  private takeEvidencePhoto(): void {
+    if (this.modalOpen || this.activeDialogue.length > 0) return;
+    this.sound.playCameraShutter();
+    const x = this.state.x;
+    const photos = this.state.photos ?? (this.state.photos = []);
+    let caption: string | null = null;
+    if (this.krasueChase || this.krasueShowTimer > 0) {
+      caption = 'ภาพถ่ายดวงไฟสีเขียวและเงาหัวผีกระสือกลางอากาศ!';
+    } else if (this.currentRoom === 'outside' && Math.abs(x - 10.2) < 4.5 && this.state.flags.checkedChickenCoopDay2) {
+      caption = 'ภาพคราบเมือกเรืองแสงและรอยข่วนที่เล้าไก่บ้าน';
+    } else if (this.currentRoom === 'outside' && Math.abs(x - -20.5) < 4.5) {
+      caption = 'ภาพเงาลึกลับริมกอกล้วยตานีคันนา';
+    } else if (this.currentRoom === 'outside' && Math.abs(x - -51.8) < 4.5) {
+      caption = 'ภาพโอ่งมังกรเปื้อนรอยลากหน้าบ้านยายสาย';
+    } else if (this.currentRoom === 'outside' && Math.abs(x - -96.5) < 4.5) {
+      caption = 'ภาพศาลเจ้าแม่ตะเคียนคู่ผูกผ้าเจ็ดสี';
+    } else if (this.currentRoom === 'outside' && Math.abs(x - -112.0) < 4.5) {
+      caption = 'ภาพชิงช้าไม้โรงเรียนประถมบ้านทุ่ง';
+    } else if (this.currentRoom === 'outside' && Math.abs(x - 120.5) < 4.5) {
+      caption = 'ภาพโกศบรรจุอัฐิหมายเลข 4 ท้ายป่าช้าวัด';
+    }
+
+    if (caption) {
+      if (!photos.includes(caption)) {
+        photos.push(caption);
+        this.adjustSanity(15);
+        this.saveGame();
+        this.showToast(`📷 แชะ! บันทึกหลักฐาน: ${caption} (+15 สติ)`);
+      } else {
+        this.showToast(`📷 แชะ! มีภาพ "${caption}" ในอัลบั้มสมุดสืบแล้ว`);
+      }
+    } else {
+      this.showToast('📷 แชะ! เก็บภาพบรรยากาศบ้านทุ่งอีสาน (ลองถ่ายใกล้จุดลี้ลับหรือตอนกระสือปรากฏตัว!)');
+    }
+  }
+
   private getNavigationGuide(): { text: string; direction: string } {
     const f = this.state.flags;
     const h = this.state.gameMinutes / 60;
     const isNight = h >= 20.5 || h < 5.5;
     let targetRoom: Ch2RoomId = 'outside';
-    let targetX = 5.0;
+    let targetX = 5.9;
     let text = '';
 
     if (!f.bondedWithFamilyDay1) {
       if (this.currentRoom !== 'stilt_house') {
         targetRoom = 'outside';
-        targetX = 5.0;
+        targetX = 5.9;
         text = 'ขึ้นบันไดบ้านไม้ยกสูงไปหาแม่คำและน้องแก้ว';
       } else {
         targetRoom = 'stilt_house';
@@ -2197,7 +2548,7 @@ export class Chapter2Engine {
         }
       } else if (this.currentRoom !== 'stilt_house') {
         targetRoom = 'outside';
-        targetX = 5.0;
+        targetX = 5.9;
         text = 'กลับขึ้นบ้านไม้ยกสูงนำของสดและปลาช่อนให้แม่คำทำมื้อเย็นด้วยกัน';
       } else {
         targetRoom = 'stilt_house';
@@ -2210,7 +2561,7 @@ export class Chapter2Engine {
       text = 'ลงมาตรวจดูใต้แคร่ไม้ไผ่ใต้ถุนบ้านหาข้าวต้มมัดปริศนา';
     } else if (!f.heardPaWarning && !f.sawKrasueAtWindow) {
       targetRoom = 'outside';
-      targetX = -9.6;
+      targetX = -8.6;
       text = 'ฟังประกาศเตือนภัยจากหอกระจายข่าวหมู่บ้าน (รถแห่เริ่มหยุดวิ่ง!)';
     } else if (!f.checkedChickenCoopDay2 && !f.sawKrasueAtWindow) {
       targetRoom = 'outside';
@@ -2224,16 +2575,16 @@ export class Chapter2Engine {
       if (!isNight) {
         if (this.currentRoom !== 'stilt_house') {
           targetRoom = 'outside';
-          targetX = 5.0;
+          targetX = 5.9;
           text = 'ขึ้นบ้านไม้ยกสูงนอนรอเวลาจนถึงกลางคืน (21:40)';
         } else {
           targetRoom = 'stilt_house';
-          targetX = 4.0;
+          targetX = 4.8;
           text = 'กดนอนบนเสื่อรอถึงสามทุ่มครึ่ง (21:40)';
         }
       } else if (this.currentRoom !== 'stilt_house') {
         targetRoom = 'outside';
-        targetX = 5.0;
+        targetX = 5.9;
         text = 'รีบขึ้นเรือนไปเฝ้าดูหน้าต่างบ้านในยามค่ำคืน!';
       } else {
         targetRoom = 'stilt_house';
@@ -2247,7 +2598,7 @@ export class Chapter2Engine {
     } else if (!f.placedThornsAtWindow) {
       if (this.currentRoom !== 'stilt_house') {
         targetRoom = 'outside';
-        targetX = 5.0;
+        targetX = 5.9;
         text = 'นำหนามพุทรากลับขึ้นไปวางขวางหน้าต่างบ้านยกสูง';
       } else {
         targetRoom = 'stilt_house';
@@ -2294,11 +2645,11 @@ export class Chapter2Engine {
       if (!isNight) {
         if (this.currentRoom !== 'stilt_house') {
           targetRoom = 'outside';
-          targetX = 5.0;
+          targetX = 5.9;
           text = 'นอนรอเวลาถึงสามทุ่มครึ่ง (21:40) บนเรือนไม้ยกสูง';
         } else {
           targetRoom = 'stilt_house';
-          targetX = 4.0;
+          targetX = 4.8;
           text = 'กดนอนบนเสื่อรอเวลา 21:40 น.';
         }
       } else {
@@ -2319,7 +2670,7 @@ export class Chapter2Engine {
     } else if (!f.comfortedSisterCrisis) {
       if (this.currentRoom !== 'stilt_house') {
         targetRoom = 'outside';
-        targetX = 5.0;
+        targetX = 5.9;
         text = 'รีบขึ้นไปดูอาการน้องแก้วและแม่คำบนเรือนก่อนเข้าป่าช้าวัด';
       } else {
         targetRoom = 'stilt_house';
@@ -2329,16 +2680,16 @@ export class Chapter2Engine {
     } else if (!isNight) {
       if (this.currentRoom !== 'stilt_house') {
         targetRoom = 'outside';
-        targetX = 5.0;
+        targetX = 5.9;
         text = 'นอนรอถึงเวลา 21:40 น. บนเรือนไม้ยกสูง';
       } else {
         targetRoom = 'stilt_house';
-        targetX = 4.0;
+        targetX = 4.8;
         text = 'รอเวลาถึงกลางคืน (21:40)';
       }
     } else {
       targetRoom = 'outside';
-      targetX = 110.5;
+      targetX = 120.5;
       text = 'เดินผ่านงานวัดป่าไปโกศบรรจุอัฐิหมายเลข 4 หลังวัดเพื่อทำพิธีตัดขาดทายาทกระสือ';
     }
 
@@ -2379,6 +2730,12 @@ export class Chapter2Engine {
     const g = this.getNavigationGuide();
     this.hudQuest.textContent = `เป้าหมาย: ${g.text}`;
     this.hudNav.textContent = g.direction;
+    this.updateExtraHud();
+  }
+
+  private updateExtraHud(): void {
+    if (!this.hudExtra) return;
+    this.hudExtra.textContent = `💰 ${this.state.baht ?? 120} ฿ • 🏃 ${Math.round(this.stamina)}% • 🔋 ${Math.round(this.state.battery ?? 100)}%`;
   }
 
   private showToast(msg: string, horror = false): void {
@@ -2408,22 +2765,51 @@ export class Chapter2Engine {
       }
 
       const isMoving = moveX !== 0 || moveZ !== 0;
+      const wantSprint =
+        isMoving &&
+        !this.ridingBike &&
+        (this.codes.has('ShiftLeft') || this.codes.has('ShiftRight') || this.isSprintingTouch) &&
+        this.stamina > 2;
+      if (wantSprint) {
+        this.stamina = Math.max(0, this.stamina - 24 * dt);
+      } else {
+        this.stamina = Math.min(100, this.stamina + 14 * dt);
+      }
+
+      if (this.state.flashlightOn) {
+        this.state.battery = Math.max(0, (this.state.battery ?? 100) - 1.15 * dt);
+        if (this.state.battery <= 0) {
+          this.state.flashlightOn = false;
+          this.btnFlashlight.classList.remove('active');
+          this.touchFlashlight.classList.remove('active');
+          this.touchFlashlight.textContent = '🔦';
+          this.sound.playSwitchClick();
+          this.showToast('ถ่านไฟฉายหมด! ซื้อถ่านที่ร้านเจ๊แตน (-89 ม.) หรือนอนชาร์จบนเรือนฟรี', true);
+        }
+      }
+
+      this.hudExtraTimer -= dt;
+      if (this.hudExtraTimer <= 0) {
+        this.hudExtraTimer = 0.25;
+        this.updateExtraHud();
+      }
+
       if (isMoving) {
         if (moveX !== 0) this.facing = moveX > 0 ? 1 : -1;
-        const speed = this.ridingBike && this.currentRoom === 'outside' ? 10.8 : 4.6;
-        const roomLimit = this.currentRoom === 'temple_sala' ? 6.0 : 5.1;
+        const speed = this.ridingBike && this.currentRoom === 'outside' ? 10.8 : wantSprint ? 7.4 : 4.6;
+        const roomLimit = this.currentRoom === 'stilt_house' ? 7.1 : this.currentRoom === 'temple_sala' ? 6.0 : 5.1;
         const minX = this.currentRoom !== 'outside' ? -roomLimit : CH2_MIN_X;
         const maxX = this.currentRoom !== 'outside' ? roomLimit : CH2_MAX_X;
         this.state.x = Math.max(minX, Math.min(maxX, this.state.x + moveX * speed * dt));
         // Keep player cleanly on road / inside floor walkway (never clipping behind building platforms!)
         const minZ = this.currentRoom !== 'outside' ? -0.15 : 0.25;
         const maxZ = this.currentRoom !== 'outside' ? 1.55 : 2.0;
-        this.playerZ = Math.max(minZ, Math.min(maxZ, this.playerZ + moveZ * (this.ridingBike ? 3.2 : 2.1) * dt));
+        this.playerZ = Math.max(minZ, Math.min(maxZ, this.playerZ + moveZ * (this.ridingBike ? 3.2 : wantSprint ? 2.8 : 2.1) * dt));
         this.updateHUD();
         if (!this.ridingBike) {
           this.stepTimer -= dt;
           if (this.stepTimer <= 0) {
-            this.stepTimer = 0.28;
+            this.stepTimer = wantSprint ? 0.19 : 0.28;
             this.sound.playFootstep(this.currentRoom === 'stilt_house' ? 'wood' : 'concrete');
           }
         }
@@ -2431,12 +2817,23 @@ export class Chapter2Engine {
 
       const prevMin = Math.floor(this.state.gameMinutes);
       this.state.gameMinutes = (this.state.gameMinutes + dt * 1.4) % 1440;
-      if (Math.floor(this.state.gameMinutes) !== prevMin) this.updateHUD();
+      const curMin = Math.floor(this.state.gameMinutes);
+      if (curMin !== prevMin) this.updateHUD();
+      if (curMin >= 330 && curMin <= 345 && this.lastRoosterDay !== this.state.day) {
+        this.lastRoosterDay = this.state.day;
+        this.sound.playRoosterCrow();
+      }
 
       this.autoSaveTimer -= dt;
       if (this.autoSaveTimer <= 0) {
         this.autoSaveTimer = 5;
         this.saveGame();
+      }
+
+      if (this.dogHowlCooldown > 0) this.dogHowlCooldown -= dt;
+      if (this.krasueChase && this.dogHowlCooldown <= 0) {
+        this.dogHowlCooldown = 14;
+        this.sound.playDogHowl();
       }
 
       if (this.krasueCooldown > 0) this.krasueCooldown -= dt;
@@ -2451,7 +2848,7 @@ export class Chapter2Engine {
       const safe =
         this.currentRoom !== 'outside' ||
         inSaiSin ||
-        (this.state.x >= -4 && this.state.x <= 4);
+        (this.state.x >= -5.5 && this.state.x <= 6.5);
 
       if (this.krasueChase) {
         if (safe) {

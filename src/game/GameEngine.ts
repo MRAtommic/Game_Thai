@@ -2,6 +2,7 @@ import { drawCharacterCanvas, CharacterKind } from '../art/SpriteFactory';
 import { drawItemIconDataUrl } from '../art/TextureFactory';
 import { SoundEngine } from '../audio/SoundEngine';
 import { CLUES, DORM_RULES, FLOOR_NAMES, ITEMS } from '../data/storyData';
+import { renderSharedInventoryBar } from '../ui/InventoryBar';
 import { bindCameraZoomControls } from '../ui/mobileZoom';
 import {
   DialogueLine,
@@ -273,6 +274,9 @@ export class GameEngine {
       this.touchFlashlight.classList.add('hidden');
     }
     this.touchBike.classList.add('hidden');
+    document.getElementById('hud-extra')?.classList.add('hidden');
+    document.getElementById('touch-sprint')?.classList.add('hidden');
+    document.getElementById('touch-photo')?.classList.add('hidden');
 
     this.running = true;
     this.lastTime = performance.now();
@@ -295,6 +299,9 @@ export class GameEngine {
     this.touchDown.classList.add('hidden');
     this.touchFlashlight.classList.add('hidden');
     this.touchBike.classList.add('hidden');
+    document.getElementById('hud-extra')?.classList.add('hidden');
+    document.getElementById('touch-sprint')?.classList.add('hidden');
+    document.getElementById('touch-photo')?.classList.add('hidden');
     this.interactPrompt.classList.add('hidden');
     this.dialogueBox.classList.add('hidden');
     this.modalBackdrop.classList.add('hidden');
@@ -321,6 +328,7 @@ export class GameEngine {
       const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0 || window.innerWidth <= 900;
       this.mobileControls.classList.toggle('hidden', !isTouch);
       this.touchFlashlight.classList.toggle('hidden', !isTouch);
+      this.renderInventory();
     };
     window.addEventListener('resize', handleResize, sig);
     window.addEventListener('orientationchange', () => setTimeout(handleResize, 120), sig);
@@ -619,26 +627,20 @@ export class GameEngine {
   }
 
   private renderInventory(): void {
-    this.invBar.innerHTML = '';
-    if (this.state.inventory.length === 0) {
-      this.invBar.innerHTML = '<span style="font-size:0.8rem;color:#8892a8;padding:6px 10px">กระเป๋าว่างเปล่า</span>';
-      return;
-    }
-
-    this.state.inventory.forEach((itemId, idx) => {
-      const item = ITEMS[itemId];
-      if (!item) return;
-      const btn = document.createElement('button');
-      btn.className = 'inv-slot';
-      btn.title = `${item.name}: ${item.description}`;
-      const imgUrl = this.getItemIconUrl(itemId);
-      btn.innerHTML = `
-        <span class="inv-num">${idx + 1}</span>
-        <span class="inv-icon"><img class="inv-img" src="${imgUrl}" alt="${item.name}" /></span>
-        <span class="inv-name">${item.name}</span>
-      `;
-      btn.addEventListener('click', () => this.useInventoryItem(itemId));
-      this.invBar.appendChild(btn);
+    renderSharedInventoryBar({
+      invBar: this.invBar,
+      modalBody: this.modalBody,
+      items: this.state.inventory,
+      getMeta: (id) => ITEMS[id],
+      getIconUrl: (id) => this.getItemIconUrl(id),
+      onUse: (id) => this.useInventoryItem(id),
+      onReorder: (newOrder) => {
+        this.state.inventory = newOrder;
+        this.saveGame();
+      },
+      onOpenModal: (title, html) => this.openModal(title, html),
+      onCloseModal: () => this.closeModal(),
+      onPlayClick: () => this.sound.playUIClick(),
     });
   }
 

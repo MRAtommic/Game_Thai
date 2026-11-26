@@ -820,6 +820,92 @@ export class SoundEngine {
     src.start(now);
   }
 
+  public playCameraShutter(): void {
+    if (!this.ctx || !this.masterGain) return;
+    const now = this.ctx.currentTime;
+    [0, 0.055].forEach((off, idx) => {
+      if (!this.ctx || !this.masterGain) return;
+      const osc = this.ctx.createOscillator();
+      const g = this.ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(idx === 0 ? 1800 : 1200, now + off);
+      osc.frequency.exponentialRampToValueAtTime(320, now + off + 0.035);
+      g.gain.setValueAtTime(0.16, now + off);
+      g.gain.exponentialRampToValueAtTime(0.001, now + off + 0.04);
+      osc.connect(g);
+      g.connect(this.masterGain);
+      osc.start(now + off);
+      osc.stop(now + off + 0.045);
+    });
+  }
+
+  public playCoinJingle(): void {
+    if (!this.ctx || !this.masterGain) return;
+    const now = this.ctx.currentTime;
+    [1318.5, 1760].forEach((freq, i) => {
+      if (!this.ctx || !this.masterGain) return;
+      const osc = this.ctx.createOscillator();
+      const g = this.ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      const t = now + i * 0.07;
+      g.gain.setValueAtTime(0.001, t);
+      g.gain.linearRampToValueAtTime(0.1, t + 0.01);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.22);
+      osc.connect(g);
+      g.connect(this.masterGain);
+      osc.start(t);
+      osc.stop(t + 0.24);
+    });
+  }
+
+  public playDogHowl(): void {
+    if (!this.ctx || !this.masterGain) return;
+    const now = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const g = this.ctx.createGain();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(240, now);
+    osc.frequency.linearRampToValueAtTime(420, now + 0.45);
+    osc.frequency.exponentialRampToValueAtTime(195, now + 1.65);
+    g.gain.setValueAtTime(0.001, now);
+    g.gain.linearRampToValueAtTime(0.065, now + 0.25);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + 1.7);
+    osc.connect(g);
+    g.connect(this.masterGain);
+    osc.start(now);
+    osc.stop(now + 1.75);
+  }
+
+  public playRoosterCrow(): void {
+    if (!this.ctx || !this.masterGain) return;
+    const now = this.ctx.currentTime;
+    const notes = [
+      { f1: 520, f2: 680, d: 0.14, t: 0 },
+      { f1: 680, f2: 860, d: 0.16, t: 0.18 },
+      { f1: 760, f2: 520, d: 0.55, t: 0.38 },
+    ];
+    notes.forEach((n) => {
+      if (!this.ctx || !this.masterGain) return;
+      const osc = this.ctx.createOscillator();
+      const g = this.ctx.createGain();
+      osc.type = 'sawtooth';
+      const flt = this.ctx.createBiquadFilter();
+      flt.type = 'bandpass';
+      flt.frequency.value = 1100;
+      osc.frequency.setValueAtTime(n.f1, now + n.t);
+      osc.frequency.linearRampToValueAtTime(n.f2, now + n.t + n.d);
+      g.gain.setValueAtTime(0.001, now + n.t);
+      g.gain.linearRampToValueAtTime(0.045, now + n.t + 0.03);
+      g.gain.exponentialRampToValueAtTime(0.0001, now + n.t + n.d);
+      osc.connect(flt);
+      flt.connect(g);
+      g.connect(this.masterGain);
+      osc.start(now + n.t);
+      osc.stop(now + n.t + n.d + 0.02);
+    });
+  }
+
   /**
    * Plays lively procedural Isaan Rot Hae (หมอลำ/ลูกทุ่งรถแห่) beat whose volume scales by distance from the truck.
    */

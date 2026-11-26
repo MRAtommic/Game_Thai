@@ -584,6 +584,32 @@ export function drawCh2ItemIconDataUrl(itemId: string): string {
     ctx.arc(24, 22, 4, 0, Math.PI * 2);
     ctx.fill();
     ctx.fillRect(19, 26, 10, 6);
+  } else if (itemId === 'battery_cell') {
+    // Classic Thai frog-brand D-cell battery
+    ctx.fillStyle = '#15803d';
+    ctx.fillRect(16, 13, 16, 24);
+    ctx.fillStyle = '#eab308';
+    ctx.fillRect(16, 18, 16, 9);
+    ctx.fillStyle = '#cbd5e1';
+    ctx.fillRect(21, 9, 6, 4);
+  } else if (itemId === 'red_soda') {
+    // Red Fanta / Thai shrine soda bottle with straw
+    ctx.fillStyle = '#ef4444';
+    ctx.fillRect(18, 18, 12, 20);
+    ctx.fillStyle = '#fca5a5';
+    ctx.fillRect(20, 12, 8, 6);
+    ctx.fillStyle = '#fde047';
+    ctx.fillRect(24, 6, 2, 12);
+  } else if (itemId === 'camera') {
+    // Smartphone / camera icon
+    ctx.fillStyle = '#1e293b';
+    ctx.fillRect(10, 14, 28, 22);
+    ctx.fillStyle = '#38bdf8';
+    ctx.beginPath();
+    ctx.arc(24, 25, 6, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#fef08a';
+    ctx.fillRect(31, 17, 4, 3);
   } else {
     // sacred_knife (มีดหมอลงอาคม)
     ctx.fillStyle = '#cbd5e1';

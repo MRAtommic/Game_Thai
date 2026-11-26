@@ -154,6 +154,8 @@ export interface RuralActorsController {
   taniSpirit: THREE.Group;
   taniLight: THREE.PointLight;
   saleng: { group: THREE.Group; wheels: THREE.Group[]; x: number; dir: 1 | -1 };
+  schoolSwing: THREE.Group;
+  morningMonk: { group: THREE.Group; x: number; dir: 1 | -1 };
 }
 
 /** Builds the slow-moving Isaan Rot Hae speaker pickup truck + crowd of dancing villagers. */
@@ -598,22 +600,112 @@ export function buildTempleFairZone(scene: THREE.Scene): TempleFairController {
   return { ferrisWheel, gondolas, bulbs, stageLights, stageDancers, boothVendors, closedSign };
 }
 
-/** Builds Takian Twin Trees Shrine (-96.5), Village Arch (-101.5), Bang Fai (-67.5), PA Tower (-8.5), Granary (-6.4), Fair/Market actors, Tani spirit, and Saleng cart. */
+/** Builds School & Haunted Swing (-112), Welcome Arch (-104.5), Takian (-96.5), Show-huay Store (-89.5), Bang Fai (-67.5), PA Tower (-8.6), Granary (-11.4), Clinic (+96), Lotus Bridge, Morning Monk, Tani, and Saleng. */
 export function buildExpandedVillageLife(scene: THREE.Scene, awningMat: THREE.Material): RuralActorsController {
-  // 0A) Village Welcome Archway ("ยินดีต้อนรับสู่ บ้านทุ่งอีสาน" with giant Khaen & Plara jar at x = -101.5)
-  [-102.6, -100.4].forEach((ax) => {
+  // 00) Ban Thung Primary School & Eerie Playground Swing (โรงเรียนประถมบ้านทุ่ง x = -112.5)
+  addPart(scene, 5.8, 2.8, 2.2, '#e2e8f0', -113.5, 1.4, -2.4, 0.88);
+  addPart(scene, 6.2, 0.16, 2.6, '#1e3a8a', -113.5, 2.95, -2.4, 0.7);
+  addPart(scene, 2.0, 1.05, 0.08, '#14532d', -112.2, 1.55, -1.26, 0.8); // green chalkboard!
+  const schSign = new THREE.Mesh(
+    new THREE.PlaneGeometry(2.5, 0.65),
+    new THREE.MeshBasicMaterial({ map: makeBannerTex('#1e3a8a', '#facc15', '#ffffff', 'โรงเรียนบ้านทุ่งวิทยา', 'กระดานดำ & สนามเด็กเล่น') })
+  );
+  schSign.position.set(-113.5, 2.55, -1.24);
+  scene.add(schSign);
+  // Thai Flagpole + Swinging Playground Frame (-109.2)
+  addPart(scene, 0.08, 4.6, 0.08, '#f8fafc', -109.8, 2.3, -1.4);
+  addPart(scene, 0.55, 0.34, 0.03, '#dc2626', -109.5, 4.35, -1.4);
+  addPart(scene, 0.55, 0.12, 0.04, '#1d4ed8', -109.5, 4.35, -1.39);
+  [-109.1, -107.7].forEach((sx) => addPart(scene, 0.08, 2.2, 0.08, '#dc2626', sx, 1.1, -1.6));
+  addPart(scene, 1.6, 0.08, 0.08, '#facc15', -108.4, 2.2, -1.6);
+  const schoolSwing = new THREE.Group();
+  schoolSwing.position.set(-108.4, 2.18, -1.6);
+  addPart(schoolSwing, 0.03, 1.45, 0.03, '#94a3b8', -0.26, -0.72, 0);
+  addPart(schoolSwing, 0.03, 1.45, 0.03, '#94a3b8', 0.26, -0.72, 0);
+  addPart(schoolSwing, 0.62, 0.06, 0.28, '#92400e', 0, -1.46, 0);
+  scene.add(schoolSwing);
+
+  // 00B) Jae Tan's Village Grocery Store + Boonterm Top-up Kiosk (ร้านเจ๊แตน โชห่วย x = -89.5)
+  addPart(scene, 4.8, 2.7, 2.2, '#fef3c7', -89.5, 1.35, -2.25, 0.85);
+  addPart(scene, 5.2, 0.16, 2.7, '#0369a1', -89.5, 2.8, -2.05, 0.55);
+  const shopSign = new THREE.Mesh(
+    new THREE.PlaneGeometry(2.6, 0.64),
+    new THREE.MeshBasicMaterial({ map: makeBannerTex('#0369a1', '#facc15', '#ffffff', 'ร้านเจ๊แตน โชห่วย', 'ถ่านไฟฉาย • ยาดม • น้ำแดง • บุญเติม') })
+  );
+  shopSign.position.set(-89.5, 2.45, -0.68);
+  scene.add(shopSign);
+  addPart(scene, 2.6, 0.82, 0.68, '#78350f', -89.9, 0.41, -1.05); // shop counter
+  ['#ef4444', '#22c55e', '#facc15'].forEach((jc, ji) => {
+    const jar = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.11, 0.26, 10), new THREE.MeshStandardMaterial({ color: jc, roughness: 0.3 }));
+    jar.position.set(-90.5 + ji * 0.42, 0.94, -1.02);
+    scene.add(jar);
+  });
+  // Orange Boonterm top-up machine kiosk at front right of store!
+  addPart(scene, 0.52, 1.55, 0.42, '#ea580c', -87.6, 0.78, -0.92, 0.4);
+  addPart(scene, 0.36, 0.42, 0.06, '#7dd3fc', -87.6, 1.18, -0.7, 0.2);
+  const shopVendor = makeVillagerFigure('#f472b6', '#1e293b');
+  shopVendor.position.set(-89.9, 0, -1.55);
+  scene.add(shopVendor);
+  const shopLight = new THREE.PointLight('#fde68a', 4.2, 11, 1.1);
+  shopLight.position.set(-89.5, 2.4, -0.2);
+  scene.add(shopLight);
+
+  // 00C) Ban Thung Health Clinic & Community Hall (อนามัยบ้านทุ่ง x = +96.0)
+  addPart(scene, 5.4, 2.9, 2.3, '#f8fafc', 96.0, 1.45, -2.35, 0.8);
+  addPart(scene, 5.8, 0.18, 2.7, '#0f766e', 96.0, 3.0, -2.25, 0.6);
+  // Red medical cross emblem + Clinic banner
+  addPart(scene, 0.55, 0.16, 0.06, '#dc2626', 96.0, 2.35, -1.16);
+  addPart(scene, 0.16, 0.55, 0.06, '#dc2626', 96.0, 2.35, -1.16);
+  const clinicSign = new THREE.Mesh(
+    new THREE.PlaneGeometry(2.5, 0.58),
+    new THREE.MeshBasicMaterial({ map: makeBannerTex('#0f766e', '#fef08a', '#ffffff', 'รพ.สต. อนามัยบ้านทุ่ง', 'สมุดเวชระเบียน • ปฐมพยาบาล') })
+  );
+  clinicSign.position.set(96.0, 1.72, -1.16);
+  scene.add(clinicSign);
+  const clinicLight = new THREE.PointLight('#bae6fd', 4.0, 11, 1.1);
+  clinicLight.position.set(96.0, 2.5, -0.4);
+  scene.add(clinicLight);
+
+  // 00D) Wooden Footbridge & Blooming Lotus Pads in Village Pond (+21.8 .. +24.8)
+  addPart(scene, 2.4, 0.12, 0.95, '#78502e', 23.2, 0.36, -1.6);
+  [22.1, 24.3].forEach((bx) => addPart(scene, 0.12, 0.85, 0.12, '#4f311c', bx, 0.42, -1.2));
+  [
+    [22.4, -2.6, '#f472b6'],
+    [23.7, -3.5, '#f8fafc'],
+    [24.4, -2.4, '#fb7185'],
+    [21.6, -4.1, '#f472b6'],
+  ].forEach(([lx, lz, lcol]) => {
+    const pad = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.24, 0.03, 10), new THREE.MeshStandardMaterial({ color: '#15803d' }));
+    pad.position.set(lx as number, 0.06, lz as number);
+    const lotus = new THREE.Mesh(new THREE.ConeGeometry(0.11, 0.18, 7), new THREE.MeshStandardMaterial({ color: lcol as string }));
+    lotus.rotation.x = Math.PI;
+    lotus.position.set(lx as number, 0.15, lz as number);
+    scene.add(pad, lotus);
+  });
+
+  // 00E) Morning Almsgiving Monk (พระสงฆ์ออกบิณฑบาตยามเช้า 05:45 - 07:45 น.)
+  const monkGrp = makeVillagerFigure('#d97706', '#b45309');
+  // Black alms bowl cradled in front
+  const bowl = new THREE.Mesh(new THREE.SphereGeometry(0.15, 10, 8), new THREE.MeshStandardMaterial({ color: '#18181b', metalness: 0.4 }));
+  bowl.position.set(0.22, 0.86, 0.14);
+  monkGrp.add(bowl);
+  monkGrp.position.set(-18, 0, 0.2);
+  monkGrp.visible = false;
+  scene.add(monkGrp);
+
+  // 0A) Village Welcome Archway ("ยินดีต้อนรับสู่ บ้านทุ่งอีสาน" with giant Khaen at x = -104.5)
+  [-105.6, -103.4].forEach((ax) => {
     addPart(scene, 0.28, 4.3, 0.28, '#593722', ax, 2.15, -0.8);
-    // Bamboo Khaen pipes ornament mounted on arch columns!
     for (let k = -1; k <= 1; k++) {
       addPart(scene, 0.05, 1.55 + Math.abs(k) * 0.25, 0.05, '#ca8a04', ax + k * 0.07, 2.4, -0.62);
     }
   });
-  addPart(scene, 3.2, 0.22, 0.45, '#7f1d1d', -101.5, 4.3, -0.8);
+  addPart(scene, 3.2, 0.22, 0.45, '#7f1d1d', -104.5, 4.3, -0.8);
   const welcomeSign = new THREE.Mesh(
     new THREE.PlaneGeometry(3.0, 0.72),
     new THREE.MeshBasicMaterial({ map: makeBannerTex('#14532d', '#eab308', '#fef08a', 'ยินดีต้อนรับ บ้านทุ่งอีสาน', 'วิถีถิ่น • ศรัทธา • บุญบั้งไฟ') })
   );
-  welcomeSign.position.set(-101.5, 3.72, -0.62);
+  welcomeSign.position.set(-104.5, 3.72, -0.62);
   scene.add(welcomeSign);
 
   // 0B) Traditional Rocket Festival Launch Pad (ซุ้มบั้งไฟพญานาค x = -67.5)
@@ -638,32 +730,31 @@ export function buildExpandedVillageLife(scene: THREE.Scene, awningMat: THREE.Ma
   bfSign.position.set(-67.5, 3.3, -1.74);
   scene.add(bfSign);
 
-  // 0C) Village PA Loudspeaker Broadcast Tower (หอกระจายข่าวผู้ใหญ่บ้าน x = -9.6)
-  [-9.8, -9.4].forEach((tx) => addPart(scene, 0.1, 6.2, 0.1, '#64748b', tx, 3.1, -1.45, 0.5, 0.6));
-  addPart(scene, 0.7, 0.12, 0.4, '#94a3b8', -9.6, 5.75, -1.45);
+  // 0C) Village PA Loudspeaker Broadcast Tower (หอกระจายข่าวผู้ใหญ่บ้าน x = -8.6, clear of big stilt house)
+  [-8.8, -8.4].forEach((tx) => addPart(scene, 0.1, 6.2, 0.1, '#64748b', tx, 3.1, -1.45, 0.5, 0.6));
+  addPart(scene, 0.7, 0.12, 0.4, '#94a3b8', -8.6, 5.75, -1.45);
   [-1, 1].forEach((side) => {
     const horn = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.4, 8, 1, true), new THREE.MeshStandardMaterial({ color: '#e2e8f0', side: THREE.DoubleSide }));
     horn.rotation.z = side * (Math.PI / 2.2);
-    horn.position.set(-9.6 + side * 0.4, 5.95, -1.4);
+    horn.position.set(-8.6 + side * 0.4, 5.95, -1.4);
     scene.add(horn);
   });
   const paSign = new THREE.Mesh(
     new THREE.PlaneGeometry(1.7, 0.46),
     new THREE.MeshBasicMaterial({ map: makeBannerTex('#1e293b', '#eab308', '#fef08a', 'หอกระจายข่าวหมู่บ้าน') })
   );
-  paSign.position.set(-9.6, 2.2, -1.22);
+  paSign.position.set(-8.6, 2.2, -1.22);
   scene.add(paSign);
 
-  // 0D) Elevated Isaan Wooden Rice Granary (ยุ้งฉางข้าวอีสาน x = -6.2)
-  [-7.2, -5.2].forEach((gx) => {
+  // 0D) Elevated Isaan Wooden Rice Granary (ยุ้งฉางข้าวอีสาน x = -11.4)
+  [-12.4, -10.4].forEach((gx) => {
     addPart(scene, 0.2, 2.5, 0.2, '#3b2416', gx, 1.25, -2.0);
     addPart(scene, 0.2, 2.5, 0.2, '#3b2416', gx, 1.25, -3.1);
   });
-  addPart(scene, 2.4, 1.35, 1.4, '#78502e', -6.2, 2.15, -2.55);
-  addPart(scene, 2.8, 0.16, 1.85, '#92400e', -6.2, 3.05, -2.55);
-  // Large earthen red jar beside granary
+  addPart(scene, 2.4, 1.35, 1.4, '#78502e', -11.4, 2.15, -2.55);
+  addPart(scene, 2.8, 0.16, 1.85, '#92400e', -11.4, 3.05, -2.55);
   const redJar = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.25, 0.68, 12), new THREE.MeshStandardMaterial({ color: '#991b1b', roughness: 0.6 }));
-  redJar.position.set(-4.85, 0.34, -1.65);
+  redJar.position.set(-9.9, 0.34, -1.75);
   scene.add(redJar);
 
   // 0E) Yellow Golden Shower Blossoms (ดอกคูณเหลืองอีสาน) along village roads
@@ -767,9 +858,9 @@ export function buildExpandedVillageLife(scene: THREE.Scene, awningMat: THREE.Ma
   takianLight.position.set(-96.5, 2.0, -0.5);
   scene.add(takianLight);
 
-  // Floating ghostly wisps around Takian shrine & relocated Cemetery (+98..+115)
+  // Floating ghostly wisps around Twin Takian Shrine & relocated Cemetery (+108..+124)
   const wisps: RuralActorsController['wisps'] = [];
-  [-97.2, -95.4, 102.0, 107.5, 111.2, 114.0].forEach((wx, idx) => {
+  [-97.2, -95.4, 111.0, 116.5, 120.5, 123.5].forEach((wx, idx) => {
     const wisp = new THREE.Mesh(
       new THREE.SphereGeometry(0.11, 8, 8),
       new THREE.MeshBasicMaterial({ color: wx < 0 ? '#fef08a' : '#bef264', transparent: true, opacity: 0.72 })
@@ -971,6 +1062,8 @@ export function buildExpandedVillageLife(scene: THREE.Scene, awningMat: THREE.Ma
     taniSpirit,
     taniLight,
     saleng: { group: salengGrp, wheels: salengWheels, x: 12, dir: -1 },
+    schoolSwing,
+    morningMonk: { group: monkGrp, x: -18, dir: 1 },
   };
 }
 
@@ -978,6 +1071,7 @@ export function buildExpandedVillageLife(scene: THREE.Scene, awningMat: THREE.Ma
 export function animateIsaanWorldLife(
   dt: number,
   clock: number,
+  gameMinutes: number,
   isDay: boolean,
   isNight: boolean,
   mood: VillageMood,
@@ -1067,8 +1161,8 @@ export function animateIsaanWorldLife(
     v.group.visible = visible;
     if (!visible) return;
     v.x += v.dir * v.speed * dt;
-    if (v.x > v.maxX) v.x = v.minX;
-    else if (v.x < v.minX) v.x = v.maxX;
+    if (v.dir === 1 && v.x > 134) v.x = -126;
+    else if (v.dir === -1 && v.x < -126) v.x = 134;
     v.group.position.x = v.x;
     v.wheels.forEach((w) => (w.rotation.z -= v.speed * 2.6 * dt));
     if (v.headlight) v.headlight.intensity = isDay ? 0.35 : 3.4;
@@ -1168,4 +1262,21 @@ export function animateIsaanWorldLife(
     w.mesh.position.x = w.baseX + Math.sin(clock * 1.1 + w.phase) * 0.45;
     w.mesh.position.y = w.baseY + Math.sin(clock * 1.9 + w.phase) * 0.35;
   });
+
+  // 9) Haunted school swing gently rocks on its own in uneasy/lockdown nights!
+  rural.schoolSwing.rotation.x =
+    isNight && mood !== 'festive' ? Math.sin(clock * 2.2) * 0.28 : Math.sin(clock * 0.9) * 0.03;
+
+  // 10) Morning almsgiving monk (พระสงฆ์ออกบิณฑบาตช่วง 05:30 - 07:45 น.)
+  const hr = gameMinutes / 60;
+  const isAlmsTime = hr >= 5.5 && hr <= 7.75;
+  rural.morningMonk.group.visible = isAlmsTime;
+  if (isAlmsTime) {
+    rural.morningMonk.x += rural.morningMonk.dir * 1.45 * dt;
+    if (rural.morningMonk.x > 24) rural.morningMonk.dir = -1;
+    else if (rural.morningMonk.x < -24) rural.morningMonk.dir = 1;
+    rural.morningMonk.group.position.x = rural.morningMonk.x;
+    rural.morningMonk.group.scale.x = rural.morningMonk.dir;
+    rural.morningMonk.group.position.y = Math.abs(Math.sin(clock * 4.2)) * 0.03;
+  }
 }

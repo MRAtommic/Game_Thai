@@ -31,8 +31,8 @@ import {
 
 export type { VillageMood };
 
-export const CH2_MIN_X = -105.0;
-export const CH2_MAX_X = 120.0;
+export const CH2_MIN_X = -118.0;
+export const CH2_MAX_X = 136.0;
 
 export type Ch2RoomId = 'outside' | 'stilt_house' | 'temple_sala' | 'kuti';
 
@@ -750,16 +750,16 @@ export class IsaanWorld {
   }
 
   private buildLandscapeAndRiceFields(): void {
-    // Rural laterite earthen sidewalk + wide 2-lane village asphalt highway + lush paddy soil across -120..+135
-    this.addBox(this.scene, 265, 0.4, 9.8, '#4b3b2c', 8, -0.2, 1.45, 0.92);
-    this.addBox(this.scene, 265, 0.36, 16.5, '#23381f', 8, -0.22, -8.8, 0.95);
-    this.addBox(this.scene, 265, 0.04, 2.7, '#272a30', 8, 0.015, 4.0, 0.9); // dark asphalt highway (z = 2.65..5.35)
-    for (let lx = -112; lx <= 128; lx += 5.0) {
-      this.addBox(this.scene, 2.4, 0.05, 0.1, '#facc15', lx, 0.022, 4.0, 0.6); // dashed yellow road line
+    // Rural laterite earthen sidewalk + wide 2-lane village asphalt highway + lush paddy soil across -132..+148
+    this.addBox(this.scene, 290, 0.4, 9.8, '#4b3b2c', 8, -0.2, 1.45, 0.92);
+    this.addBox(this.scene, 290, 0.36, 16.5, '#23381f', 8, -0.22, -8.8, 0.95);
+    this.addBox(this.scene, 290, 0.04, 2.7, '#272a30', 8, 0.015, 4.0, 0.9); // dark asphalt highway
+    for (let lx = -126; lx <= 138; lx += 5.0) {
+      this.addBox(this.scene, 2.4, 0.05, 0.1, '#facc15', lx, 0.022, 4.0, 0.6);
     }
 
     // Distant Phuphan mountain silhouettes across expanded horizon
-    for (let mx = -115; mx <= 135; mx += 20) {
+    for (let mx = -125; mx <= 145; mx += 20) {
       const hill = new THREE.Mesh(
         new THREE.ConeGeometry(16, 10 + (Math.abs(mx) % 5), 5),
         new THREE.MeshBasicMaterial({ color: '#101826' })
@@ -768,8 +768,8 @@ export class IsaanWorld {
       this.scene.add(hill);
     }
 
-    // Neighbor elevated stilt houses behind the village road & paddies
-    this.addBackgroundStiltHouse(-89.0, -5.2, '#4c2618', true);
+    // Neighbor elevated stilt houses behind the village road & paddies (clear of Store -89.5 & Fair)
+    this.addBackgroundStiltHouse(-107.0, -5.6, '#4c2618', true);
     this.addBackgroundStiltHouse(-73.5, -5.8, '#3d2c20', true);
     this.addBackgroundStiltHouse(-58.5, -4.5, '#4c2618', true);
     this.addBackgroundStiltHouse(-39.5, -5.6, '#3d2c20', true);
@@ -777,7 +777,7 @@ export class IsaanWorld {
     this.addBackgroundStiltHouse(-22.5, -4.8, '#473022', true);
     this.addBackgroundStiltHouse(-15.5, -6.0, '#36261d', true);
     this.addBackgroundStiltHouse(14.0, -5.8, '#4c2618', true);
-    this.addBackgroundStiltHouse(98.0, -6.2, '#3d2c20', false);
+    this.addBackgroundStiltHouse(106.0, -6.2, '#3d2c20', false);
 
     // Cozy Rice-Field Hut (เถียงนาอีสาน at x = -16.8, z = -3.8)
     [-17.8, -15.8].forEach((hx) => {
@@ -820,11 +820,11 @@ export class IsaanWorld {
     this.addWaterBuffalo(-14.2, -3.4, 1);
     this.addWaterBuffalo(14.0, -3.2, -1);
 
-    // Scarecrow
-    this.addBox(this.scene, 0.1, 1.85, 0.1, '#5c3c20', -13.5, 0.92, -2.7);
-    this.addBox(this.scene, 1.1, 0.12, 0.1, '#991b1b', -13.5, 1.38, -2.7);
+    // Scarecrow moved slightly to -14.8 clear of Rice Granary (-11.4)
+    this.addBox(this.scene, 0.1, 1.85, 0.1, '#5c3c20', -14.8, 0.92, -2.7);
+    this.addBox(this.scene, 1.1, 0.12, 0.1, '#991b1b', -14.8, 1.38, -2.7);
     const strawHat = new THREE.Mesh(new THREE.ConeGeometry(0.32, 0.24, 6), new THREE.MeshStandardMaterial({ color: '#a16207' }));
-    strawHat.position.set(-13.5, 1.88, -2.7);
+    strawHat.position.set(-14.8, 1.88, -2.7);
     this.scene.add(strawHat);
 
     // Haystacks & Bamboo Chicken Coops cleanly spaced into distinct yard zones
@@ -907,8 +907,8 @@ export class IsaanWorld {
     shrineCandle.position.set(17.5, 1.8, -0.55);
     this.scene.add(shrineCandle);
 
-    // Tall utility poles along z = -3.4 spanning the expanded 225m village (clear of Takian & Fair booths)!
-    const vPoles = [-92.5, -79, -64, -48, -32, -16, 12, 27, 46, 59.5, 93.0, 106];
+    // Tall utility poles along z = -3.4 spanning the expanded 254m village!
+    const vPoles = [-110, -92.5, -79, -64, -48, -32, -16, 12, 27, 46, 59.5, 93.0, 114];
     vPoles.forEach((px) => {
       this.addBox(this.scene, 0.22, 7.2, 0.22, '#4a3f35', px, 3.6, -3.4);
       this.addBox(this.scene, 0.1, 0.08, 1.4, '#475569', px, 6.7, -2.7);
@@ -1233,69 +1233,98 @@ export class IsaanWorld {
   }
 
   private buildStiltHouseAndUnderneath(): void {
-    // Set back cleanly behind walkway z <= -0.95 so player never clips stilts or platform
-    [-4.2, 0, 4.2].forEach((sx) => {
-      this.addBox(this.scene, 0.34, 4.2, 0.34, '#3b2416', sx, 2.1, -1.25);
-      this.addBox(this.scene, 0.34, 4.2, 0.34, '#3b2416', sx, 2.1, -3.15);
+    // Grand Detailed 12.6m Thai-Isaan Teak Stilt House (บ้านเรือนไทยอีสานหลังใหญ่ของหนุ่ม x = -6.2 .. +6.2)
+    [-5.4, -1.8, 1.8, 5.4].forEach((sx) => {
+      // Concrete foundation footings + thick dark-teak house stilts!
+      this.addBox(this.scene, 0.52, 0.22, 0.52, '#94a3b8', sx, 0.11, -1.15);
+      this.addBox(this.scene, 0.52, 0.22, 0.52, '#94a3b8', sx, 0.11, -3.45);
+      this.addBox(this.scene, 0.36, 4.4, 0.36, '#3b2416', sx, 2.2, -1.15);
+      this.addBox(this.scene, 0.36, 4.4, 0.36, '#3b2416', sx, 2.2, -3.45);
     });
 
-    // Ground Underneath (แคร่ไม้ไผ่ + ตุ่มน้ำดิน)
-    this.addBox(this.scene, 2.5, 0.14, 1.35, '#8c6239', -1.8, 0.56, -1.85);
-    [-2.8, -0.8].forEach((lx) => this.addBox(this.scene, 0.12, 0.55, 1.2, '#5c3c20', lx, 0.28, -1.85));
-    const tJar = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.36, 0.28, 0.78, 14),
-      new THREE.MeshStandardMaterial({ color: '#7c2d12', roughness: 0.65 })
-    );
-    tJar.position.set(1.6, 0.39, -1.85);
-    this.scene.add(tJar);
-
-    // Raised Wooden Platform + Plank Walls + Symmetrical Gable Roof
-    this.addBox(this.scene, 9.6, 0.24, 3.0, '#4f311c', 0, 2.05, -2.2);
-    this.addBox(this.scene, 8.8, 2.45, 2.4, '#3e2514', 0, 3.4, -2.35);
-    this.addThaiGableRoof(this.scene, 0, 4.6, -2.35, 9.2, 2.9, 1.75, '#4c2618', '#78350f', '#2b180d');
-
-    this.addBox(this.scene, 9.2, 0.72, 0.12, '#593722', 0, 2.52, -0.78);
-    const winTex = createThaiWindowTexture(true);
-    [-2.4, 2.2].forEach((wx) => {
-      const w = new THREE.Mesh(
-        new THREE.PlaneGeometry(1.5, 1.25),
-        new THREE.MeshStandardMaterial({ map: winTex, emissive: '#3d2508', emissiveIntensity: 0.6 })
+    // Ground Underneath Living Space: Large Bamboo Bed + Hammock + Dragon Jars + Flower Bush!
+    this.addBox(this.scene, 3.0, 0.14, 1.5, '#8c6239', -2.2, 0.56, -2.05); // spacious bamboo bed (แคร่ใหญ่)
+    [-3.4, -2.2, -1.0].forEach((lx) => this.addBox(this.scene, 0.12, 0.55, 1.35, '#5c3c20', lx, 0.28, -2.05));
+    // Woven Pha Khao Ma hammock slung between stilts (เปลญวนใต้ถุน!)
+    this.addBox(this.scene, 2.4, 0.1, 0.72, '#dc2626', 1.8, 0.88, -2.15).rotation.z = 0.08;
+    // Twin Thai Dragon Water Jars + Blooming Pink Bougainvillea Pot beside front steps
+    [3.65, 4.45].forEach((jx) => {
+      const tJar = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.38, 0.28, 0.84, 14),
+        new THREE.MeshStandardMaterial({ color: '#7c2d12', roughness: 0.55 })
       );
-      w.position.set(wx, 3.5, -1.12);
+      tJar.position.set(jx, 0.42, -1.75);
+      this.scene.add(tJar);
+    });
+    const pot = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.2, 0.38, 10), new THREE.MeshStandardMaterial({ color: '#9a3412' }));
+    pot.position.set(-5.6, 0.19, -0.65);
+    const bush = new THREE.Mesh(new THREE.SphereGeometry(0.45, 8, 8), new THREE.MeshStandardMaterial({ color: '#15803d' }));
+    bush.position.set(-5.6, 0.58, -0.65);
+    const blossom = new THREE.Mesh(new THREE.SphereGeometry(0.24, 7, 7), new THREE.MeshStandardMaterial({ color: '#ec4899' }));
+    blossom.position.set(-5.5, 0.82, -0.52);
+    this.scene.add(pot, bush, blossom);
+
+    // Wide Raised Teak Deck + Carved Front Balcony Balusters + Grand 2-Tier Roof + Front Gable Portico!
+    this.addBox(this.scene, 12.6, 0.26, 3.4, '#4f311c', 0, 2.1, -2.28); // wide veranda floor
+    this.addBox(this.scene, 11.4, 2.65, 2.6, '#3e2514', 0, 3.52, -2.45); // tall upper teak house walls
+    // 2-tier main Thai gable roof + center decorative front porch gable (มุขหน้าจั่วเรือนไทย!)
+    this.addThaiGableRoof(this.scene, 0, 4.82, -2.45, 11.8, 3.1, 1.85, '#4c2618', '#eab308', '#2b180d');
+    this.addThaiGableRoof(this.scene, 0, 5.55, -2.45, 7.2, 2.2, 1.15, '#7c2d12', '#facc15', '#3b2416');
+    this.addBox(this.scene, 3.2, 0.14, 1.1, '#593722', 0, 4.72, -1.0); // front entrance portico eave
+
+    // Carved Front Balcony Railing + Vertical Balusters (ระเบียงลูกกรงไม้สัก)
+    this.addBox(this.scene, 12.2, 0.1, 0.12, '#78350f', 0, 2.88, -0.68);
+    this.addBox(this.scene, 12.2, 0.1, 0.12, '#593722', 0, 2.32, -0.68);
+    for (let bx = -5.8; bx <= 5.8; bx += 0.58) {
+      this.addBox(this.scene, 0.08, 0.56, 0.08, '#854d0e', bx, 2.6, -0.68);
+    }
+
+    // Center Carved Teak Entrance Door + 2 Glowing Thai Windows + Hanging Balcony Lanterns!
+    const hDoor = new THREE.Mesh(
+      new THREE.PlaneGeometry(1.3, 2.0),
+      new THREE.MeshStandardMaterial({ map: createThaiDoorTexture('เรือนหนุ่ม') })
+    );
+    hDoor.position.set(0, 3.35, -1.14);
+    this.scene.add(hDoor);
+    const winTex = createThaiWindowTexture(true);
+    [-3.4, 3.2].forEach((wx) => {
+      const w = new THREE.Mesh(
+        new THREE.PlaneGeometry(1.75, 1.35),
+        new THREE.MeshStandardMaterial({ map: winTex, emissive: '#3d2508', emissiveIntensity: 0.7 })
+      );
+      w.position.set(wx, 3.55, -1.14);
       this.scene.add(w);
+    });
+    [-4.8, 4.8].forEach((lx) => {
+      const lOrb = new THREE.Mesh(new THREE.SphereGeometry(0.12, 8, 8), new THREE.MeshBasicMaterial({ color: '#fde68a' }));
+      lOrb.position.set(lx, 4.45, -0.78);
+      this.scene.add(lOrb);
     });
 
     for (let ti = 0; ti < 5; ti++) {
-      const thorn = this.addBox(this.placedThornsMesh, 0.9, 0.08, 0.08, '#713f12', 2.2, 3.05 + (ti % 2) * 0.15, -0.95);
+      const thorn = this.addBox(this.placedThornsMesh, 0.95, 0.08, 0.08, '#713f12', 3.2, 3.1 + (ti % 2) * 0.15, -0.98);
       thorn.rotation.z = (ti - 2) * 0.28;
     }
     this.placedThornsMesh.visible = false;
     this.scene.add(this.placedThornsMesh);
 
-    // Staircase cleanly positioned along front edge (-0.55)
+    // Grand Wide Wooden Staircase at right edge (+5.8) with handrails!
     for (let s = 0; s < 6; s++) {
-      this.addBox(this.scene, 0.34, 0.12, 1.0, '#593722', 4.6 + (5 - s) * 0.26, 0.3 + s * 0.34, -0.65);
+      this.addBox(this.scene, 0.36, 0.12, 1.15, '#593722', 5.5 + (5 - s) * 0.28, 0.32 + s * 0.35, -0.62);
     }
+    this.addBox(this.scene, 1.9, 0.08, 0.08, '#78350f', 6.1, 1.55, -0.08).rotation.z = -0.68;
 
-    const houseLight = new THREE.PointLight('#ffbe6b', 4.5, 14, 1.1);
-    houseLight.position.set(0, 2.8, 0.4);
+    const houseLight = new THREE.PointLight('#ffbe6b', 5.6, 16, 1.0);
+    houseLight.position.set(0, 3.2, 0.6);
     this.scene.add(houseLight);
 
-    // Rice Granary (ยุ้งข้าวอีสาน at x = -8.6) cleanly separated ~4m left of Stilt House
-    [-9.7, -7.5].forEach((gx) => {
-      this.addBox(this.scene, 0.22, 3.0, 0.22, '#3b2416', gx, 1.5, -1.45);
-      this.addBox(this.scene, 0.22, 3.0, 0.22, '#3b2416', gx, 1.5, -2.65);
-    });
-    this.addBox(this.scene, 2.7, 1.45, 1.6, '#6b4728', -8.6, 2.15, -2.05);
-    this.addThaiGableRoof(this.scene, -8.6, 2.88, -2.05, 2.8, 1.8, 1.0, '#5c3c20');
-
-    // Classic Bicycle parked neatly left of Stilt House & E-taen cart spaced out at -11.4
-    this.parkedBikeGroup.position.set(-3.4, 0, -0.35);
+    // Classic Bicycle parked left of Grand Stilt House (-6.5) & E-taen cart at +7.8
+    this.parkedBikeGroup.position.set(-6.5, 0, -0.35);
     this.exteriorGroup.add(this.parkedBikeGroup);
-    this.addBox(this.scene, 1.9, 0.65, 0.95, '#1e3a5f', -11.4, 0.6, -0.85);
-    [-12.1, -10.7].forEach((wx) => {
+    this.addBox(this.scene, 1.9, 0.65, 0.95, '#1e3a5f', 8.0, 0.6, -1.65);
+    [7.3, 8.7].forEach((wx) => {
       const w = new THREE.Mesh(new THREE.TorusGeometry(0.24, 0.07, 8, 14), new THREE.MeshStandardMaterial({ color: '#111827' }));
-      w.position.set(wx, 0.26, -0.35);
+      w.position.set(wx, 0.26, -1.18);
       this.scene.add(w);
     });
   }
@@ -1469,21 +1498,21 @@ export class IsaanWorld {
     kutiLight.position.set(54.5, 2.9, 0.3);
     this.scene.add(kutiLight);
 
-    // Cemetery Archway Exit Gate past Temple Fair Plaza (ประตูสู่ป่าช้าหลังวัด at x = +95.5)
+    // Cemetery Archway Exit Gate past Clinic (+103.5) & Bone Urn #4 at +120.5!
     [-2.2, 2.65].forEach((gz) => {
-      this.addBox(this.scene, 0.55, 3.8, 0.55, '#94a3b8', 95.5, 1.9, gz);
+      this.addBox(this.scene, 0.55, 3.8, 0.55, '#94a3b8', 103.5, 1.9, gz);
     });
-    this.addBox(this.scene, 0.68, 0.5, 5.4, '#475569', 95.5, 3.85, 0.22);
+    this.addBox(this.scene, 0.68, 0.5, 5.4, '#475569', 103.5, 3.85, 0.22);
 
-    // 4) Thai Bone-Urn Cemetery (สุสานไทย & โกศบรรจุอัฐิ at +98 .. +115, Urn #4 at +110.5!)
+    // 4) Thai Bone-Urn Cemetery (สุสานไทย & โกศบรรจุอัฐิ at +107 .. +125, Urn #4 at +120.5!)
     const cSign = new THREE.Mesh(
       new THREE.PlaneGeometry(2.4, 0.75),
       new THREE.MeshStandardMaterial({ map: paintSignTex('#1e293b', '#94a3b8', '#f1f5f9', 'เขตป่าช้า โกศอัฐิ') })
     );
-    cSign.position.set(97.5, 2.1, -1.2);
+    cSign.position.set(105.8, 2.1, -1.2);
     this.scene.add(cSign);
 
-    [100.5, 103.8, 107.2, 110.5, 113.8].forEach((ux, idx) => {
+    [110.0, 113.5, 117.0, 120.5, 124.0].forEach((ux, idx) => {
       const hScale = idx === 3 ? 1.35 : 0.95 + (idx % 2) * 0.2;
       const tone = idx === 3 ? '#9ca3af' : '#d6d3d1';
       this.addBox(this.scene, 1.3 * hScale, 0.45, 1.3 * hScale, '#64748b', ux, 0.22, -1.65);
@@ -1503,7 +1532,7 @@ export class IsaanWorld {
       this.addBox(this.scene, 0.42, 0.52, 0.08, '#1e293b', ux, 0.85, -1.14);
     });
     const cemLight = new THREE.PointLight('#84cc16', 2.8, 16, 1.3);
-    cemLight.position.set(110.5, 2.4, 0.4);
+    cemLight.position.set(120.5, 2.4, 0.4);
     this.scene.add(cemLight);
   }
 
@@ -1621,29 +1650,55 @@ export class IsaanWorld {
       return g;
     };
 
-    // 1) Stilt House Interior ('stilt_house')
-    const house = makeRoom('stilt_house', '#ffcf88', 2.6, 12.6);
+    // 1) Grand Detailed Stilt House Interior ('stilt_house', 16.4m wide!)
+    const house = makeRoom('stilt_house', '#ffcf88', 3.4, 16.4);
+    // Warm wooden ceiling beam, wall wainscot & Thai vintage wall calendar
+    this.addBox(house, 16.2, 0.14, 0.18, '#593722', 0, 3.3, -1.42);
+    this.addBox(house, 16.2, 0.85, 0.06, '#4f311c', 0, 0.42, -1.44);
+    // Teak Kitchen Cupboard (ตู้กับข้าวไม้สัก) + Vintage CRT TV on stand + Standing Fan (left zone x = -6.6 .. -4.8)
+    this.addBox(house, 1.1, 1.85, 0.55, '#6b4226', -6.6, 0.92, -1.15);
+    this.addBox(house, 0.9, 1.2, 0.04, '#cbd5e1', -6.6, 1.15, -0.86); // wire-mesh cupboard doors
+    this.addBox(house, 1.15, 0.65, 0.55, '#4f311c', -5.2, 0.32, -1.15); // TV table
+    this.addBox(house, 0.72, 0.58, 0.45, '#1e293b', -5.2, 0.94, -1.15); // retro CRT TV
+    this.addBox(house, 0.48, 0.4, 0.04, '#38bdf8', -5.2, 0.96, -0.92); // glowing TV screen
+    // Home Buddha Altar Shelf & Family Portrait Frame of Grandma Boonma (หิ้งพระ & รูปย่า x = -3.8)
+    this.addBox(house, 0.95, 0.1, 0.45, '#78350f', -3.8, 2.35, -1.25);
+    this.addBox(house, 0.24, 0.38, 0.2, '#eab308', -3.8, 2.58, -1.25); // golden home Buddha
+    this.addBox(house, 0.65, 0.78, 0.06, '#92400e', -2.9, 2.15, -1.42); // framed family portrait!
+    this.addBox(house, 0.5, 0.62, 0.04, '#fef3c7', -2.9, 2.15, -1.39);
+    // Large woven floor mat + Khantoke dinner tray + Kratib + Bai Sri tray
     const rug = new THREE.Mesh(
-      new THREE.PlaneGeometry(3.2, 1.8),
+      new THREE.PlaneGeometry(3.8, 2.0),
       new THREE.MeshStandardMaterial({ map: createRugTexture('#7c2d12', '#eab308') })
     );
     rug.rotation.x = -Math.PI / 2;
     rug.position.set(-0.5, 0.02, -0.2);
     house.add(rug);
+    const khantoke = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.38, 0.22, 12), new THREE.MeshStandardMaterial({ color: '#92400e', roughness: 0.7 }));
+    khantoke.position.set(-0.6, 0.11, -0.28);
+    house.add(khantoke);
     const kratib = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.18, 0.16, 0.25, 12),
+      new THREE.CylinderGeometry(0.16, 0.14, 0.22, 12),
       new THREE.MeshStandardMaterial({ color: '#d97706', roughness: 0.75 })
     );
-    kratib.position.set(-0.5, 0.15, -0.35);
+    kratib.position.set(-0.48, 0.32, -0.28);
     house.add(kratib);
     const hWin = new THREE.Mesh(
-      new THREE.PlaneGeometry(1.9, 1.4),
+      new THREE.PlaneGeometry(2.1, 1.45),
       new THREE.MeshStandardMaterial({ map: createThaiWindowTexture(false) })
     );
     hWin.position.set(2.4, 2.05, -1.44);
     house.add(hWin);
-    this.addBox(house, 2.0, 0.12, 1.25, '#1e3a5f', 4.0, 0.06, -0.75);
-    this.addBox(house, 0.5, 0.14, 0.7, '#f8fafc', 4.6, 0.18, -0.75);
+    // Sleeping area with wooden bed, Thai Khit pillows, and sheer white mosquito-net canopy (มุ้งนอน x = 4.8)
+    this.addBox(house, 2.2, 0.18, 1.35, '#1e3a5f', 4.8, 0.09, -0.78);
+    this.addBox(house, 0.55, 0.16, 0.78, '#dc2626', 5.45, 0.24, -0.78); // red Khit pillow!
+    [3.85, 5.75].forEach((px) => this.addBox(house, 0.06, 2.0, 0.06, '#78350f', px, 1.0, -1.35));
+    const netCanopy = new THREE.Mesh(
+      new THREE.BoxGeometry(2.05, 1.45, 1.2),
+      new THREE.MeshBasicMaterial({ color: '#f8fafc', transparent: true, opacity: 0.16 })
+    );
+    netCanopy.position.set(4.8, 1.28, -0.82);
+    house.add(netCanopy);
     const momSprite = this.makeChar(this.charFrames.mom[0], 1.48, 2.2);
     momSprite.position.set(-2.0, 0.94, -0.8);
     const sisSprite = this.makeChar(this.charFrames.sister[0], 1.4, 2.05);
@@ -1965,6 +2020,7 @@ export class IsaanWorld {
     animateIsaanWorldLife(
       dt,
       this.animClock,
+      gameMinutes,
       isDay,
       isNight,
       mood,
@@ -2038,6 +2094,10 @@ export class IsaanWorld {
 
   public getDrunkWalkerX(): number {
     return this.ruralActorsCtrl.drunkX;
+  }
+
+  public getMorningMonkX(): number {
+    return this.ruralActorsCtrl.morningMonk.x;
   }
 
   public resize(): void {
