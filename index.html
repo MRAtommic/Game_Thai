@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="th">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#07090f" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230d121f'/%3E%3Cpath d='M16 5L5 14v13h22V14L16 5z' fill='none' stroke='%23e0a94c' stroke-width='2.5'/%3E%3Crect x='13' y='18' width='6' height='9' fill='%23e0a94c'/%3E%3C/svg%3E"
+    />
+    <title>หอพักเรือนจันทร์ — คืนสืบหลอนห้อง 304</title>
+    <style>
+      html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #07090f; color: #eceae4; }
+      .hidden { display: none !important; }
+      html.resuming #title-screen { display: none !important; }
+    </style>
+    <script>
+      try {
+        if (sessionStorage.getItem('reuan_chan_active_session') === '1' && localStorage.getItem('reuan_chan_dorm_save_v1')) {
+          document.documentElement.classList.add('resuming');
+        }
+      } catch (e) {}
+    </script>
+    <link rel="stylesheet" href="/src/style.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&family=Noto+Serif+Thai:wght@500;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div id="app">
+      <canvas id="game-canvas"></canvas>
+
+      <div id="sanity-overlay"></div>
+      <div id="lightning-overlay"></div>
+      <div id="scare-flash"></div>
+
+      <!-- Ghost Chase Warning Banner -->
+      <div id="chase-banner" class="hidden">
+        <span class="chase-dot"></span>
+        <span>มีบางอย่างกำลังตามคุณมา! รีบหนีเข้าป้อมยาม หรือ ห้อง 202</span>
+      </div>
+
+      <!-- Drunk Zombie Hallucination Banner -->
+      <div id="drunk-banner" class="hidden">
+        <span class="drunk-dot"></span>
+        <span id="drunk-status-text">เมาหลอนซอมบี้บุก! • [Space / คลิกซ้าย] ยิงปืน • กด [O] เพื่อสร่างเมา</span>
+        <button id="btn-sober-up" class="sober-btn" type="button">หายเมา [O]</button>
+      </div>
+
+      <!-- Top HUD -->
+      <header id="hud-top" class="hidden">
+        <div class="hud-card hud-time">
+          <div class="hud-row">
+            <span id="hud-clock">17:30</span>
+            <span id="hud-period" class="badge">เย็น</span>
+            <span id="hud-weather" class="badge badge-weather">ครึ้ม</span>
+          </div>
+          <div id="hud-location" class="hud-sub">หน้าหอพักเรือนจันทร์ (ชั้น 0)</div>
+        </div>
+
+        <div class="hud-card hud-status">
+          <div class="sanity-header">
+            <span class="status-kicker">สภาพจิตใจ</span>
+            <span id="hud-sanity-val">100%</span>
+          </div>
+          <div class="sanity-bar-bg">
+            <div id="hud-sanity-fill"></div>
+          </div>
+          <div class="hud-divider"></div>
+          <div id="hud-quest" class="hud-quest-text">ภารกิจ: คุยกับลุงยามหน้าหอเพื่อรับกุญแจห้อง</div>
+          <div class="hud-nav-row">
+            <svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+              <circle cx="8" cy="8" r="6" />
+              <polygon points="8,4 10.2,9.5 8,8.4 5.8,9.5" fill="currentColor" stroke="none" />
+            </svg>
+            <span id="hud-nav" class="hud-nav">เดินไปทางขวา</span>
+          </div>
+        </div>
+
+        <div class="hud-actions">
+          <button id="btn-flashlight" class="icon-btn" title="ไฟฉาย (F)">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M18 6l-6 6v8H8v-8L2 6h16z" />
+              <line x1="6" y1="2" x2="6" y2="4" />
+              <line x1="10" y1="2" x2="10" y2="4" />
+              <line x1="14" y1="2" x2="14" y2="4" />
+            </svg>
+            <span>ไฟฉาย</span>
+          </button>
+          <button id="btn-rules" class="icon-btn btn-rules-alert" title="กฎหอพัก (R)">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+              <line x1="12" y1="9" x2="12" y2="13" />
+              <line x1="12" y1="17" x2="12.01" y2="17" />
+            </svg>
+            <span>กฎหอพัก</span>
+          </button>
+          <button id="btn-notebook" class="icon-btn" title="สมุดเบาะแส (N)">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M4 19.5A2.5 2.5 0 016.5 17H20" />
+              <path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z" />
+            </svg>
+            <span>เบาะแส</span>
+          </button>
+          <button id="btn-map" class="icon-btn" title="แผนผังหอ (M)">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6" />
+              <line x1="8" y1="2" x2="8" y2="18" />
+              <line x1="16" y1="6" x2="16" y2="22" />
+            </svg>
+            <span>แผนผัง</span>
+          </button>
+          <button id="btn-sound" class="icon-btn" title="เปิด/ปิดเสียง">เสียง: เปิด</button>
+        </div>
+      </header>
+
+      <!-- Floating Interaction Prompt -->
+      <div id="interact-prompt" class="hidden">
+        <span class="prompt-key">E</span>
+        <span id="interact-label">สำรวจ</span>
+      </div>
+
+      <div id="toast-container"></div>
+
+      <!-- Bottom Inventory Bar -->
+      <div id="inventory-bar" class="hidden"></div>
+
+      <!-- Mobile Touch Controls -->
+      <div id="mobile-controls" class="hidden">
+        <div class="dpad">
+          <button id="touch-left" class="touch-btn touch-move" aria-label="เดินซ้าย">◀</button>
+          <button id="touch-right" class="touch-btn touch-move" aria-label="เดินขวา">▶</button>
+        </div>
+        <div class="touch-actions">
+          <button id="touch-up" class="touch-btn touch-small hidden" aria-label="ขึ้นชั้นบน">▲ ขึ้น</button>
+          <button id="touch-down" class="touch-btn touch-small hidden" aria-label="ลงชั้นล่าง">▼ ลง</button>
+          <button id="touch-shoot" class="touch-btn touch-shoot hidden" aria-label="ยิงปืน">ยิงปืน!</button>
+          <button id="touch-interact" class="touch-btn touch-act" aria-label="สำรวจ/คุย">สำรวจ</button>
+        </div>
+      </div>
+
+      <!-- Dialogue Box -->
+      <section id="dialogue-box" class="hidden">
+        <div class="dialogue-inner">
+          <div class="dialogue-portrait-wrap">
+            <canvas id="dialogue-portrait" width="96" height="96"></canvas>
+          </div>
+          <div class="dialogue-content">
+            <div class="dialogue-speaker-row">
+              <span id="dialogue-speaker">ลุงชัย</span>
+              <span id="dialogue-role" class="dialogue-role">ยามหน้าหอ</span>
+            </div>
+            <p id="dialogue-text"></p>
+            <div id="dialogue-choices"></div>
+            <div id="dialogue-continue" class="dialogue-hint">แตะหรือกด [E / Space] เพื่อไปต่อ</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Modal -->
+      <div id="modal-backdrop" class="hidden">
+        <div id="modal-card">
+          <div class="modal-header">
+            <h2 id="modal-title">หัวข้อ</h2>
+            <button id="modal-close" class="modal-close-btn">✕</button>
+          </div>
+          <div id="modal-body"></div>
+        </div>
+      </div>
+
+      <!-- Title Screen -->
+      <section id="title-screen">
+        <div class="title-bg-glow"></div>
+        <div class="title-content">
+          <div class="title-tag">2.5D THAI SUPERNATURAL MYSTERY</div>
+          <h1 class="title-main">หอพักเรือนจันทร์</h1>
+          <p class="title-sub">คืนสืบหลอนห้อง 304</p>
+          <p class="title-desc">
+            หอพักเก่า 3 ชั้นท้ายซอยเปลี่ยว ค่าเช่าถูกผิดปกติ...<br />
+            กับกฎข้อห้ามแปลกประหลาดที่แปะไว้หลังประตูห้อง<br />
+            เอาตัวรอดผ่านคืนฝนตก และค้นหาว่าเกิดอะไรขึ้นกับผู้เช่าห้อง 304
+          </p>
+          <div class="title-buttons">
+            <button id="btn-start-game" class="primary-btn">เริ่ม Chapter 1: หอพักเรือนจันทร์</button>
+            <button id="btn-continue-game" class="secondary-btn hidden">เล่นต่อ Chapter 1</button>
+            <button id="btn-start-ch2" class="secondary-btn">เริ่ม Chapter 2: บ้านทุ่งผีกระสือ (อีสาน)</button>
+            <button id="btn-continue-ch2" class="secondary-btn hidden">เล่นต่อ Chapter 2</button>
+          </div>
+          <div class="title-controls-info">
+            <span><strong>PC:</strong> W/A/S/D หรือ ลูกศร เดิน &amp; ขึ้นลงบันได (รองรับคีย์บอร์ดไทย) • E สำรวจ/คุย • F ไฟฉาย • R กฎหอพัก</span>
+            <span><strong>มือถือ:</strong> ปุ่มควบคุมบนหน้าจอ + แตะปุ่มสำรวจ / ช่องไอเทมด้านล่าง</span>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
