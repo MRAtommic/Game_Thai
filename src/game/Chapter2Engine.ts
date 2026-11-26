@@ -3,7 +3,7 @@ import { SoundEngine } from '../audio/SoundEngine';
 import { CH2_CLUES, CH2_ITEMS, CH2_RULES, CH2_ZONE_NAMES } from '../data/chapter2Data';
 import { DialogueLine, EndingType, FloorIndex, TimePeriod, WeatherType } from '../types';
 import { bindCameraZoomControls } from '../ui/mobileZoom';
-import { CH2_MAX_X, CH2_MIN_X, Ch2RoomId, IsaanWorld } from '../world/IsaanWorld';
+import { CH2_MAX_X, CH2_MIN_X, Ch2RoomId, IsaanWorld, VillageMood } from '../world/IsaanWorld';
 
 const CH2_SAVE_KEY = 'reuan_chan_ch2_save_v1';
 
@@ -35,6 +35,10 @@ interface Ch2Flags {
   inspectedTakian?: boolean;
   visitedFair?: boolean;
   ateSomtam?: boolean;
+  caughtPondFishDay1?: boolean;
+  heardPaWarning?: boolean;
+  inspectedTani?: boolean;
+  wonFairPrize?: boolean;
 }
 
 interface Ch2SaveState {
@@ -602,6 +606,34 @@ export class Chapter2Engine {
         label: 'ทักทายขบวนรถแห่บ้านทุ่ง (ฟังหมอลำซิ่งเพิ่มสติ)',
         onInteract: () => this.interactRotHae(),
       },
+      {
+        id: 'ch2_pond_fish',
+        x: 20.4,
+        range: 2.3,
+        label: 'ท่าน้ำหนองน้ำบ้านทุ่ง (ตกปลาช่อน / ดูชาวบ้านหว่านแห)',
+        onInteract: () => this.interactPondFishing(),
+      },
+      {
+        id: 'ch2_pa_tower',
+        x: -9.6,
+        range: 2.3,
+        label: 'ฟังประกาศจากหอกระจายข่าวผู้ใหญ่บ้าน',
+        onInteract: () => this.interactPaTower(),
+      },
+      {
+        id: 'ch2_bangfai',
+        x: -67.5,
+        range: 2.4,
+        label: 'ชมซุ้มลานบุญบั้งไฟพญานาคประจำหมู่บ้าน',
+        onInteract: () => this.interactBangFai(),
+      },
+      {
+        id: 'ch2_tani',
+        x: -20.5,
+        range: 2.2,
+        label: 'ตรวจดูกอกล้วยตานีริมคันนา',
+        onInteract: () => this.interactTaniBanana(),
+      },
 
       // INSIDE STILT HOUSE ('stilt_house')
       {
@@ -725,7 +757,7 @@ export class Chapter2Engine {
     const f = this.state.flags;
     this.adjustSanity(20);
 
-    // 1) Warm Day 1 Homecoming Bonding!
+    // 1) Warm Day 1 Homecoming Bonding with authentic Isaan warmth!
     if (!f.bondedWithFamilyDay1) {
       f.bondedWithFamilyDay1 = true;
       this.addClue('family_story');
@@ -734,51 +766,55 @@ export class Chapter2Engine {
           speaker: 'แม่คำ',
           role: 'แม่ของหนุ่ม (ยิ้มน้ำตาคลอ)',
           portrait: 'vendor',
-          text: 'กลับมาแล้วเหรอลูกหนุ่ม! ดูสิ ผอมลงไปหน่อยนะเรา ทำแต่งานอยู่กรุงเทพฯ ... มานี่มา แม่ต้มไก่บ้านใส่ใบมะขามอ่อนของโปรดไว้รอแล้ว',
+          text: 'กลับมาแล้วบ่ลูกหนุ่ม! เบิ่งแหมะ จ่อยลงไปหลายนะเฮา... มานี่มา แม่ต้มไก่บ้านใส่ใบมะขามอ่อนกับแจ่วบองไว้รอท่าลูกแล้ว กินข้าวแลงนำกันเด้อมื้อนี้',
         },
         {
           speaker: 'น้องแก้ว',
           role: 'น้องสาวของหนุ่ม (ยิ้มดีใจ)',
           portrait: 'prim',
-          text: 'พี่หนุ่ม! แก้วเอาสมุดพกเทอมนี้มาอวดด้วย ได้เกรดเฉลี่ยตั้ง 3.85 แน่ะ พี่สัญญาแล้วนะว่ากลับมาอยู่บ้านแล้วจะพาแก้วไปเดินตลาดกับไปไหว้พระด้วยกัน!',
+          text: 'อ้ายหนุ่ม! แก้วเอาสมุดพกเทอมนี้มาอวดนำ ได้เกรดตั้ง 3.85 พุ้นน่ะ มื้อนี้บ้านเฮาจัดงานวัดประจำปี มีรถแห่หมอลำซิ่งผ่านหน้าบ้านด้วย อ้ายไปเดินตลาด ไปตกปลาหนองน้ำ กับแวะเที่ยวงานวัดซอยแม่ก่อนนะ!',
         },
         {
           speaker: 'หนุ่ม',
           role: 'ลูกชายคนโต (กอดแม่กับน้อง)',
           portrait: 'player',
-          text: 'เก่งมากน้องสาวพี่ เดี๋ยวพี่ซักพักจะออกไปเดินตลาดสดซื้อหมูสดกับผักมาให้แม่ทำกับข้าวมื้อใหญ่ แล้วแวะไปกราบหลวงพี่ที่วัดป่าด้วยเลย — ว่าแต่แม่ครับ แถวบ้านเรายังเงียบสงบดีอยู่ใช่ไหมครับ?',
+          text: 'คักขนาดเลยน้องสาวอ้าย! เดี๋ยวอ้ายสิเดินตลาดสดซื้อหมูซื้อผักแวะกินส้มตำแม่ลำไย ไปตกปลาหนองน้ำมาให้แม่เฮ็ดต้มยำ แวะเบิ่งงานวัดกับกราบหลวงพี่นำ — ว่าแต่บ้านเฮาช่วงนี้ยังม่วนซื่นปกติอยู่แม่นบ่ครับแม่?',
         },
         {
           speaker: 'แม่คำ',
           role: 'แม่ของหนุ่ม',
           portrait: 'vendor',
-          text: 'ก็สงบดีแหละลูก ยกเว้นช่วงหลังๆ กลางคืนหมามันชอบหอนแปลกๆ ... พอถามตาชมกับป้าบัวที่ตลาด แกก็พูดกันถึงเรื่องเก่ายี่สิบปีก่อนสมัยย่าบุญมายังอยู่ ว่าอย่าเดินทุ่งดึกๆ พี่หนุ่มลองไปเดินตลาดซื้อของแล้วแวะคุยทักทายผู้ใหญ่ในชุมชนดูนะลูก',
+          text: 'ตอนนี้คึกคักม่วนหลายลูก ทั้งงานวัดทั้งบุญบั้งไฟ... แต่ตอนดึกๆ พักหลังหมามันหอนแปลกๆ อยู่จักหน่อย ฟ้าวออกไปเดินตลาดทักทายเฮียตี๋ ป้าบัว ตาชม ตกปลาหนองน้ำ แวะงานวัด แล้วกราบหลวงพี่ก่อนค่ำเด้อลูก ค่อยมากินข้าวแลงพร้อมหน้ากัน!',
         },
       ]);
       this.saveGame();
       return;
     }
 
-    // 2) Returning home on Day 1 evening with market groceries for a warm family dinner!
+    // 2) Returning home on Day 1 evening with groceries & pond fish for warm family dinner!
     if (!f.finishedDay1Dinner) {
       const finishedShoppingDay1 =
-        f.boughtPorkDay1 && f.askedFishFolkloreDay1 && f.heardHerbFolkloreDay1 && f.greetedMonkDay1;
+        f.boughtPorkDay1 &&
+        f.askedFishFolkloreDay1 &&
+        f.heardHerbFolkloreDay1 &&
+        f.caughtPondFishDay1 &&
+        f.visitedFair &&
+        f.greetedMonkDay1;
       if (!finishedShoppingDay1) {
         this.startDialogue([
           {
             speaker: 'แม่คำ',
             role: 'แม่ของหนุ่ม',
             portrait: 'vendor',
-            text: 'ออกไปเดินตลาดสดทักทายเฮียตี๋เขียงหมู ป้าบัวแผงปลา ตาชมแผงสมุนไพร แล้วก็แวะกราบหลวงพี่ที่วัดป่าให้ครบก่อนนะลูก ค่ำๆ ค่อยกลับมากินข้าวเย็นด้วยกัน',
+            text: 'ฟ้าวไปเดินตลาดสด (ตาชม ป้าบัว เฮียตี๋) ตกปลาช่อนหนองน้ำ เที่ยวงานวัดให้ม่วน แล้วแวะกราบหลวงพี่ที่กุฏิให้ครบก่อนนะลูก ค่ำๆ ค่อยกลับมากินข้าวแลงนำกัน!',
           },
         ]);
         return;
       }
 
       f.finishedDay1Dinner = true;
-      if (this.state.inventory.includes('market_groceries')) {
-        this.removeItem('market_groceries');
-      }
+      if (this.state.inventory.includes('market_groceries')) this.removeItem('market_groceries');
+      if (this.state.inventory.includes('fresh_fish')) this.removeItem('fresh_fish');
       this.state.day += 1;
       this.state.gameMinutes = 8 * 60 + 30; // Peaceful morning of Day 2!
       this.state.sanity = 100;
@@ -787,25 +823,25 @@ export class Chapter2Engine {
           speaker: 'หนุ่ม',
           role: 'คืนแรกอันแสนอบอุ่นในเรือนไม้',
           portrait: 'player',
-          text: 'ส่งของสดให้แม่คำทำกับข้าวมื้อเย็น... กินข้าวเหนียวส้มตำพร้อมหน้าพร้อมตาทั้งแม่และน้องแก้ว หัวเราะกันจนลืมเรื่องเล่าชวนขนลุกในตลาดไปชั่วคราว คืนนั้นทุกคนหลับลงอย่างมีความสุข',
+          text: 'แม่คำทำต้มยำปลาช่อนกับหมูย่างหอมกรุ่น! ทั้งครอบครัวล้อมวงจกข้าวเหนียวกินข้าวแลงพร้อมหน้า หัวเราะกันใต้แสงตะเกียงท่ามกลางเสียงรถแห่แว่วไกลๆ คืนนั้นเป็นคืนที่อบอุ่นใจที่สุดตั้งแต่กลับมาบ้านเกิด',
         },
         {
           speaker: 'แม่คำ (เช้าวันรุ่งขึ้น — 08:30 น.)',
           role: 'ชวนคุยบนเรือนไม้ยกสูง',
           portrait: 'vendor',
-          text: 'หนุ่มตื่นแล้วเหรอลูก... แต่เมื่อคืนตอนตีสอง แม่สะดุ้งตื่นเพราะได้ยินเสียงแมวร้องขู่กับเสียงหมาหอนลากยาวใต้ถุนบ้านแปลกๆ ชอบกล',
+          text: 'ตื่นแล้วบ่ลูกหนุ่ม... เมื่อคืนตอนตีสอง แม่สะดุ้งตื่นเพราะได้ยินเสียงแมวร้องขู่กับเสียงหมาหอนลากยาวใต้ถุนบ้านแปลกๆ ชอบกลเหมือนมีอะไรมากุ๊กกักใต้เรือน',
         },
         {
           speaker: 'น้องแก้ว',
           role: 'น้องสาวของหนุ่ม (เพิ่งนึกขึ้นได้)',
           portrait: 'prim',
-          text: 'เออใช่พี่หนุ่ม! เมื่อวานตอนบ่ายก่อนพี่เดินเข้าบ้าน มีป้าแก่ๆ หลังค่อมเอา "ข้าวต้มมัด" มายื่นให้แก้วตรงรั้วบ้าน แก้วเห็นกลิ่นมันคาวๆ แปลกๆ เลยแอบโยนทิ้งไว้ใต้แคร่ไม้ใต้ถุนบ้าน ยังไม่ได้บอกแม่เลย...',
+          text: 'เออแม่นอ้ายหนุ่ม! เมื่อวานตอนบ่ายก่อนอ้ายเข้าบ้าน มีป้าแก่หลังค่อมยื่น "ข้าวต้มมัด" ให้แก้วตรงรั้วบ้าน แก้วได้กลิ่นมันคาวๆ แปลกๆ เลยแอบโยนทิ้งไว้ใต้แคร่ไม้ใต้ถุนบ้าน บ่กล้ากิน...',
         },
         {
           speaker: 'หนุ่ม',
-          role: 'นึกถึงคำเล่าของตาชมในตลาด!',
+          role: 'นึกถึงตำนานที่ตาชมเล่า!',
           portrait: 'player',
-          text: 'เดี๋ยวนะ... ข้าวต้มมัดกลิ่นคาวจากป้าแก่หลังค่อม?! เหมือนที่ตาชมเล่าเรื่องตำนานกระสือคายน้ำลายใส่ของกินเลย! ผมจะลงไปก้มดูใต้แคร่ไม้ไผ่ใต้ถุนบ้านเดี๋ยวนี้!',
+          text: 'เดี๋ยวนะ... ข้าวต้มมัดกลิ่นคาวจากป้าแก่หลังค่อม?! เหมือนที่ตาชมเล่าเรื่องตำนานกระสือคายน้ำลายใส่ของกินเลย! เดี๋ยวอ้ายสิลงไปก้มเบิ่งใต้แคร่ไม้ไผ่ใต้ถุนบ้านเดี๋ยวนี้!',
         },
       ]);
       f.learnedSweetTrap = true;
@@ -929,7 +965,7 @@ export class Chapter2Engine {
           speaker: 'หนุ่ม',
           role: 'รีบกระชากบานหน้าต่างปิด!',
           portrait: 'player',
-          text: 'มันกรีดร้องแผดเสียงก่อนบินวูบหายไปทางทุ่งนาวัด!! ตรงขอบหน้าต่างมีคราบเมือกเรืองแสงหยดทิ้งไว้... เรื่องเล่าของตาชมเป็นความจริงทั้งหมด! พรุ่งนี้เช้าหรือตอนนี้ต้องรีบออกไปหาตาชมขอ "หนามพุทรา" มาขวางหน้าต่างให้ได้!',
+          text: 'มันกรีดร้องแผดเสียงก่อนบินวูบหายไปทางทุ่งนาวัด!! ตรงขอบหน้าต่างมีคราบเมือกเรืองแสงหยดทิ้งไว้... ข่าวแพร่สะพัดทั่วหมู่บ้านภายในพริบตา ชาวบ้านรีบปิดประตูหน้าต่างเข้าบ้านเงียบกริบ ไม่มีรถวิ่ง งานวัดและรถแห่ปิดตัวลงหมด!',
         },
       ]);
       this.saveGame();
@@ -1342,7 +1378,7 @@ export class Chapter2Engine {
     }
 
     this.krasueShowTimer = 12.0;
-    this.krasueX = 77.2;
+    this.krasueX = 113.2;
     this.sound.playScare();
 
     this.startDialogue([
@@ -1394,7 +1430,29 @@ export class Chapter2Engine {
                 f.checkedButcherDeep &&
                 f.checkedFishDeep &&
                 f.checkedYaiSai;
-              this.triggerEnding(perfect ? 'true' : 'normal');
+              const endType: EndingType = perfect ? 'true' : 'normal';
+              this.saveGame();
+              this.sound.playClueChime();
+              this.startDialogue([
+                {
+                  speaker: 'รุ่งเช้า — พิธีบายศรีสู่ขวัญบนเรือนไม้บ้านทุ่ง',
+                  role: 'หมู่บ้านกลับมามีชีวิตชีวาอีกครั้ง',
+                  portrait: 'vendor',
+                  text: 'พอตัดสายใยอาคมขาดสะบั้น เสียงกรีดร้องของผีกระสือก็สลายหายไปพร้อมรุ่งอรุณ... แม่คำ น้องแก้ว ตาชม ป้าบัว เฮียตี๋ และหลวงพี่ช่วยกันจัด "พานบายศรีสู่ขวัญ" ผูกฝ้ายขาวรับขวัญให้หนุ่มและน้องแก้วกลางเรือนไม้!',
+                },
+                {
+                  speaker: 'น้องแก้ว & ชาวบ้าน',
+                  role: 'งานวัดและเสียงรถแห่กลับมาดังก้องทุ่งนา',
+                  portrait: 'prim',
+                  text: '"มาเด้อขวัญเอ๊ย... ขวัญเจ้ามาอยู่กับเนื้อกับตัว!" นอกเรือนไม้ รถสองแถว รถแห่หมอลำ และไฟชิงช้าสวรรค์งานวัดป่ากลับมาคึกคักอบอุ่นดังเดิม!',
+                  choices: [
+                    {
+                      label: 'ปิดฉาก Chapter 2 อย่างภาคภูมิใจ',
+                      action: () => this.triggerEnding(endType),
+                    },
+                  ],
+                },
+              ]);
             },
           },
           {
@@ -1508,6 +1566,11 @@ export class Chapter2Engine {
       this.adjustSanity(45);
       this.removeItem('takian_charm');
       return this.showToast('ยกผ้าเจ็ดสีเจ้าแม่ตะเคียนอธิษฐานข่มขวัญ (+45 สติ)');
+    }
+    if (itemId === 'fair_amulet') {
+      this.adjustSanity(40);
+      this.removeItem('fair_amulet');
+      return this.showToast('อาราธนาเหรียญหลวงพ่อวัดป่าเรียกขวัญกลับคืน (+40 สติ)');
     }
     if (itemId === 'bicycle') {
       this.toggleBicycle();
@@ -1623,12 +1686,23 @@ export class Chapter2Engine {
     if (found) found.onInteract();
   }
 
+  private getVillageMood(): VillageMood {
+    const f = this.state.flags;
+    if (f.banishedKrasue) return 'festive';
+    if (f.sawKrasueAtWindow) return 'lockdown';
+    if (f.checkedUnderHouse || f.heardPaWarning) return 'uneasy';
+    return 'festive';
+  }
+
   private getNearestInteractable(): Ch2Interactable | null {
+    const mood = this.getVillageMood();
     let best: Ch2Interactable | null = null;
     let bestD = Infinity;
     for (const item of this.interactables) {
       if ((item.room ?? 'outside') !== this.currentRoom) continue;
       if (item.id === 'ch2_bicycle' && this.state.inventory.includes('bicycle')) continue;
+      if (item.id === 'ch2_rothae' && mood !== 'festive') continue;
+      if (item.id === 'ch2_drunk' && mood === 'lockdown') continue;
       const ix = item.getX ? item.getX() : item.x;
       const d = Math.abs(this.state.x - ix);
       if (d <= (item.range ?? 1.8) && d < bestD) {
@@ -1778,6 +1852,10 @@ export class Chapter2Engine {
   }
 
   private openSongthaewTransitModal(): void {
+    if (this.getVillageMood() === 'lockdown') {
+      this.showToast('ช่วงนี้รถสองแถวและรถทุกคันหยุดวิ่งหมดแล้ว! ชาวบ้านปิดบ้านเงียบ — ต้องเดินหรือปั่นจักรยานเอาเอง', true);
+      return;
+    }
     this.sound.playVehicleHorn();
     this.openModal(
       'ขึ้นรถสองแถวสายบ้านทุ่ง (เดินทางข้ามหมู่บ้าน)',
@@ -1818,19 +1896,23 @@ export class Chapter2Engine {
         speaker: 'ลุงทิดขี้เมา',
         role: 'ชาวบ้านปากซอย (เมาเหล้าขาว)',
         portrait: 'uncle',
-        text: 'อึ้ก... ไอ้หนุ่มกลับมาบ้านเรอะ! เมื่อคืนข้านั่งก๊งอยู่ตรงท่ารถ รอรถสองแถว... รถแห่ขับช้าๆ ผ่านไปปุ๊บ ข้าเห็นหัวคนมีไส้เขียวๆ ลอยสวนไฟหน้ารถเข้าไปทางบ้านเรือนไทยเลยเว้ย!',
+        text: 'อึ้ก... ไอ้หนุ่มกลับมาบ้านเฮาแล่วเบาะ! เมื่อคืนข้านั่งก๊งอยู่ตรงท่ารถ รอรถสองแถว... รถแห่ขับช้าๆ ผ่านไปปุ๊บ ข้าเห็นหัวคนมีไส้เขียวๆ ลอยสวนไฟหน้ารถเข้าไปทางบ้านเรือนไทยเลยเว้ย!',
       },
       {
         speaker: 'หนุ่ม',
         role: 'ลูกชายคนโต',
         portrait: 'player',
-        text: 'ลุงเห็นจริงๆ เหรอครับ? งั้นแสดงว่าไม่ใช่แค่คนลือ — ระวังตัวด้วยนะครับลุงทิด รีบเข้าบ้านก่อนดึกนะ!',
+        text: 'ลุงเห็นอีหลีเบาะครับ? งั้นแสดงว่าไม่ใช่แค่คนลือ — ระวังตัวด้วยนะครับลุงทิด รีบเข้าบ้านก่อนดึกเด้อ!',
       },
     ]);
   }
 
   private interactSomtamStall(): void {
     this.sound.playUIClick();
+    if (this.getVillageMood() === 'lockdown') {
+      this.showToast('ร้านส้มตำแม่ลำไยปิดเงียบแล้ว — แม่ค้าต่างรีบเก็บแผงหนีข่าวกระสืออาละวาด!', true);
+      return;
+    }
     if (!this.state.flags.ateSomtam) {
       this.state.flags.ateSomtam = true;
       this.adjustSanity(25);
@@ -1839,7 +1921,7 @@ export class Chapter2Engine {
           speaker: 'แม่ลำไย',
           role: 'แม่ค้าส้มตำครกไม้-ไก่ย่าง',
           portrait: 'vendor',
-          text: 'อ้าวหนุ่ม! กลับจากกรุงเทพฯ แล้วเหรอ มาๆ กินส้มตำปูปลาร้ากับไก่ย่างร้อนๆ ให้หายเหนื่อย แม่แถมข้าวเหนียวห่อนึงเลย (+25 สติ) ช่วงนี้ตลาดคึกคักแต่อย่าเดินเลยไปแถวบ้านยายสายตอนมืดล่ะ!',
+          text: 'อ้าวหนุ่ม! กลับจากเมืองกรุงแล้วบ่ มาๆ กินส้มตำปูปลาร้ากับไก่ย่างฮ้อนๆ ให้เซาเมื่อย แม่แถมข้าวเหนียวห่อนึงเลย (+25 สติ) ช่วงนี้ตลาดคึกคักแต่อย่าเดินเลยไปแถวบ้านยายสายตอนมืดเด้อหล่า!',
         },
       ]);
     } else {
@@ -1847,23 +1929,167 @@ export class Chapter2Engine {
     }
   }
 
+  private interactPondFishing(): void {
+    if (!this.state.flags.bondedWithFamilyDay1) {
+      this.showToast('ชาวบ้านกำลังหว่านแหจับปลาในหนองน้ำ — ขึ้นไปคุยกับแม่คำและน้องแก้วบนเรือนก่อนนะ');
+      return;
+    }
+    if (this.state.flags.caughtPondFishDay1) {
+      this.adjustSanity(10);
+      this.showToast('นั่งรับลมริมหนองน้ำดูชาวบ้านหว่านแหจับปลา (+10 สติ)');
+      return;
+    }
+    this.sound.playUIClick();
+    this.openModal(
+      'ท่าน้ำหนองน้ำบ้านทุ่ง — ตกปลาช่อนไปฝากแม่คำ',
+      `
+      <p style="margin-top:0">ลุงชาวบ้านบนท่าน้ำชวนหนุ่มลองเหวี่ยงเบ็ดตกปลาช่อนตัวโตกลับไปให้แม่ทำต้มยำมื้อเย็น! กดจับจังหวะตอนทุ่นกระตุกได้เลย:</p>
+      <div id="fish-bar" style="height:26px;background:#0f172a;border:1px solid #38bdf8;border-radius:8px;position:relative;overflow:hidden;margin:14px 0">
+        <div style="position:absolute;left:38%;width:24%;top:0;bottom:0;background:rgba(34,197,94,0.35);border-left:2px solid #4ade80;border-right:2px solid #4ade80"></div>
+        <div id="fish-cursor" style="position:absolute;top:2px;bottom:2px;width:10px;background:#facc15;border-radius:4px;left:0%"></div>
+      </div>
+      <button id="btn-pull-fish" class="primary-btn" style="width:100%">🎣 วัดเบ็ด / ดึงแหจับปลา!</button>
+      `
+    );
+    const cursor = document.getElementById('fish-cursor')!;
+    let pos = 0;
+    let dir = 1;
+    const timer = window.setInterval(() => {
+      if (!this.modalOpen) {
+        clearInterval(timer);
+        return;
+      }
+      pos += dir * 3.8;
+      if (pos >= 94) {
+        pos = 94;
+        dir = -1;
+      } else if (pos <= 0) {
+        pos = 0;
+        dir = 1;
+      }
+      cursor.style.left = `${pos}%`;
+    }, 30);
+    document.getElementById('btn-pull-fish')?.addEventListener('click', () => {
+      clearInterval(timer);
+      this.sound.playPickup();
+      this.state.flags.caughtPondFishDay1 = true;
+      this.addItem('fresh_fish');
+      this.closeModal();
+      this.startDialogue([
+        {
+          speaker: 'หนุ่ม',
+          role: 'บนท่าน้ำไม้หนองน้ำบ้านทุ่ง',
+          portrait: 'player',
+          text: pos >= 34 && pos <= 64
+            ? 'เย้!! วัดเบ็ดจังหวะเป๊ะ ได้ "ปลาช่อนนา" ตัวเบ้อเริ่มเลย! เอาไปฝากแม่คำเฮ็ดต้มยำปลาแซ่บๆ มื้อแลงนี้แน่นอน!'
+            : 'ฮึบ! เกือบหลุดมือแต่ลุงชาวบ้านช่วยช้อนแหขึ้นมาได้ทัน! ได้ "ปลาช่อนสดหนองน้ำ" ตัวโตฝากแม่คำแล้ว!',
+        },
+      ]);
+      this.saveGame();
+    });
+  }
+
   private interactTempleFair(): void {
     this.sound.playUIClick();
-    if (!this.state.flags.visitedFair) {
+    const mood = this.getVillageMood();
+    if (mood === 'lockdown') {
+      this.showToast('งานวัดปิดร้างมืดสนิท! ป้ายหน้าซุ้มเขียนว่า "งดจัดงานรำวงและมหรสพ ชาวบ้านโปรดเข้าบ้าน"', true);
+      return;
+    }
+    if (mood === 'uneasy') {
+      this.showToast('ซุ้มงานวัดเริ่มลดไฟหรี่ลงแล้ว คนเที่ยวงานบางตาเพราะข่าวลือผีกระสือเริ่มหนาหู');
+      return;
+    }
+    this.openModal(
+      'งานบุญประจำปี วัดป่าบ้านทุ่ง 🎡',
+      `
+      <p style="margin-top:0">บรรยากาศงานวัดคึกคักสุดๆ! มีทั้งชิงช้าสวรรค์ เวทีหมอลำ ซุ้มปาลูกโป่ง และซุ้มสอยดาวลุ้นโชค:</p>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-top:10px">
+        <button id="btn-fair-dart" class="primary-btn">🎈 เล่นปาลูกโป่งงานวัด (ฟื้น +20 สติ & ฟังข่าวชาวบ้าน)</button>
+        <button id="btn-fair-soidao" class="secondary-btn">⭐ สอยดาวลุ้นโชควัดป่า ${this.state.flags.wonFairPrize ? '(สอยได้รางวัลแล้ว ✓)' : '(ลุ้นของขลังวัดป่า!)'}</button>
+      </div>
+      `
+    );
+    document.getElementById('btn-fair-dart')?.addEventListener('click', () => {
+      this.sound.playBalloonPop();
       this.state.flags.visitedFair = true;
-      this.adjustSanity(15);
+      this.adjustSanity(20);
       this.addClue('fair_rumor');
+      this.closeModal();
       this.startDialogue([
         {
           speaker: 'โฆษกงานวัด & ชาวบ้าน',
-          role: 'ลานงานบุญวัดป่าบ้านทุ่ง',
+          role: 'ซุ้มปาลูกโป่งงานวัดป่า',
           portrait: 'tom',
-          text: 'ม่วนซื่นโฮแซว! มาปาลูกโป่งสอยดาวขึ้นชิงช้าสวรรค์กันจ้า! (เดินชมงานวัดใจชื้นขึ้น +15 สติ)... แต่ขอเตือนนะหนุ่ม พอเลยสี่ทุ่มไฟเวทีหมอลำเบาลง อย่าเดินข้ามซุ้มประตูไปป่าช้าหลังวัดคนเดียวเด็ดขาด!',
+          text: 'ปัง! ปัง! แม่นหลายไอ้หนุ่ม ปาแตก 3 ลูกรวดเลย (+20 สติ)! ช่วงนี้ม่วนซื่นเต็มที่เด้อ แต่อย่าเผลอเดินเลยซุ้มประตูไปป่าช้าหลังวัดตอนดึกล่ะ มีคนเล่าเรื่องลี้ลับหนาหูเหลือเกิน!',
         },
       ]);
+      this.saveGame();
+    });
+    document.getElementById('btn-fair-soidao')?.addEventListener('click', () => {
+      this.sound.playClueChime();
+      this.state.flags.visitedFair = true;
+      this.addClue('fair_rumor');
+      this.closeModal();
+      if (!this.state.flags.wonFairPrize) {
+        this.state.flags.wonFairPrize = true;
+        this.addItem('fair_amulet');
+        this.showToast('🎉 สอยดาวได้รางวัลใหญ่: "เหรียญหลวงพ่อวัดป่า" พกไว้กันขวัญหนีดีฝ่อ!');
+      } else {
+        this.adjustSanity(10);
+        this.showToast('🎈 ชมชิงช้าสวรรค์และรำวงหมอลำหน้าเวที (+10 สติ)');
+      }
+      this.saveGame();
+    });
+  }
+
+  private interactPaTower(): void {
+    this.sound.playPaSystemChime();
+    const mood = this.getVillageMood();
+    if (!this.state.flags.heardPaWarning && mood !== 'festive') {
+      this.state.flags.heardPaWarning = true;
+      this.addClue('speaker_warning');
+      this.saveGame();
+    }
+    const text =
+      mood === 'lockdown'
+        ? '📣 [เสียงตามสายผู้ใหญ่บ้าน] "ประกาศด่วน! ขณะนี้พบผีกระสือออกอาละวาดในบ้านทุ่ง! ขอให้ทุกบ้านปิดประตูหน้าต่าง ขัดหนามพุทรา และงดวิ่งรถทุกชนิดหลังค่ำ!"'
+        : mood === 'uneasy'
+        ? '📣 [เสียงตามสายผู้ใหญ่บ้าน] "แจ้งข่าวลูกบ้านบ้านทุ่ง... ช่วงนี้มีข่าวลือเรื่องตับหมูหายและดวงไฟประหลาด จึงของดรถแห่ชั่วคราว และอย่าออกจากบ้านยามวิกาลเด้อ!"'
+        : '📣 [เสียงตามสายผู้ใหญ่บ้าน] "สวัสดีพี่น้องบ้านทุ่งอีสาน! มื้อนี้มีงานวัดประจำปีและขบวนรถแห่ ขอให้ทุกคนม่วนซื่นและคอยช่วยสอดส่องดูแลกันนะจ๊ะ!"';
+    this.startDialogue([{ speaker: 'เสียงจากหอกระจายข่าว', role: 'ผู้ใหญ่บ้านบ้านทุ่ง', portrait: 'uncle', text }]);
+  }
+
+  private interactBangFai(): void {
+    this.sound.playUIClick();
+    if (this.getVillageMood() === 'lockdown') {
+      this.showToast('ลานบั้งไฟเงียบวังเวงไร้ผู้คนเพราะข่าวลือผีกระสือ');
     } else {
-      this.adjustSanity(5);
-      this.showToast('แสงไฟชิงช้าสวรรค์และเสียงกลองรำวงช่วยให้ใจชื้นขึ้น (+5 สติ) — ด้านขวาเลยไปคือซุ้มประตูป่าช้า');
+      this.adjustSanity(8);
+      this.showToast('ซุ้มบั้งไฟพญานาคประจำหมู่บ้านประดับลายกนกทองสวยงาม — ประเพณีขอฝนชาวอีสาน (+8 สติ)');
+    }
+  }
+
+  private interactTaniBanana(): void {
+    const mood = this.getVillageMood();
+    const h = this.state.gameMinutes / 60;
+    const isNight = h >= 19.0 || h < 5.8;
+    if (mood !== 'festive' && isNight) {
+      this.sound.playScare();
+      this.state.flags.inspectedTani = true;
+      this.addClue('banana_spirit');
+      this.adjustSanity(-10);
+      this.startDialogue([
+        {
+          speaker: 'เงาหญิงชุดเขียวในดงกล้วยตานี',
+          role: 'สิ่งลี้ลับริมคันนา',
+          portrait: 'narrator',
+          text: '(กลิ่นดอกกล้วยป่าเย็นยะเยือกลอยโชย...) "อย่าเดินออกห่างวงสายสิญจน์นักพ่อหนุ่ม... ดวงไฟอาคมจากท้ายตลาดมักลอยผ่านกอข้าไปทางโกศหลังวัดทุกคืน..."',
+        },
+      ]);
+      this.saveGame();
+    } else {
+      this.showToast('กอกล้วยตานีริมคันนาปลิวไสวตามสายลม — ช่วงกลางวันดูร่มรื่นปกติ');
     }
   }
 
@@ -1895,7 +2121,7 @@ export class Chapter2Engine {
       if (!f.heardHerbFolkloreDay1) {
         targetRoom = 'outside';
         targetX = -28.0;
-        text = 'เดินตลาดสดแวะคุยฟังเรื่องเล่าชุมชนจากตาชมแผงสมุนไพร';
+        text = 'เดินตลาดใหญ่แวะคุยฟังเรื่องเล่าชุมชนจากตาชมแผงสมุนไพร';
       } else if (!f.askedFishFolkloreDay1) {
         targetRoom = 'outside';
         targetX = -36.0;
@@ -1904,11 +2130,19 @@ export class Chapter2Engine {
         targetRoom = 'outside';
         targetX = -44.0;
         text = 'รับหมูสดจากเฮียตี๋เขียงหมูกลับไปให้แม่ทำกับข้าว';
+      } else if (!f.caughtPondFishDay1) {
+        targetRoom = 'outside';
+        targetX = 20.4;
+        text = 'เดินไปท่าน้ำหนองน้ำ (+20 ม.) ตกปลาช่อนสดฝากแม่คำทำต้มยำ';
+      } else if (!f.visitedFair) {
+        targetRoom = 'outside';
+        targetX = 76.0;
+        text = 'แวะเที่ยวงานวัดป่า (ปาลูกโป่ง / สอยดาว) ก่อนงานจะปิด!';
       } else if (!f.greetedMonkDay1) {
         if (this.currentRoom !== 'kuti') {
           targetRoom = 'outside';
           targetX = 54.5;
-          text = 'เดินไปทางขวาแวะกราบสวัสดีหลวงพี่ที่กุฏิวัดป่า';
+          text = 'เดินไปแวะกราบสวัสดีหลวงพี่ที่กุฏิวัดป่า';
         } else {
           targetRoom = 'kuti';
           targetX = 1.8;
@@ -1917,16 +2151,20 @@ export class Chapter2Engine {
       } else if (this.currentRoom !== 'stilt_house') {
         targetRoom = 'outside';
         targetX = 5.0;
-        text = 'กลับขึ้นบ้านไม้ยกสูงนำของสดให้แม่คำทำมื้อเย็นด้วยกัน';
+        text = 'กลับขึ้นบ้านไม้ยกสูงนำของสดและปลาช่อนให้แม่คำทำมื้อเย็นด้วยกัน';
       } else {
         targetRoom = 'stilt_house';
         targetX = -1.2;
-        text = 'กินข้าวเย็นพร้อมหน้ากับแม่คำและน้องแก้ว';
+        text = 'กินข้าวแลงพร้อมหน้ากับแม่คำและน้องแก้ว';
       }
     } else if (!f.checkedUnderHouse) {
       targetRoom = 'outside';
       targetX = -1.8;
       text = 'ลงมาตรวจดูใต้แคร่ไม้ไผ่ใต้ถุนบ้านหาข้าวต้มมัดปริศนา';
+    } else if (!f.heardPaWarning && !f.sawKrasueAtWindow) {
+      targetRoom = 'outside';
+      targetX = -9.6;
+      text = 'ฟังประกาศเตือนภัยจากหอกระจายข่าวหมู่บ้าน (รถแห่เริ่มหยุดวิ่ง!)';
     } else if (!f.sawKrasueAtWindow) {
       if (!isNight) {
         if (this.currentRoom !== 'stilt_house') {
@@ -2218,12 +2456,13 @@ export class Chapter2Engine {
         this.interactPrompt.classList.add('hidden');
       }
 
+      const villageMood = this.getVillageMood();
       this.sound.updateAmbience(dt, this.state.weather, period, this.state.sanity, 0 as FloorIndex, this.krasueChase);
       this.sound.updateIsaanAmbience(dt, period, this.currentRoom === 'outside', this.krasueChase);
       this.sound.updateRotHaeMusic(
         dt,
         Math.abs(this.state.x - this.world.getRotHaeX()),
-        this.currentRoom === 'outside',
+        this.currentRoom === 'outside' && villageMood === 'festive',
         this.krasueChase
       );
 
@@ -2243,7 +2482,9 @@ export class Chapter2Engine {
         this.ridingBike,
         this.krasueShowTimer > 0 || this.krasueChase,
         this.krasueChase,
-        this.krasueX
+        this.krasueX,
+        villageMood,
+        this.state.flags.banishedKrasue
       );
     }
   }

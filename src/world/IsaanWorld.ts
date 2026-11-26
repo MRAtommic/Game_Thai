@@ -26,7 +26,10 @@ import {
   RuralActorsController,
   SongthaewController,
   TempleFairController,
+  VillageMood,
 } from './IsaanFestivalsAndTraffic';
+
+export type { VillageMood };
 
 export const CH2_MIN_X = -105.0;
 export const CH2_MAX_X = 120.0;
@@ -350,6 +353,7 @@ export class IsaanWorld {
   private trafficVehicles: MovingVehicle[] = [];
   private templeFairCtrl!: TempleFairController;
   private ruralActorsCtrl!: RuralActorsController;
+  private baiSriGroup: THREE.Group = new THREE.Group();
 
   private charFrames: Record<Ch2CharacterKind, THREE.CanvasTexture[]> = {
     noom: [],
@@ -1646,6 +1650,19 @@ export class IsaanWorld {
     sisSprite.position.set(0.9, 0.9, -0.8);
     house.add(momSprite, sisSprite);
 
+    // Sacred Phan Bai Sri banana-leaf blessing tray (พานบายศรีสู่ขวัญ) for celebratory finale!
+    const baiSriMat = new THREE.MeshStandardMaterial({ color: '#15803d', roughness: 0.65 });
+    const brassTray = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.22, 0.14, 12), new THREE.MeshStandardMaterial({ color: '#eab308', metalness: 0.6 }));
+    brassTray.position.set(0, 0.07, 0);
+    const coneLower = new THREE.Mesh(new THREE.ConeGeometry(0.24, 0.45, 8), baiSriMat);
+    coneLower.position.set(0, 0.36, 0);
+    const topFlower = new THREE.Mesh(new THREE.SphereGeometry(0.08, 8, 8), new THREE.MeshBasicMaterial({ color: '#fef08a' }));
+    topFlower.position.set(0, 0.62, 0);
+    this.baiSriGroup.add(brassTray, coneLower, topFlower);
+    this.baiSriGroup.position.set(-0.4, 0.02, 0.1);
+    this.baiSriGroup.visible = false;
+    house.add(this.baiSriGroup);
+
     // 2) Grand Temple Hall / Ubosot Interior ('temple_sala') — Rich Golden Thai Sanctuary!
     const sala = makeRoom('temple_sala', '#ffdf9a', 4.2, 14.2);
     // Replace generic dorm concrete wall inside Ubosot with ornate Thai Temple Mural Wall!
@@ -1747,10 +1764,13 @@ export class IsaanWorld {
     isRidingBike: boolean,
     showKrasue: boolean,
     krasueChasing: boolean,
-    krasueX: number
+    krasueX: number,
+    mood: VillageMood = 'festive',
+    showBaiSri = false
   ): void {
     this.animClock += dt;
     const isInside = currentRoom !== 'outside';
+    this.baiSriGroup.visible = showBaiSri && currentRoom === 'stilt_house';
 
     this.exteriorGroup.visible = !isInside;
     (Object.keys(this.roomGroups) as Ch2RoomId[]).forEach((rid) => {
@@ -1921,28 +1941,33 @@ export class IsaanWorld {
     let hemi = 0.65;
     let sun = 0.45;
     if (h >= 6.5 && h < 16.5) {
-      sky.set('#5e82a3');
-      hemi = 1.0;
-      sun = 1.15;
+      sky.set(mood === 'lockdown' ? '#3d4c5c' : mood === 'uneasy' ? '#516c87' : '#5e82a3');
+      hemi = mood === 'lockdown' ? 0.68 : 1.0;
+      sun = mood === 'lockdown' ? 0.65 : 1.15;
     } else if (h >= 16.5 && h < 19.0) {
-      sky.set('#3b3248');
-      hemi = 0.78;
-      sun = 0.65;
+      sky.set(mood === 'lockdown' ? '#1f2436' : '#3b3248');
+      hemi = mood === 'lockdown' ? 0.52 : 0.78;
+      sun = mood === 'lockdown' ? 0.35 : 0.65;
     } else {
-      sky.set('#121a2d');
-      hemi = 0.62;
-      sun = 0.42;
+      sky.set(mood === 'lockdown' ? '#090e18' : '#121a2d');
+      hemi = mood === 'lockdown' ? 0.42 : 0.62;
+      sun = mood === 'lockdown' ? 0.25 : 0.42;
     }
     this.scene.background = sky;
-    (this.scene.fog as THREE.FogExp2).color.copy(sky);
+    const fog = this.scene.fog as THREE.FogExp2;
+    fog.color.copy(sky);
+    fog.density = mood === 'lockdown' ? 0.023 : mood === 'uneasy' ? 0.018 : 0.014;
     this.hemiLight.intensity = hemi;
     this.sunMoonLight.intensity = sun;
 
     const isDay = h >= 7.0 && h < 17.5;
+    const isNight = h >= 19.0 || h < 5.8;
     animateIsaanWorldLife(
       dt,
       this.animClock,
       isDay,
+      isNight,
+      mood,
       this.rotHaeCtrl,
       this.songthaewCtrl,
       this.trafficVehicles,
@@ -1951,7 +1976,8 @@ export class IsaanWorld {
     );
 
     for (const vl of this.villageLights) {
-      vl.light.intensity = isDay ? vl.base * 0.18 : vl.base;
+      const moodDim = mood === 'lockdown' ? 0.55 : 1.0;
+      vl.light.intensity = (isDay ? vl.base * 0.18 : vl.base) * moodDim;
     }
     for (const rl of this.roomLights) {
       rl.light.intensity = rl.room === currentRoom ? rl.baseIntensity : 0;

@@ -129,12 +129,16 @@ export interface RotHaeController {
   dir: 1 | -1;
 }
 
+export type VillageMood = 'festive' | 'uneasy' | 'lockdown';
+
 export interface TempleFairController {
   ferrisWheel: THREE.Group;
   gondolas: THREE.Group[];
   bulbs: THREE.Mesh[];
   stageLights: THREE.PointLight[];
   stageDancers: THREE.Group[];
+  boothVendors: THREE.Group[];
+  closedSign: THREE.Mesh;
 }
 
 export interface RuralActorsController {
@@ -143,6 +147,13 @@ export interface RuralActorsController {
   drunkDir: 1 | -1;
   shoppers: { group: THREE.Group; baseX: number; range: number; speed: number; phase: number }[];
   wisps: { mesh: THREE.Mesh; baseX: number; baseY: number; phase: number }[];
+  fireflies: { mesh: THREE.Mesh; baseX: number; baseY: number; phase: number }[];
+  campfireGroup: THREE.Group;
+  campfireLight: THREE.PointLight;
+  khaenPlayer: THREE.Group;
+  taniSpirit: THREE.Group;
+  taniLight: THREE.PointLight;
+  saleng: { group: THREE.Group; wheels: THREE.Group[]; x: number; dir: 1 | -1 };
 }
 
 /** Builds the slow-moving Isaan Rot Hae speaker pickup truck + crowd of dancing villagers. */
@@ -560,6 +571,14 @@ export function buildTempleFairZone(scene: THREE.Scene): TempleFairController {
   stageLights.forEach((l) => scene.add(l));
 
   const stageDancers: THREE.Group[] = [];
+  const boothVendors: THREE.Group[] = [];
+  // Track fair booth vendors cleanly inside fair controller
+  [65.5, 70.5, 81.5].forEach((fx, fi) => {
+    const v = makeVillagerFigure(['#fb7185', '#38bdf8', '#fbbf24'][fi], '#1e293b');
+    v.position.set(fx - 0.55, 0, -1.65);
+    scene.add(v);
+    boothVendors.push(v);
+  });
   [85.6, 86.9, 88.6, 89.8].forEach((dx, idx) => {
     const d = makeVillagerFigure(flagCols[idx], '#1e293b');
     d.position.set(dx, idx % 2 === 0 ? 0.72 : 0, idx % 2 === 0 ? -1.8 : -0.75);
@@ -567,11 +586,161 @@ export function buildTempleFairZone(scene: THREE.Scene): TempleFairController {
     stageDancers.push(d);
   });
 
-  return { ferrisWheel, gondolas, bulbs, stageLights, stageDancers };
+  // Notice banner shown across stage when fair cancels during Krasue lockdown
+  const closedSign = new THREE.Mesh(
+    new THREE.PlaneGeometry(3.6, 0.85),
+    new THREE.MeshBasicMaterial({ map: makeBannerTex('#450a0a', '#ef4444', '#fecaca', 'งดจัดงานวัดชั่วคราว', 'เตือนภัยผีกระสือ — ชาวบ้านเข้าบ้านก่อนมืด!') })
+  );
+  closedSign.position.set(76.0, 1.85, -0.55);
+  closedSign.visible = false;
+  scene.add(closedSign);
+
+  return { ferrisWheel, gondolas, bulbs, stageLights, stageDancers, boothVendors, closedSign };
 }
 
-/** Builds Takian Twin Trees Shrine (-96.5), Bus Stops (-82, +26), 4 new Big Market stalls, Drunk walker, and 6 Market Shoppers. */
+/** Builds Takian Twin Trees Shrine (-96.5), Village Arch (-101.5), Bang Fai (-67.5), PA Tower (-8.5), Granary (-6.4), Fair/Market actors, Tani spirit, and Saleng cart. */
 export function buildExpandedVillageLife(scene: THREE.Scene, awningMat: THREE.Material): RuralActorsController {
+  // 0A) Village Welcome Archway ("ยินดีต้อนรับสู่ บ้านทุ่งอีสาน" with giant Khaen & Plara jar at x = -101.5)
+  [-102.6, -100.4].forEach((ax) => {
+    addPart(scene, 0.28, 4.3, 0.28, '#593722', ax, 2.15, -0.8);
+    // Bamboo Khaen pipes ornament mounted on arch columns!
+    for (let k = -1; k <= 1; k++) {
+      addPart(scene, 0.05, 1.55 + Math.abs(k) * 0.25, 0.05, '#ca8a04', ax + k * 0.07, 2.4, -0.62);
+    }
+  });
+  addPart(scene, 3.2, 0.22, 0.45, '#7f1d1d', -101.5, 4.3, -0.8);
+  const welcomeSign = new THREE.Mesh(
+    new THREE.PlaneGeometry(3.0, 0.72),
+    new THREE.MeshBasicMaterial({ map: makeBannerTex('#14532d', '#eab308', '#fef08a', 'ยินดีต้อนรับ บ้านทุ่งอีสาน', 'วิถีถิ่น • ศรัทธา • บุญบั้งไฟ') })
+  );
+  welcomeSign.position.set(-101.5, 3.72, -0.62);
+  scene.add(welcomeSign);
+
+  // 0B) Traditional Rocket Festival Launch Pad (ซุ้มบั้งไฟพญานาค x = -67.5)
+  addPart(scene, 2.6, 0.22, 1.6, '#78350f', -67.5, 0.11, -1.65);
+  [-68.3, -66.7].forEach((bx) => addPart(scene, 0.12, 3.8, 0.12, '#92400e', bx, 1.9, -1.85));
+  addPart(scene, 2.2, 0.12, 0.12, '#eab308', -67.5, 3.3, -1.85);
+  const rocket = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.14, 0.16, 3.3, 10),
+    new THREE.MeshStandardMaterial({ color: '#dc2626', roughness: 0.45 })
+  );
+  rocket.position.set(-67.5, 2.25, -1.7);
+  rocket.rotation.z = -0.35;
+  scene.add(rocket);
+  const rocketCone = new THREE.Mesh(new THREE.ConeGeometry(0.16, 0.55, 10), new THREE.MeshStandardMaterial({ color: '#facc15' }));
+  rocketCone.position.set(-66.95, 3.82, -1.7);
+  rocketCone.rotation.z = -0.35;
+  scene.add(rocketCone);
+  const bfSign = new THREE.Mesh(
+    new THREE.PlaneGeometry(2.0, 0.52),
+    new THREE.MeshBasicMaterial({ map: makeBannerTex('#7f1d1d', '#facc15', '#fef08a', 'ลานบุญบั้งไฟบ้านทุ่ง') })
+  );
+  bfSign.position.set(-67.5, 3.3, -1.74);
+  scene.add(bfSign);
+
+  // 0C) Village PA Loudspeaker Broadcast Tower (หอกระจายข่าวผู้ใหญ่บ้าน x = -9.6)
+  [-9.8, -9.4].forEach((tx) => addPart(scene, 0.1, 6.2, 0.1, '#64748b', tx, 3.1, -1.45, 0.5, 0.6));
+  addPart(scene, 0.7, 0.12, 0.4, '#94a3b8', -9.6, 5.75, -1.45);
+  [-1, 1].forEach((side) => {
+    const horn = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.4, 8, 1, true), new THREE.MeshStandardMaterial({ color: '#e2e8f0', side: THREE.DoubleSide }));
+    horn.rotation.z = side * (Math.PI / 2.2);
+    horn.position.set(-9.6 + side * 0.4, 5.95, -1.4);
+    scene.add(horn);
+  });
+  const paSign = new THREE.Mesh(
+    new THREE.PlaneGeometry(1.7, 0.46),
+    new THREE.MeshBasicMaterial({ map: makeBannerTex('#1e293b', '#eab308', '#fef08a', 'หอกระจายข่าวหมู่บ้าน') })
+  );
+  paSign.position.set(-9.6, 2.2, -1.22);
+  scene.add(paSign);
+
+  // 0D) Elevated Isaan Wooden Rice Granary (ยุ้งฉางข้าวอีสาน x = -6.2)
+  [-7.2, -5.2].forEach((gx) => {
+    addPart(scene, 0.2, 2.5, 0.2, '#3b2416', gx, 1.25, -2.0);
+    addPart(scene, 0.2, 2.5, 0.2, '#3b2416', gx, 1.25, -3.1);
+  });
+  addPart(scene, 2.4, 1.35, 1.4, '#78502e', -6.2, 2.15, -2.55);
+  addPart(scene, 2.8, 0.16, 1.85, '#92400e', -6.2, 3.05, -2.55);
+  // Large earthen red jar beside granary
+  const redJar = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.25, 0.68, 12), new THREE.MeshStandardMaterial({ color: '#991b1b', roughness: 0.6 }));
+  redJar.position.set(-4.85, 0.34, -1.65);
+  scene.add(redJar);
+
+  // 0E) Yellow Golden Shower Blossoms (ดอกคูณเหลืองอีสาน) along village roads
+  [-88, -62, -23.5, 12.2, 58.2].forEach((kx) => {
+    const trunk = addPart(scene, 0.18, 3.4, 0.18, '#473628', kx, 1.7, -3.1);
+    void trunk;
+    [[-0.35, 3.5], [0.35, 3.65], [0, 3.9]].forEach(([dx, dy]) => {
+      const bloom = new THREE.Mesh(new THREE.SphereGeometry(0.45, 7, 7), new THREE.MeshStandardMaterial({ color: '#facc15', emissive: '#ca8a04', emissiveIntensity: 0.22 }));
+      bloom.position.set(kx + dx, dy, -2.95);
+      scene.add(bloom);
+    });
+  });
+
+  // 0F) Cozy Campfire & Grilled Fish Circle under Stilt House (-1.8, visible in festive nights!)
+  const campfireGroup = new THREE.Group();
+  const embers = new THREE.Mesh(new THREE.ConeGeometry(0.22, 0.35, 7), new THREE.MeshBasicMaterial({ color: '#f97316' }));
+  embers.position.set(0, 0.18, 0);
+  campfireGroup.add(embers);
+  const sitA = makeVillagerFigure('#38bdf8', '#1e293b');
+  sitA.position.set(-0.62, 0, -0.05);
+  const sitB = makeVillagerFigure('#f472b6', '#1e293b');
+  sitB.position.set(0.62, 0, -0.05);
+  campfireGroup.add(sitA, sitB);
+  campfireGroup.position.set(-1.8, 0, -1.05);
+  scene.add(campfireGroup);
+  const campfireLight = new THREE.PointLight('#fb923c', 3.4, 8, 1.2);
+  campfireLight.position.set(-1.8, 0.75, -0.85);
+  scene.add(campfireLight);
+
+  // 0G) Morlam Khaen Player seated on the Cozy Rice-Field Hut (เถียงนา x = -16.8)
+  const khaenPlayer = makeVillagerFigure('#1e3a8a', '#0f172a', '#a16207');
+  // Twin Khaen bamboo pipes held to mouth
+  addPart(khaenPlayer, 0.06, 0.95, 0.12, '#eab308', 0.26, 1.32, 0.16);
+  khaenPlayer.position.set(-16.8, 1.15, -3.55);
+  scene.add(khaenPlayer);
+
+  // 0H) Mysterious Nang Tani Banana-Tree Spirit (นางตานีดงกล้วย x = -20.5) — only glows at eerie lockdown night!
+  const taniSpirit = makeVillagerFigure('#16a34a', '#15803d');
+  taniSpirit.position.set(-20.5, 0.25, -2.4);
+  taniSpirit.visible = false;
+  scene.add(taniSpirit);
+  const taniLight = new THREE.PointLight('#4ade80', 0, 7, 1.3);
+  taniLight.position.set(-20.5, 1.4, -2.0);
+  scene.add(taniLight);
+
+  // 0I) Sidecar Ice-Cream Saleng Motorcycle (รถซาเล้งขายไอติมกะทิ)
+  const salengGrp = new THREE.Group();
+  const salengWheels: THREE.Group[] = [];
+  [-0.45, 0.45].forEach((wx) => {
+    const w = makeWheel(0.22, 0.1);
+    w.position.set(wx, 0.22, 0);
+    salengGrp.add(w);
+    salengWheels.push(w);
+  });
+  addPart(salengGrp, 0.95, 0.26, 0.24, '#0284c7', 0, 0.46, 0);
+  addPart(salengGrp, 0.85, 0.48, 0.72, '#e2e8f0', 0.05, 0.56, 0.56); // ice-cream chest sidecar!
+  addPart(salengGrp, 0.06, 1.2, 0.06, '#cbd5e1', 0.05, 1.25, 0.56);
+  const umbrella = new THREE.Mesh(new THREE.ConeGeometry(0.65, 0.28, 8), new THREE.MeshStandardMaterial({ color: '#f43f5e', roughness: 0.5 }));
+  umbrella.position.set(0.05, 1.88, 0.56);
+  salengGrp.add(umbrella);
+  addPart(salengGrp, 0.3, 0.52, 0.22, '#facc15', -0.05, 0.88, 0); // driver
+  salengGrp.position.set(12, 0, 3.0);
+  scene.add(salengGrp);
+
+  // 0J) Golden Fireflies twinkling over rice paddies at dusk/night!
+  const fireflies: RuralActorsController['fireflies'] = [];
+  [-20.2, -17.5, -14.8, -11.5, 13.0, 16.5, 19.2].forEach((fx, fi) => {
+    const ff = new THREE.Mesh(
+      new THREE.SphereGeometry(0.055, 6, 6),
+      new THREE.MeshBasicMaterial({ color: '#fde047', transparent: true, opacity: 0.8 })
+    );
+    const fy = 0.85 + (fi % 3) * 0.42;
+    ff.position.set(fx, fy, -2.1 - (fi % 2) * 0.6);
+    scene.add(ff);
+    fireflies.push({ mesh: ff, baseX: fx, baseY: fy, phase: fi * 1.1 });
+  });
+
   // 1) Mysterious Twin Takian Trees & 7-Color Sacred Cloth Shrine (ต้นตะเคียนคู่ x = -96.5)
   [-97.3, -95.7].forEach((tx, idx) => {
     addPart(scene, 0.75, 8.6, 0.72, '#3d2817', tx, 4.3, -2.1 - idx * 0.25, 0.95);
@@ -789,120 +958,183 @@ export function buildExpandedVillageLife(scene: THREE.Scene, awningMat: THREE.Ma
     return { group: sg, baseX: sd.baseX, range: sd.range, speed: sd.speed, phase: idx * 1.35 };
   });
 
-  return { drunkGroup, drunkX: -71.0, drunkDir: 1, shoppers, wisps };
+  return {
+    drunkGroup,
+    drunkX: -71.0,
+    drunkDir: 1,
+    shoppers,
+    wisps,
+    fireflies,
+    campfireGroup,
+    campfireLight,
+    khaenPlayer,
+    taniSpirit,
+    taniLight,
+    saleng: { group: salengGrp, wheels: salengWheels, x: 12, dir: -1 },
+  };
 }
 
-/** Updates all moving vehicles, Songthaew bus stops, Rot Hae dancers/lights, Ferris wheel, drunk walker & market shoppers. */
+/** Updates all moving vehicles, Songthaew, Rot Hae, Temple Fair & Rural actors smoothly reacting to current VillageMood! */
 export function animateIsaanWorldLife(
   dt: number,
   clock: number,
   isDay: boolean,
+  isNight: boolean,
+  mood: VillageMood,
   rotHae: RotHaeController,
   songthaew: SongthaewController,
   vehicles: MovingVehicle[],
   fair: TempleFairController,
   rural: RuralActorsController
 ): void {
-  // 1) Rot Hae slow cruise + flashing neon LEDs + crowd dancing & walking along!
-  const rotSpeed = 2.05;
-  rotHae.x += rotHae.dir * rotSpeed * dt;
-  if (rotHae.x > 91) rotHae.dir = -1;
-  else if (rotHae.x < -94) rotHae.dir = 1;
-  rotHae.group.position.x = rotHae.x;
-  rotHae.group.scale.x = rotHae.dir;
-  // Counter-flip banner text so Thai signage never mirrors backward when driving left
-  rotHae.banner.scale.x = rotHae.dir;
-  rotHae.wheels.forEach((w) => (w.rotation.z -= 5.8 * dt));
-  // Beat-synced strobe colors at 132 BPM
-  const beatIdx = Math.floor(clock * 4.4);
-  const partyCols = ['#f43f5e', '#22d3ee', '#facc15', '#a855f7', '#4ade80'];
-  rotHae.discoLight.color.set(partyCols[beatIdx % partyCols.length]);
-  rotHae.discoLight.intensity = 5.5 + Math.sin(clock * 14) * 2.5;
-  rotHae.ledMeshes.forEach((b, i) => {
-    (b.material as THREE.MeshBasicMaterial).color.set(partyCols[(beatIdx + i) % partyCols.length]);
-  });
+  const isFestive = mood === 'festive';
+  const isLockdown = mood === 'lockdown';
+
+  // 1) Rot Hae ONLY runs during 'festive' village life — canceled once Krasue rumors & outbreak begin!
+  rotHae.group.visible = isFestive;
   rotHae.dancers.forEach((d) => {
-    d.group.position.x = rotHae.x + d.offsetX * rotHae.dir;
-    d.group.position.y = Math.abs(Math.sin(clock * 7.2 + d.phase)) * 0.14;
-    d.group.rotation.z = Math.sin(clock * 5.8 + d.phase) * 0.12;
-    const armL = d.group.getObjectByName('armL');
-    const armR = d.group.getObjectByName('armR');
-    if (armL) armL.rotation.z = 1.9 + Math.sin(clock * 9.0 + d.phase) * 0.65;
-    if (armR) armR.rotation.z = -1.9 - Math.cos(clock * 9.0 + d.phase) * 0.65;
+    d.group.visible = isFestive;
   });
-
-  // 2) Songthaew route with stops at -82 (Pak Soi), -24.5 (Market), +61.4 (Temple & Fair)
-  const stops = [-82.0, -24.5, 61.4];
-  if (songthaew.stopTimer > 0) {
-    songthaew.stopTimer -= dt;
-  } else {
-    songthaew.x += songthaew.dir * 5.2 * dt;
-    if (songthaew.x > 88) {
-      songthaew.dir = -1;
-      songthaew.lastStopX = 999;
-    } else if (songthaew.x < -98) {
-      songthaew.dir = 1;
-      songthaew.lastStopX = 999;
-    }
-    for (const sx of stops) {
-      if (Math.abs(songthaew.x - sx) < 0.25 && Math.abs(songthaew.lastStopX - sx) > 3) {
-        songthaew.stopTimer = 3.6;
-        songthaew.lastStopX = sx;
-        break;
-      }
-    }
-    songthaew.wheels.forEach((w) => (w.rotation.z -= 12 * dt));
+  rotHae.discoLight.intensity = isFestive ? 5.5 + Math.sin(clock * 14) * 2.5 : 0;
+  if (isFestive) {
+    const rotSpeed = 2.05;
+    rotHae.x += rotHae.dir * rotSpeed * dt;
+    if (rotHae.x > 91) rotHae.dir = -1;
+    else if (rotHae.x < -94) rotHae.dir = 1;
+    rotHae.group.position.x = rotHae.x;
+    rotHae.group.scale.x = rotHae.dir;
+    rotHae.banner.scale.x = rotHae.dir;
+    rotHae.wheels.forEach((w) => (w.rotation.z -= 5.8 * dt));
+    const beatIdx = Math.floor(clock * 4.4);
+    const partyCols = ['#f43f5e', '#22d3ee', '#facc15', '#a855f7', '#4ade80'];
+    rotHae.discoLight.color.set(partyCols[beatIdx % partyCols.length]);
+    rotHae.ledMeshes.forEach((b, i) => {
+      (b.material as THREE.MeshBasicMaterial).color.set(partyCols[(beatIdx + i) % partyCols.length]);
+    });
+    rotHae.dancers.forEach((d) => {
+      d.group.position.x = rotHae.x + d.offsetX * rotHae.dir;
+      d.group.position.y = Math.abs(Math.sin(clock * 7.2 + d.phase)) * 0.14;
+      d.group.rotation.z = Math.sin(clock * 5.8 + d.phase) * 0.12;
+      const armL = d.group.getObjectByName('armL');
+      const armR = d.group.getObjectByName('armR');
+      if (armL) armL.rotation.z = 1.9 + Math.sin(clock * 9.0 + d.phase) * 0.65;
+      if (armR) armR.rotation.z = -1.9 - Math.cos(clock * 9.0 + d.phase) * 0.65;
+    });
   }
-  songthaew.group.position.x = songthaew.x;
-  songthaew.group.scale.x = songthaew.dir;
-  songthaew.banner.scale.x = songthaew.dir;
-  songthaew.headlight.intensity = isDay ? 0.5 : 4.2;
-  // Waiting passengers step forward excitedly when Songthaew stops near them
+
+  // 2) Songthaew stops running completely in lockdown ("ไม่มีรถวิ่ง หมู่บ้านก็เงียบ")!
+  songthaew.group.visible = !isLockdown;
+  if (!isLockdown) {
+    const stops = [-82.0, -24.5, 61.4];
+    if (songthaew.stopTimer > 0) {
+      songthaew.stopTimer -= dt;
+    } else {
+      songthaew.x += songthaew.dir * 5.2 * dt;
+      if (songthaew.x > 88) {
+        songthaew.dir = -1;
+        songthaew.lastStopX = 999;
+      } else if (songthaew.x < -98) {
+        songthaew.dir = 1;
+        songthaew.lastStopX = 999;
+      }
+      for (const sx of stops) {
+        if (Math.abs(songthaew.x - sx) < 0.25 && Math.abs(songthaew.lastStopX - sx) > 3) {
+          songthaew.stopTimer = 3.6;
+          songthaew.lastStopX = sx;
+          break;
+        }
+      }
+      songthaew.wheels.forEach((w) => (w.rotation.z -= 12 * dt));
+    }
+    songthaew.group.position.x = songthaew.x;
+    songthaew.group.scale.x = songthaew.dir;
+    songthaew.banner.scale.x = songthaew.dir;
+    songthaew.headlight.intensity = isDay ? 0.5 : 4.2;
+  } else {
+    songthaew.headlight.intensity = 0;
+  }
   songthaew.stopWaiters.forEach((w) => {
-    const nearBus = Math.abs(songthaew.x - w.stopX) < 3.0 && songthaew.stopTimer > 0;
-    w.group.position.z = THREE.MathUtils.lerp(w.group.position.z, nearBus ? 2.85 : 1.95, Math.min(1, dt * 4));
+    w.group.visible = !isLockdown;
+    if (!isLockdown) {
+      const nearBus = Math.abs(songthaew.x - w.stopX) < 3.0 && songthaew.stopTimer > 0;
+      w.group.position.z = THREE.MathUtils.lerp(w.group.position.z, nearBus ? 2.85 : 1.95, Math.min(1, dt * 4));
+    }
   });
 
-  // 3) Ambient highway traffic (Cars, Motorbikes, Bicycles)
-  for (const v of vehicles) {
+  // 3) ALL highway traffic stops completely during lockdown curfew — dead silent village!
+  vehicles.forEach((v, idx) => {
+    const visible = isFestive ? true : mood === 'uneasy' ? idx % 2 === 0 : false;
+    v.group.visible = visible;
+    if (!visible) return;
     v.x += v.dir * v.speed * dt;
     if (v.x > v.maxX) v.x = v.minX;
     else if (v.x < v.minX) v.x = v.maxX;
     v.group.position.x = v.x;
     v.wheels.forEach((w) => (w.rotation.z -= v.speed * 2.6 * dt));
     if (v.headlight) v.headlight.intensity = isDay ? 0.35 : 3.4;
+  });
+
+  rural.saleng.group.visible = isFestive;
+  if (isFestive) {
+    rural.saleng.x += rural.saleng.dir * 3.8 * dt;
+    if (rural.saleng.x > 82) rural.saleng.dir = -1;
+    else if (rural.saleng.x < -90) rural.saleng.dir = 1;
+    rural.saleng.group.position.x = rural.saleng.x;
+    rural.saleng.group.scale.x = rural.saleng.dir;
+    rural.saleng.wheels.forEach((w) => (w.rotation.z -= 9.5 * dt));
   }
 
-  // 4) Temple Fair Ferris Wheel + blinking carnival bulbs + Morlam stage dancers
-  fair.ferrisWheel.rotation.z += 0.28 * dt;
-  fair.gondolas.forEach((g) => {
-    g.rotation.z = -fair.ferrisWheel.rotation.z;
-  });
+  // 4) Temple Fair shuts down completely in 'lockdown' — dark silent Ferris Wheel, empty stage & closed notice!
+  fair.closedSign.visible = isLockdown;
+  if (!isLockdown) {
+    fair.ferrisWheel.rotation.z += (isFestive ? 0.28 : 0.1) * dt;
+    fair.gondolas.forEach((g) => {
+      g.rotation.z = -fair.ferrisWheel.rotation.z;
+    });
+  }
   fair.bulbs.forEach((b, i) => {
-    const on = Math.floor(clock * 4 + i) % 3 !== 0;
-    (b.material as THREE.MeshBasicMaterial).opacity = on ? 1 : 0.35;
+    const mat = b.material as THREE.MeshBasicMaterial;
+    if (isLockdown) {
+      mat.opacity = 0.12;
+    } else {
+      const on = Math.floor(clock * 4 + i) % 3 !== 0;
+      mat.opacity = isFestive ? (on ? 1 : 0.35) : on ? 0.45 : 0.15;
+    }
   });
   fair.stageLights.forEach((l, i) => {
-    l.intensity = (isDay ? 1.8 : 5.6) + Math.sin(clock * 5.2 + i * 2) * 2.0;
+    if (isLockdown) l.intensity = 0.25;
+    else if (isFestive) l.intensity = (isDay ? 1.8 : 5.6) + Math.sin(clock * 5.2 + i * 2) * 2.0;
+    else l.intensity = 1.4;
   });
   fair.stageDancers.forEach((d, idx) => {
-    d.rotation.z = Math.sin(clock * 4.5 + idx * 1.3) * 0.1;
-    const armL = d.getObjectByName('armL');
-    const armR = d.getObjectByName('armR');
-    if (armL) armL.rotation.z = 0.8 + Math.sin(clock * 5.5 + idx) * 0.5;
-    if (armR) armR.rotation.z = -0.8 - Math.cos(clock * 5.5 + idx) * 0.5;
+    d.visible = isFestive;
+    if (isFestive) {
+      d.rotation.z = Math.sin(clock * 4.5 + idx * 1.3) * 0.1;
+      const armL = d.getObjectByName('armL');
+      const armR = d.getObjectByName('armR');
+      if (armL) armL.rotation.z = 0.8 + Math.sin(clock * 5.5 + idx) * 0.5;
+      if (armR) armR.rotation.z = -0.8 - Math.cos(clock * 5.5 + idx) * 0.5;
+    }
+  });
+  fair.boothVendors.forEach((v) => {
+    v.visible = !isLockdown;
   });
 
-  // 5) Drunk villager staggering back and forth (-77 .. -65)
-  rural.drunkX += rural.drunkDir * 0.95 * dt;
-  if (rural.drunkX > -65) rural.drunkDir = -1;
-  else if (rural.drunkX < -77) rural.drunkDir = 1;
-  rural.drunkGroup.position.x = rural.drunkX;
-  rural.drunkGroup.rotation.z = Math.sin(clock * 3.1) * 0.18;
-  rural.drunkGroup.position.y = Math.abs(Math.sin(clock * 4.0)) * 0.04;
+  // 5) Drunkard hides home during lockdown curfew; shoppers shrink in uneasy mode & vanish in lockdown!
+  rural.drunkGroup.visible = !isLockdown;
+  if (!isLockdown) {
+    rural.drunkX += rural.drunkDir * 0.95 * dt;
+    if (rural.drunkX > -65) rural.drunkDir = -1;
+    else if (rural.drunkX < -77) rural.drunkDir = 1;
+    rural.drunkGroup.position.x = rural.drunkX;
+    rural.drunkGroup.rotation.z = Math.sin(clock * 3.1) * 0.18;
+    rural.drunkGroup.position.y = Math.abs(Math.sin(clock * 4.0)) * 0.04;
+  }
 
-  // 6) Market & Fair shoppers strolling naturally
-  rural.shoppers.forEach((s) => {
+  rural.shoppers.forEach((s, idx) => {
+    const show = isFestive ? true : mood === 'uneasy' ? idx % 2 === 0 : false;
+    s.group.visible = show;
+    if (!show) return;
     const sx = s.baseX + Math.sin(clock * 0.45 * s.speed + s.phase) * s.range;
     const dir = Math.cos(clock * 0.45 * s.speed + s.phase) >= 0 ? 1 : -1;
     s.group.position.x = sx;
@@ -910,7 +1142,28 @@ export function animateIsaanWorldLife(
     s.group.position.y = Math.abs(Math.sin(clock * 5.2 + s.phase)) * 0.03;
   });
 
-  // 7) Ghostly floating wisps around Twin Takian Shrine & Cemetery
+  // 6) Campfire circle & Khaen player active during 'festive', gone when rumors/outbreak strike!
+  rural.campfireGroup.visible = isFestive;
+  rural.campfireLight.intensity = isFestive ? 3.2 + Math.sin(clock * 9) * 0.6 : 0;
+  rural.khaenPlayer.visible = isFestive;
+  if (isFestive) {
+    rural.khaenPlayer.rotation.z = Math.sin(clock * 3.2) * 0.08;
+  }
+
+  // 7) Fireflies twinkle above paddies at night; Tani banana-tree spirit appears eerily at night during uneasy/lockdown!
+  rural.fireflies.forEach((ff) => {
+    ff.mesh.visible = isNight || !isDay;
+    if (ff.mesh.visible) {
+      ff.mesh.position.x = ff.baseX + Math.sin(clock * 1.4 + ff.phase) * 0.6;
+      ff.mesh.position.y = ff.baseY + Math.sin(clock * 2.1 + ff.phase) * 0.35;
+      (ff.mesh.material as THREE.MeshBasicMaterial).opacity = 0.25 + (Math.sin(clock * 4.5 + ff.phase) + 1) * 0.35;
+    }
+  });
+  const showTani = isNight && mood !== 'festive';
+  rural.taniSpirit.visible = showTani;
+  rural.taniLight.intensity = showTani ? 2.2 + Math.sin(clock * 4) * 0.6 : 0;
+
+  // 8) Ghostly floating wisps around Twin Takian Shrine & Cemetery
   rural.wisps.forEach((w) => {
     w.mesh.position.x = w.baseX + Math.sin(clock * 1.1 + w.phase) * 0.45;
     w.mesh.position.y = w.baseY + Math.sin(clock * 1.9 + w.phase) * 0.35;
