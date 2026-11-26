@@ -309,7 +309,8 @@ body,
   font-size: 0.88rem;
   color: #efe7d6;
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.72);
-  pointer-events: none;
+  pointer-events: auto;
+  cursor: pointer;
   animation: bob 1.4s infinite ease-in-out;
 }
 
@@ -550,61 +551,91 @@ body,
 /* Mobile Touch Controls */
 #mobile-controls {
   position: fixed;
-  bottom: max(84px, calc(env(safe-area-inset-bottom) + 74px));
-  left: max(14px, env(safe-area-inset-left));
-  right: max(14px, env(safe-area-inset-right));
+  bottom: max(90px, calc(env(safe-area-inset-bottom) + 80px));
+  left: max(10px, env(safe-area-inset-left));
+  right: max(10px, env(safe-area-inset-right));
   z-index: 17;
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
+  gap: 8px;
   pointer-events: none;
 }
 
 .dpad,
-.touch-actions {
+.touch-actions,
+.touch-util-row {
   display: flex;
-  gap: 10px;
+  gap: 8px;
   pointer-events: auto;
   align-items: flex-end;
 }
 
+.touch-util-row {
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
 .touch-btn {
-  border: 1px solid rgba(224, 169, 76, 0.45);
-  background: rgba(13, 18, 30, 0.72);
+  border: 2px solid rgba(224, 169, 76, 0.55);
+  background: rgba(10, 14, 26, 0.80);
   color: #f4e6cb;
-  border-radius: 16px;
+  border-radius: 18px;
   font-family: var(--font-sans);
-  font-weight: 600;
-  backdrop-filter: blur(6px);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+  font-weight: 700;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255,230,160,0.08);
   touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: pointer;
+  transition: transform 0.08s, background 0.08s;
 }
 
 .touch-btn:active,
 .touch-btn.pressed {
-  background: rgba(224, 169, 76, 0.34);
+  background: rgba(224, 169, 76, 0.38);
   border-color: var(--accent);
-  transform: scale(0.95);
+  transform: scale(0.93);
 }
 
 .touch-move {
-  width: 62px;
-  height: 62px;
-  font-size: 1.35rem;
+  width: 70px;
+  height: 70px;
+  font-size: 1.5rem;
 }
 
 .touch-act {
-  min-width: 74px;
-  height: 62px;
+  min-width: 80px;
+  height: 70px;
   padding: 0 14px;
-  font-size: 0.95rem;
-  background: rgba(224, 169, 76, 0.22);
+  font-size: 1rem;
+  background: rgba(224, 169, 76, 0.26);
+  border-color: rgba(224, 169, 76, 0.7);
+}
+
+.touch-util {
+  width: 54px;
+  height: 54px;
+  font-size: 1.3rem;
+  background: rgba(30, 40, 70, 0.80);
 }
 
 .touch-small {
-  height: 46px;
-  padding: 0 12px;
-  font-size: 0.84rem;
+  height: 48px;
+  padding: 0 14px;
+  font-size: 0.88rem;
+}
+
+/* Landscape phone — ปุ่มเล็กลงนิดเดียวเพื่อไม่บัง */
+@media (max-height: 420px) and (orientation: landscape) {
+  #mobile-controls {
+    bottom: max(4px, env(safe-area-inset-bottom));
+  }
+  .touch-move { width: 56px; height: 56px; font-size: 1.2rem; }
+  .touch-act  { height: 56px; min-width: 68px; }
+  .touch-util { width: 44px; height: 44px; font-size: 1.1rem; }
 }
 
 /* Dialogue */
@@ -876,6 +907,7 @@ body,
   justify-content: center;
   padding: 20px;
   text-align: center;
+  overflow-y: auto;
 }
 
 .title-bg-glow {
@@ -961,7 +993,28 @@ body,
     height: 60px;
   }
   #interact-prompt {
-    bottom: 154px;
+    bottom: 170px;
     font-size: 0.82rem;
+    max-width: 84vw;
+  }
+  #dialogue-box {
+    padding: 12px 13px;
+    max-height: 70vh;
+    overflow-y: auto;
+  }
+  #dialogue-text {
+    font-size: 0.9rem;
+  }
+  .choice-btn {
+    padding: 10px 12px;
+    font-size: 0.88rem;
+  }
+  #inventory-bar {
+    max-width: calc(100vw - 16px);
+    padding: 5px 6px;
+  }
+  .inv-slot {
+    min-width: 48px;
+    height: 48px;
   }
 }

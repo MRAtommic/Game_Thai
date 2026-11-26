@@ -135,13 +135,20 @@
 
       <!-- Mobile Touch Controls -->
       <div id="mobile-controls" class="hidden">
+        <!-- ซ้าย: D-Pad เดิน + ปุ่มขึ้น/ลงชั้น -->
         <div class="dpad">
           <button id="touch-left" class="touch-btn touch-move" aria-label="เดินซ้าย">◀</button>
           <button id="touch-right" class="touch-btn touch-move" aria-label="เดินขวา">▶</button>
         </div>
-        <div class="touch-actions">
+        <!-- กลาง: ปุ่มยูทิลิตี้ (ขึ้น/ลง, ไฟฉาย, จักรยาน) -->
+        <div class="touch-util-row">
           <button id="touch-up" class="touch-btn touch-small hidden" aria-label="ขึ้นชั้นบน">▲ ขึ้น</button>
           <button id="touch-down" class="touch-btn touch-small hidden" aria-label="ลงชั้นล่าง">▼ ลง</button>
+          <button id="touch-flashlight" class="touch-btn touch-util hidden" aria-label="ไฟฉาย">🔦</button>
+          <button id="touch-bike" class="touch-btn touch-util hidden" aria-label="ปั่นจักรยาน">🚲</button>
+        </div>
+        <!-- ขวา: ยิงปืน + สำรวจ -->
+        <div class="touch-actions">
           <button id="touch-shoot" class="touch-btn touch-shoot hidden" aria-label="ยิงปืน">ยิงปืน!</button>
           <button id="touch-interact" class="touch-btn touch-act" aria-label="สำรวจ/คุย">สำรวจ</button>
         </div>

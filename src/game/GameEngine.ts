@@ -158,6 +158,8 @@ export class GameEngine {
   private touchUp = document.getElementById('touch-up')!;
   private touchDown = document.getElementById('touch-down')!;
   private touchShoot = document.getElementById('touch-shoot')!;
+  private touchFlashlight = document.getElementById('touch-flashlight')!;
+  private touchBike = document.getElementById('touch-bike')!;
 
   constructor(canvas: HTMLCanvasElement, sharedSound?: SoundEngine, onStartChapter2?: () => void) {
     this.world = new DormWorld(canvas);
@@ -264,7 +266,12 @@ export class GameEngine {
     const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0 || window.innerWidth <= 900;
     if (isTouch) {
       this.mobileControls.classList.remove('hidden');
+      this.touchFlashlight.classList.remove('hidden');
+      this.touchFlashlight.textContent = this.state.flashlightOn ? '🔦✓' : '🔦';
+    } else {
+      this.touchFlashlight.classList.add('hidden');
     }
+    this.touchBike.classList.add('hidden');
 
     this.running = true;
     this.lastTime = performance.now();
@@ -444,6 +451,15 @@ export class GameEngine {
     this.touchShoot.addEventListener('click', () => {
       this.sound.init();
       this.shootZombieGun();
+    }, sig);
+    this.touchFlashlight.addEventListener('click', () => {
+      this.sound.init();
+      this.toggleFlashlight();
+      this.touchFlashlight.textContent = this.state.flashlightOn ? '🔦✓' : '🔦';
+    }, sig);
+    this.interactPrompt.addEventListener('click', () => {
+      this.sound.init();
+      if (this.activeDialogue.length === 0 && !this.modalOpen) this.tryInteract();
     }, sig);
     document.getElementById('btn-sober-up')?.addEventListener('click', () => {
       this.sound.init();

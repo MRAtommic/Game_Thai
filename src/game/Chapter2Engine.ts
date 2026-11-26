@@ -150,6 +150,8 @@ export class Chapter2Engine {
   private btnSound = document.getElementById('btn-sound')!;
   private touchUp = document.getElementById('touch-up')!;
   private touchDown = document.getElementById('touch-down')!;
+  private touchFlashlight = document.getElementById('touch-flashlight')!;
+  private touchBike = document.getElementById('touch-bike')!;
 
   constructor(canvas: HTMLCanvasElement, sound: SoundEngine, onExitToMenu: () => void) {
     this.world = new IsaanWorld(canvas);
@@ -227,11 +229,21 @@ export class Chapter2Engine {
     this.invBar.classList.remove('hidden');
     this.touchUp.classList.add('hidden');
     this.touchDown.classList.add('hidden');
+    this.touchFlashlight.classList.add('hidden');
+    this.touchBike.classList.add('hidden');
     this.chaseBanner.querySelector('span:last-child')!.textContent =
       'ผีกระสือกำลังลอยไล่ตามมา! รีบวิ่งหนีเข้า "วงสายสิญจน์ลานวัด" พระอุโบสถ หรือขึ้นบ้านไม้ยกสูง';
 
     const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0 || window.innerWidth <= 900;
-    if (isTouch) this.mobileControls.classList.remove('hidden');
+    if (isTouch) {
+      this.mobileControls.classList.remove('hidden');
+      this.touchFlashlight.classList.remove('hidden'); // ไฟฉายแสดงตลอดในโหมดสัมผัส
+      this.touchFlashlight.textContent = this.state.flashlightOn ? '🔦✓' : '🔦';
+      if (this.state.inventory.includes('bicycle')) {
+        this.touchBike.classList.remove('hidden');
+        this.touchBike.textContent = this.ridingBike ? '🚲✓' : '🚲';
+      }
+    }
 
     this.running = true;
     this.lastTime = performance.now();
@@ -343,8 +355,17 @@ export class Chapter2Engine {
 
     const bindHold = (id: string, dir: -1 | 1) => {
       const btn = document.getElementById(id)!;
-      btn.addEventListener('pointerdown', (ev) => { ev.preventDefault(); this.sound.init(); this.touchMoveDir = dir; }, sig);
-      const end = (ev: Event) => { ev.preventDefault(); if (this.touchMoveDir === dir) this.touchMoveDir = 0; };
+      btn.addEventListener('pointerdown', (ev) => {
+        ev.preventDefault();
+        this.sound.init();
+        this.touchMoveDir = dir;
+        btn.classList.add('pressed');
+      }, sig);
+      const end = (ev: Event) => {
+        ev.preventDefault();
+        if (this.touchMoveDir === dir) this.touchMoveDir = 0;
+        btn.classList.remove('pressed');
+      };
       btn.addEventListener('pointerup', end, sig);
       btn.addEventListener('pointercancel', end, sig);
       btn.addEventListener('pointerleave', end, sig);
@@ -360,6 +381,21 @@ export class Chapter2Engine {
       },
       sig
     );
+    // ปุ่มไฟฉาย (มือถือ)
+    this.touchFlashlight.addEventListener('click', () => {
+      this.sound.init();
+      this.toggleFlashlight();
+      this.touchFlashlight.textContent = this.state.flashlightOn ? '🔦✓' : '🔦';
+    }, sig);
+    // ปุ่มจักรยาน (มือถือ) — แสดงเมื่อมีจักรยานในกระเป๋า
+    this.touchBike.addEventListener('click', () => {
+      this.sound.init();
+      if (this.state.inventory.includes('bicycle')) this.toggleBicycle();
+    }, sig);
+    this.interactPrompt.addEventListener('click', () => {
+      this.sound.init();
+      if (this.activeDialogue.length === 0 && !this.modalOpen) this.tryInteract();
+    }, sig);
   }
 
   private setupInteractables(): void {
@@ -1379,6 +1415,8 @@ export class Chapter2Engine {
     this.ridingBike = !this.ridingBike;
     this.sound.playBicycleBell();
     this.renderInventory();
+    // อัปเดตปุ่มจักรยานบนมือถือ
+    this.touchBike.textContent = this.ridingBike ? '🚲✓' : '🚲';
     this.showToast(
       this.ridingBike
         ? 'ขึ้นปั่นจักรยานบ้านทุ่งแล้ว! (ความเร็ว x2.3 — กด [B] หรือคลิกไอเทมเพื่อจอดลง)'
@@ -1392,6 +1430,8 @@ export class Chapter2Engine {
       this.sound.playPickup();
       this.renderInventory();
       this.showToast(`เก็บไอเทม: ${CH2_ITEMS[id].name}`);
+      // แสดงปุ่มจักรยานบนมือถือเมื่อเก็บจักรยาน
+      if (id === 'bicycle') this.touchBike.classList.remove('hidden');
       this.saveGame();
     }
   }
