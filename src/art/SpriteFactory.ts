@@ -18,7 +18,11 @@ export type CharacterKind =
   | 'clerk'
   | 'zombie'
   | 'prim'
-  | 'prim_chase';
+  | 'prim_chase'
+  | 'win_moto'
+  | 'police'
+  | 'laundry_lady'
+  | 'electrician';
 
 /**
  * Draws a high-resolution (128x192) illustrated/painted 2D character sprite.
@@ -470,6 +474,94 @@ export function drawCharacterCanvas(
     ctx.fillRect(71, 39 + zBob, 5, 4);
     ctx.fillStyle = '#450a0a';
     ctx.fillRect(59, 49 + zBob, 10, 8);
+  } else if (kind === 'win_moto') {
+    // Win Motorcycle Taxi Driver in iconic bright orange vest (#f97316) with #9 badge
+    drawLeg(ctx, 51 + stride, 122 + liftL, 13, 52, '#1e293b', '#0f172a');
+    drawLeg(ctx, 68 - stride, 122 + liftR, 13, 52, '#1e293b', '#0f172a');
+    drawRoundedRect(ctx, 43, 68 + bob, 42, 56, 9, '#f1f5f9');
+    drawRoundedRect(ctx, 44, 70 + bob, 40, 52, 7, '#ea580c'); // orange vest
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 18px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('9', 64, 101 + bob);
+    drawRoundedRect(ctx, 35, 72 + bob, 11, 39, 5, '#e2e8f0');
+    drawRoundedRect(ctx, 82, 72 + bob, 11, 39, 5, '#e2e8f0');
+    drawHead(ctx, 64, 41 + bob, 18, 20, '#d8a47b', '#ba865e');
+    // Baseball cap
+    ctx.fillStyle = '#0f172a';
+    ctx.beginPath();
+    ctx.ellipse(64, 24 + bob, 20, 10, 0, Math.PI, Math.PI * 2);
+    ctx.fill();
+    ctx.fillRect(46, 23 + bob, 42, 4);
+    ctx.fillStyle = '#111';
+    ctx.fillRect(58, 40 + bob, 3.5, 4);
+    ctx.fillRect(71, 40 + bob, 3.5, 4);
+  } else if (kind === 'police') {
+    // Thai Police Sergeant in khaki uniform + police cap
+    drawLeg(ctx, 51, 122, 13, 52, '#786246', '#111318');
+    drawLeg(ctx, 68, 122, 13, 52, '#786246', '#111318');
+    drawRoundedRect(ctx, 42, 68 + bob, 44, 56, 9, '#8c7454');
+    ctx.fillStyle = '#271e16';
+    ctx.fillRect(42, 113 + bob, 44, 7);
+    ctx.fillStyle = '#eab308';
+    ctx.fillRect(60, 113 + bob, 8, 7);
+    drawRoundedRect(ctx, 34, 72 + bob, 11, 40, 5, '#836b4c');
+    drawRoundedRect(ctx, 83, 72 + bob, 11, 40, 5, '#836b4c');
+    drawHead(ctx, 64, 41 + bob, 18, 20, '#d6a179', '#b68158');
+    ctx.fillStyle = '#624f38';
+    ctx.beginPath();
+    ctx.ellipse(64, 22 + bob, 22, 10, 0, Math.PI, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#14171f';
+    ctx.fillRect(45, 25 + bob, 42, 5);
+    ctx.fillStyle = '#facc15';
+    ctx.beginPath();
+    ctx.arc(64, 18 + bob, 3.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#111';
+    ctx.fillRect(58, 40 + bob, 3.5, 4);
+    ctx.fillRect(71, 40 + bob, 3.5, 4);
+  } else if (kind === 'laundry_lady') {
+    // Auntie Samorn at 24h Laundry in light blue blouse + pastel apron
+    drawLeg(ctx, 52, 122, 12, 52, '#334155', '#1e293b');
+    drawLeg(ctx, 67, 122, 12, 52, '#334155', '#1e293b');
+    drawRoundedRect(ctx, 42, 68 + bob, 44, 58, 9, '#7dd3fc');
+    drawRoundedRect(ctx, 46, 78 + bob, 36, 46, 6, '#f9a8d4'); // pink apron
+    drawRoundedRect(ctx, 35, 72 + bob, 10, 38, 4, '#67e8f9');
+    drawRoundedRect(ctx, 83, 72 + bob, 10, 38, 4, '#67e8f9');
+    drawHead(ctx, 64, 41 + bob, 18, 20, '#dfb08a', '#c3936c');
+    // Hair bun
+    ctx.fillStyle = '#2c2523';
+    ctx.beginPath();
+    ctx.arc(46, 28 + bob, 9, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.ellipse(64, 26 + bob, 19, 11, 0, Math.PI, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#111';
+    ctx.fillRect(58, 40 + bob, 3.5, 4);
+    ctx.fillRect(71, 40 + bob, 3.5, 4);
+  } else if (kind === 'electrician') {
+    // Chang Tong in navy work coveralls + yellow hard hat + tool belt
+    drawLeg(ctx, 51, 122, 13, 52, '#1e3a5f', '#111827');
+    drawLeg(ctx, 68, 122, 13, 52, '#1e3a5f', '#111827');
+    drawRoundedRect(ctx, 42, 68 + bob, 44, 58, 9, '#1d4ed8');
+    ctx.fillStyle = '#facc15';
+    ctx.fillRect(42, 92 + bob, 44, 5); // safety reflective stripe
+    ctx.fillStyle = '#78350f';
+    ctx.fillRect(42, 114 + bob, 44, 7); // tool belt
+    drawRoundedRect(ctx, 34, 72 + bob, 10, 40, 4, '#2563eb');
+    drawRoundedRect(ctx, 84, 72 + bob, 10, 40, 4, '#2563eb');
+    drawHead(ctx, 64, 41 + bob, 18, 20, '#d59e74', '#b47f57');
+    // Yellow safety helmet
+    ctx.fillStyle = '#eab308';
+    ctx.beginPath();
+    ctx.ellipse(64, 24 + bob, 22, 12, 0, Math.PI, Math.PI * 2);
+    ctx.fill();
+    ctx.fillRect(42, 23 + bob, 45, 4);
+    ctx.fillStyle = '#111';
+    ctx.fillRect(58, 40 + bob, 3.5, 4);
+    ctx.fillRect(71, 40 + bob, 3.5, 4);
   } else {
     // Terrifying Thai Horror Spirit (Prim normal + chasing!)
     const isChase = kind === 'prim_chase';

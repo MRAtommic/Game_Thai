@@ -15,7 +15,7 @@ import {
   TimePeriod,
   WeatherType,
 } from '../types';
-import { DormWorld, STAIR_X, STREET_MIN_X, WORLD_MAX_X, WORLD_MIN_X } from '../world/DormWorld';
+import { DormWorld, EAST_MAX_X, STAIR_X, STREET_MIN_X, WORLD_MAX_X, WORLD_MIN_X } from '../world/DormWorld';
 
 const SAVE_KEY = 'reuan_chan_dorm_save_v1';
 const SESSION_ACTIVE_KEY = 'reuan_chan_active_session';
@@ -84,6 +84,7 @@ export class GameEngine {
   private facing: 1 | -1 = 1;
   private codes = new Set<string>();
   private touchMoveDir: -1 | 0 | 1 = 0;
+  private isSprintingTouch = false;
   private stepTimer = 0;
   private weatherTimer = 55;
   private stairCooldown = 0;
@@ -266,16 +267,18 @@ export class GameEngine {
     this.invBar.classList.remove('hidden');
 
     const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0 || window.innerWidth <= 900;
+    const touchSprint = document.getElementById('touch-sprint');
     if (isTouch) {
       this.mobileControls.classList.remove('hidden');
       this.touchFlashlight.classList.remove('hidden');
       this.touchFlashlight.textContent = this.state.flashlightOn ? '🔦✓' : '🔦';
+      touchSprint?.classList.remove('hidden');
     } else {
       this.touchFlashlight.classList.add('hidden');
+      touchSprint?.classList.add('hidden');
     }
     this.touchBike.classList.add('hidden');
     document.getElementById('hud-extra')?.classList.add('hidden');
-    document.getElementById('touch-sprint')?.classList.add('hidden');
     document.getElementById('touch-photo')?.classList.add('hidden');
 
     this.running = true;
@@ -328,6 +331,7 @@ export class GameEngine {
       const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0 || window.innerWidth <= 900;
       this.mobileControls.classList.toggle('hidden', !isTouch);
       this.touchFlashlight.classList.toggle('hidden', !isTouch);
+      document.getElementById('touch-sprint')?.classList.toggle('hidden', !isTouch);
       this.renderInventory();
     };
     window.addEventListener('resize', handleResize, sig);
@@ -336,6 +340,8 @@ export class GameEngine {
     window.addEventListener('blur', () => {
       this.codes.clear();
       this.touchMoveDir = 0;
+      this.isSprintingTouch = false;
+      document.getElementById('touch-sprint')?.classList.remove('pressed');
     }, sig);
 
     bindCameraZoomControls(
@@ -500,6 +506,27 @@ export class GameEngine {
       this.sound.init();
       this.toggleFlashlight();
     }, sig);
+    const touchSprintBtn = document.getElementById('touch-sprint');
+    if (touchSprintBtn) {
+      let spId: number | null = null;
+      const spStart = (ev: PointerEvent) => {
+        ev.preventDefault();
+        spId = ev.pointerId;
+        this.isSprintingTouch = true;
+        touchSprintBtn.classList.add('pressed');
+        try { touchSprintBtn.setPointerCapture(ev.pointerId); } catch {}
+      };
+      const spEnd = (ev: PointerEvent) => {
+        if (spId !== null && ev.pointerId !== spId) return;
+        ev.preventDefault();
+        spId = null;
+        this.isSprintingTouch = false;
+        touchSprintBtn.classList.remove('pressed');
+      };
+      touchSprintBtn.addEventListener('pointerdown', spStart as EventListener, sig);
+      touchSprintBtn.addEventListener('pointerup', spEnd as EventListener, sig);
+      touchSprintBtn.addEventListener('pointercancel', spEnd as EventListener, sig);
+    }
     this.interactPrompt.addEventListener('click', () => {
       this.sound.init();
       if (this.activeDialogue.length > 0 || this.modalOpen) return;
@@ -681,6 +708,13 @@ export class GameEngine {
       return;
     }
 
+    if (itemId === 'sports_drink') {
+      this.adjustSanity(30);
+      this.removeItem('sports_drink');
+      this.showToast('ดื่มเกลือแร่เย็นสดชื่น หายเหนื่อยทันที (+30 สติ)');
+      return;
+    }
+
     if (itemId === 'thai_liquor') {
       if (this.drunkMode) {
         this.showToast('แค่ตอนนี้ก็เมาจนเห็นซอมบี้ทั้งหอแล้ว!');
@@ -856,6 +890,54 @@ export class GameEngine {
         label: 'สำรวจบ้านร้างท้ายซอย 9',
         onInteract: () => this.interactAbandonedHouse(),
       },
+      {
+        id: 'win_moto_stand',
+        floor: 0,
+        x: -20.5,
+        range: 2.3,
+        label: 'วินมอไซค์ซอย 9 (คุยกับพี่เบิร์ด / นั่งวินข้ามจุด)',
+        onInteract: () => this.interactWinMotoStand(),
+      },
+      {
+        id: 'police_kiosk',
+        floor: 0,
+        x: -104.5,
+        range: 2.5,
+        label: 'ป้อมตำรวจชุมชนซอย 9 (สอบปากคำดาบวิชัย)',
+        onInteract: () => this.interactPoliceKiosk(),
+      },
+      {
+        id: 'canal_bridge',
+        floor: 0,
+        x: -118.5,
+        range: 3.0,
+        label: 'สะพานข้ามคลองซอย 9 (งมหลักฐานใต้น้ำ)',
+        onInteract: () => this.interactCanalBridge(),
+      },
+      {
+        id: 'basketball_court',
+        floor: 0,
+        x: 19.5,
+        range: 2.8,
+        label: 'สนามสตรีทบาสหลังหอ (ชู้ตบาสคลายเครียด)',
+        onInteract: () => this.interactBasketballCourt(),
+      },
+      {
+        id: 'laundry_shop',
+        floor: 0,
+        x: 27.5,
+        range: 2.5,
+        label: 'ร้านซักรีด 24 ชม. "ซักสะอาด" (คุยกับป้าสมร)',
+        onInteract: () => this.interactLaundryShop(),
+      },
+      {
+        id: 'generator_shed',
+        floor: 0,
+        x: 35.8,
+        range: 2.6,
+        label: 'ห้องเครื่องปั่นไฟหอพัก (คุยกับช่างตง & ต่อสายไฟ)',
+        onInteract: () => this.interactGeneratorShed(),
+      },
 
       // FLOOR 1
       {
@@ -1003,6 +1085,14 @@ export class GameEngine {
         },
       },
       {
+        id: 'floor3_rooftop_door',
+        floor: 3,
+        x: -11.2,
+        range: 1.8,
+        label: 'ประตูเหล็กขึ้นดาดฟ้าหอพักเรือนจันทร์',
+        onInteract: () => this.interactRooftopDoor(),
+      },
+      {
         id: 'room_304',
         floor: 3,
         x: 3.5,
@@ -1011,6 +1101,38 @@ export class GameEngine {
           this.state.flags.unlockedRoom304 ? 'เดินเข้าไปในห้อง 304' : 'สำรวจประตูห้อง 304',
         label: 'ห้อง 304',
         onInteract: () => this.interactRoom304(),
+      },
+
+      // ROOFTOP ('rooftop')
+      {
+        id: 'roof_exit',
+        floor: 3,
+        room: 'rooftop',
+        x: -5.2,
+        range: 1.6,
+        label: 'เปิดประตูบันไดกลับลงไปชั้น 3',
+        onInteract: () => this.exitRoom(),
+      },
+      {
+        id: 'roof_tank',
+        floor: 3,
+        room: 'rooftop',
+        x: 1.5,
+        range: 2.2,
+        label: 'สำรวจหลังแท็งก์น้ำสเตนเลสบนดาดฟ้า',
+        onInteract: () => this.interactRooftopTank(),
+      },
+      {
+        id: 'roof_edge',
+        floor: 3,
+        room: 'rooftop',
+        x: 4.5,
+        range: 2.0,
+        label: 'มองวิวย่านซอย 9 และรถไฟฟ้า BTS ยามค่ำคืน',
+        onInteract: () => {
+          this.adjustSanity(15);
+          this.showToast('ลมแรงพัดบนดาดฟ้า มองเห็นรถไฟฟ้า BTS วิ่งตัดเส้นขอบฟ้า (+15 สติ)');
+        },
       },
 
       // ========== INSIDE ROOM INTERACTABLES ==========
@@ -1359,6 +1481,26 @@ export class GameEngine {
           text: 'หาว... ตีหนึ่งทีไรตาจะปิดทุกที ดึกป่านนี้อย่าเดินออกไปนอกหอนะลูก ข้างในมีอะไรก็รอเช้าค่อยว่ากัน... เออ ถ้ามีกาแฟสักกระป๋องคงดี',
         },
       ]);
+    } else if (
+      (f.checkedRooftop || this.state.clues.includes('canal_evidence')) &&
+      !f.uncleTrueConfession
+    ) {
+      f.uncleTrueConfession = true;
+      this.startDialogue([
+        {
+          speaker: 'ลุงชัย (เสียงสั่นเครือน้ำตาคลอ)',
+          role: 'ยามกะดึก — ความจริงที่ถูกปิด',
+          portrait: 'uncle',
+          text: 'เอ็ง... เอ็งขึ้นไปเจอมือถือเครื่องนั้นบนดาดฟ้ากับกล่องเหล็กที่เสี่ยวิรัชโยนลงคลองแล้วใช่ไหมลูก... (ก้มหน้าลง) คืนนั้นลุงเห็นเงาสองคนจริงๆ พี่ต้อมวิ่งลงมาก่อน ส่วนเสี่ยวิรัชถือเชือกขึ้นไปซ้ำบนชั้น 3 แล้วเดินลงมาขู่ว่าจะฆ่าหลานสาวลุงถ้าลุงปากโป้ง ลุงเลยจำใจปิดตายชั้น 3 เพื่อไม่ให้ดวงวิญญาณพริมทำร้ายคนอื่น...',
+        },
+        {
+          speaker: 'ต้น',
+          role: 'นักศึกษาปี 2',
+          portrait: 'player',
+          text: 'ผมเข้าใจลุงแล้วครับ... คืนนี้ผมจะเอาหลักฐานทั้งหมดเข้าห้อง 304 เพื่อลากคอทั้ง "พี่ต้อม" และ "เสี่ยวิรัช" เข้าคุกให้ได้!',
+        },
+      ]);
+      this.saveGame();
     } else if (!f.mailboxUnlocked) {
       this.startDialogue([
         {
@@ -1455,7 +1597,7 @@ export class GameEngine {
     this.outsideReturnX = returnX;
     this.state.floor = floor;
     this.currentRoom = room;
-    this.state.x = -3.8;
+    this.state.x = room === 'rooftop' ? -4.5 : -3.8;
     this.playerZ = 0.45;
     this.facing = 1;
     this.updateHUD();
@@ -1785,8 +1927,55 @@ export class GameEngine {
       this.state.clues.includes('vendor_clue');
 
     const canProveTrueEnding = hasCoreEvidence && hasWitnessCorroboration;
+    const hasDoubleTwist =
+      this.state.clues.includes('canal_evidence') &&
+      this.state.clues.includes('police_clue') &&
+      (this.state.clues.includes('rooftop_twist') || this.state.clues.includes('laundry_clue'));
 
     this.triggerPrimFlash(3.4, 3, 5.0);
+
+    const endChoices = [
+      ...(hasDoubleTwist
+        ? [
+            {
+              label:
+                'เปิดโปงปมซ้อนปม! พี่ต้อมผลักพริมแล้วหนี แต่ "เสี่ยวิรัช (เจ้าของหอ พ่อต้อม)" ขึ้นมาฆ่าซ้ำ จัดฉากแขวนคอ & ยัดเงินปิดคดี!',
+              action: () => {
+                this.state.flags.uncoveredDoubleTwist = true;
+                this.triggerEnding('true');
+              },
+            },
+          ]
+        : []),
+      {
+        label: hasDoubleTwist
+          ? 'พี่ต้อม (ห้อง 204) เป็นคนลงมือทั้งหมดคนเดียวเพราะเรื่องเงินชมรม'
+          : 'พี่ต้อม (ห้อง 204) นัดมาฆ่าปิดปากเพราะเรื่องยักยอกเงินชมรมและแอบถ่ายคลิป',
+        action: () => {
+          if (hasDoubleTwist) {
+            this.showToast('ผิดประเด็น! พี่ต้อมแค่คนแรก แต่จอมบงการตัวจริงยังซ่อนอยู่เบื้องหลัง...', true);
+            this.triggerEnding('normal');
+          } else if (canProveTrueEnding) {
+            this.triggerEnding('true');
+          } else {
+            this.showToast('แม้จะรู้ตัวคนร้าย แต่หลักฐานพยานยังไม่รัดกุมพอจะเอาผิด...', true);
+            this.triggerEnding('normal');
+          }
+        },
+      },
+      {
+        label: 'ช่างตง (อักษรย่อ ต.) เป็นคนสับคัตเอาต์แล้วขึ้นมาทำร้ายเธอ',
+        action: () => {
+          this.triggerEnding('bad');
+        },
+      },
+      {
+        label: 'เธอคิดสั้นผูกคอตายเองเพราะเครียดเรื่องเงินชมรม',
+        action: () => {
+          this.triggerEnding('bad');
+        },
+      },
+    ];
 
     this.startDialogue([
       {
@@ -1799,32 +1988,8 @@ export class GameEngine {
         speaker: 'เงาข้างหน้าต่าง',
         role: 'วิญญาณห้อง 304',
         portrait: 'prim',
-        text: 'เสียงฝนข้างนอกหยุดนิ่งลงฉับพลัน เงาหญิงสาวจ้องมองมาที่สมุดบันทึกในมือคุณก่อนเอ่ยเสียงสะท้อนก้องในหัว: "รู้ความจริงแล้วใช่ไหม... ใครเป็นคนฆ่าฉัน และทำลงไปทำไม?"',
-        choices: [
-          {
-            label: 'พี่ต้อม (ห้อง 204) นัดมาฆ่าปิดปากเพราะเรื่องยักยอกเงินชมรมและแอบถ่ายคลิป',
-            action: () => {
-              if (canProveTrueEnding) {
-                this.triggerEnding('true');
-              } else {
-                this.showToast('แม้จะรู้ตัวคนร้าย แต่หลักฐานพยานยังไม่รัดกุมพอจะเอาผิด...', true);
-                this.triggerEnding('normal');
-              }
-            },
-          },
-          {
-            label: 'ช่างตง (อักษรย่อ ต.) เป็นคนสับคัตเอาต์แล้วขึ้นมาทำร้ายเธอ',
-            action: () => {
-              this.triggerEnding('bad');
-            },
-          },
-          {
-            label: 'เธอคิดสั้นผูกคอตายเองเพราะเครียดเรื่องเงินชมรม',
-            action: () => {
-              this.triggerEnding('bad');
-            },
-          },
-        ],
+        text: 'เสียงฝนข้างนอกหยุดนิ่งลงฉับพลัน เงาหญิงสาวจ้องมองมาที่สมุดบันทึกในมือคุณก่อนเอ่ยเสียงสะท้อนก้องในหัว: "รู้ความจริงแล้วใช่ไหม... ใครเป็นคนฆ่าฉัน และใครอยู่เบื้องหลังทั้งหมดนี้?"',
+        choices: endChoices,
       },
     ]);
   }
@@ -1901,6 +2066,334 @@ export class GameEngine {
         text: 'บ้านไม้ครึ่งปูนเก่าๆ ถูกตอกไม้กระดานปิดตาย หน้าต่างข้างบนมืดสนิทจนเหมือนมีคนแอบมองลงมา... ป้ายสังกะสีเขียนไว้ว่า "เขตบ้านร้าง — ห้ามเข้า"',
       },
     ]);
+  }
+
+  private interactWinMotoStand(): void {
+    const f = this.state.flags;
+    this.sound.playUIClick();
+    if (!f.talkedWinMoto) {
+      f.talkedWinMoto = true;
+      this.addClue('win_moto_clue');
+      this.startDialogue([
+        {
+          speaker: 'พี่เบิร์ด (วินมอไซค์เบอร์ 9)',
+          role: 'ปากซอยแยก — ซอย 9',
+          portrait: 'worker',
+          text: 'อ้าว น้องห้อง 202 เหรอ? มีธุระไปไหนบอกพี่ได้นะวินนี้วิ่งไว... เออ แต่เมื่อคืน 14 ต.ค. ปีก่อน ตอนตีสิบเอ็ดกว่าๆ พี่จอดรอผู้โดยสารอยู่เห็นรถเก๋งดำจอดเปิดไฟผ่าหมาก แล้วมีผู้ชายใส่เสื้อกันฝนเทาหิ้ว "กล่องเหล็ก" ลงไปทางสะพานคลองท้ายซอยด้วยนะ!',
+        },
+      ]);
+      this.saveGame();
+      return;
+    }
+
+    this.openModal(
+      'วินมอเตอร์ไซค์ซอย 9 — พี่เบิร์ด',
+      `
+      <p style="margin-top:0">พี่เบิร์ด: "ดึกแล้วเดินไกลเดี๋ยวเมื่อย! เลือกจุดที่จะให้พี่ไปส่งได้เลย ฟรีสำหรับลูกบ้านเรือนจันทร์:"</p>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-top:10px">
+        <button class="secondary-btn" data-win="-118.5">🌉 สะพานข้ามคลองซอย 9 (-118 ม.)</button>
+        <button class="secondary-btn" data-win="-104.5">🚓 ป้อมตำรวจชุมชนซอย 9 (-104 ม.)</button>
+        <button class="secondary-btn" data-win="-72.5">🍲 ร้านอาหารอีสาน แซ่บซอย 9 (-72 ม.)</button>
+        <button class="secondary-btn" data-win="-51.5">🏪 หน้าเซเว่น 24-Seven (-51 ม.)</button>
+        <button class="secondary-btn" data-win="-11.2">🏢 ป้อมยามหน้าหอพักเรือนจันทร์ (-11 ม.)</button>
+        <button class="secondary-btn" data-win="27.5">🧺 ร้านซักรีด 24 ชม. & สนามบาส (+27 ม.)</button>
+      </div>
+      `
+    );
+    this.modalBody.querySelectorAll<HTMLButtonElement>('[data-win]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        this.state.x = Number(btn.dataset.win);
+        this.state.floor = 0;
+        this.currentRoom = 'outside';
+        this.sound.playVehicleHorn();
+        this.closeModal();
+        this.updateHUD();
+        this.saveGame();
+        this.showToast('ซิ่งวินมอไซค์มาถึงจุดหมายอย่างปลอดภัย!');
+      });
+    });
+  }
+
+  private interactPoliceKiosk(): void {
+    const f = this.state.flags;
+    this.sound.playUIClick();
+    if (!f.checkedPoliceBox) {
+      f.checkedPoliceBox = true;
+      this.addClue('police_clue');
+      this.startDialogue([
+        {
+          speaker: 'ดาบวิชัย (จ.ส.ต. วิชัย)',
+          role: 'ป้อมสายตรวจท้ายซอย 9',
+          portrait: 'uncle',
+          text: 'มาถามเรื่องคดีน้องพริมห้อง 304 เหรอไอ้หนุ่ม... ถอนหายใจจริงๆ พูดกันตรงนี้เลยนะ ผลชันสูตรเบื้องต้นในปอดเด็กยังมีฝุ่นและเศษลมหายใจตอนถูกเชือกแขวน ไม่ใช่ฆ่าตัวตายหรอก!',
+        },
+        {
+          speaker: 'ดาบวิชัย',
+          role: 'ลดเสียงลงกระซิบ',
+          portrait: 'uncle',
+          text: 'แต่คืนนั้นยังไม่ทันส่งสำนวนเต็มก็มี "เสี่ยวิรัช" เจ้าของหอพักเรือนจันทร์ที่เอ็งอยู่นั่นแหละ วิ่งเต้นโทรผ่านนายใหญ่สั่งปิดคดีภายใน 48 ชั่วโมง... ถ้าอยากมัดตัวมันให้ดิ้นไม่หลุด ลองไปงมหากล่องเหล็กที่คนเห็นแถวสะพานคลองข้างหน้านี้ดู!',
+        },
+      ]);
+      this.saveGame();
+      return;
+    }
+    this.adjustSanity(15);
+    this.showToast('ดาบวิชัย: "แสงไฟไซเรนสว่างอยู่ ปลอดภัยแล้วไอ้หนุ่ม (+15 สติ)"');
+  }
+
+  private interactCanalBridge(): void {
+    const f = this.state.flags;
+    if (f.checkedCanalBridge) {
+      this.showToast('ใต้สะพานคลองซอย 9 — คุณงมกล่องเหล็กกันน้ำขึ้นมาเป็นหลักฐานมัดตัวแล้ว');
+      return;
+    }
+    this.sound.playUIClick();
+    this.openModal(
+      'สะพานข้ามคลองซอย 9 — มินิเกมงมกล่องหลักฐานใต้น้ำ',
+      `
+      <p style="margin-top:0">ไฟฉายส่องเห็นแสงสะท้อนโลหะใต้กอบัวริมคลอง! กดจับจังหวะตอนตะขอเลื่อนผ่านโซนสีเขียวเพื่อเกี่ยวมันขึ้นมา:</p>
+      <div style="height:26px;background:#0f172a;border:1px solid #38bdf8;border-radius:8px;position:relative;overflow:hidden;margin:14px 0">
+        <div style="position:absolute;left:40%;width:20%;top:0;bottom:0;background:rgba(34,197,94,0.38);border-left:2px solid #4ade80;border-right:2px solid #4ade80"></div>
+        <div id="canal-cursor" style="position:absolute;top:2px;bottom:2px;width:10px;background:#facc15;border-radius:4px;left:0%"></div>
+      </div>
+      <button id="btn-hook-canal" class="primary-btn" style="width:100%">🪝 ดึงเชือกเกี่ยวกล่องใต้น้ำ!</button>
+      `
+    );
+    const cur = document.getElementById('canal-cursor')!;
+    let pos = 0;
+    let dir = 1;
+    const timer = window.setInterval(() => {
+      if (!this.modalOpen) {
+        clearInterval(timer);
+        return;
+      }
+      pos += dir * 3.9;
+      if (pos >= 94) {
+        pos = 94;
+        dir = -1;
+      } else if (pos <= 0) {
+        pos = 0;
+        dir = 1;
+      }
+      cur.style.left = `${pos}%`;
+    }, 28);
+    document.getElementById('btn-hook-canal')?.addEventListener('click', () => {
+      if (pos < 36 || pos > 64) {
+        this.sound.playSwitchClick();
+        this.showToast('เกี่ยวพลาด! โดนแต่กอผักตบชวา ลองกดให้ตรงโซนสีเขียวอีกที', true);
+        return;
+      }
+      clearInterval(timer);
+      f.checkedCanalBridge = true;
+      this.addItem('canal_lockbox');
+      this.addClue('canal_evidence');
+      this.closeModal();
+      this.startDialogue([
+        {
+          speaker: 'ต้น (มือสั่นเมื่อเปิดกล่อง!)',
+          role: 'บนสะพานข้ามคลองซอย 9',
+          portrait: 'player',
+          text: 'งมขึ้นมาได้สำเร็จ! ในกล่องกันน้ำมีสลิปโอนเงินปิดปากตำรวจ เอกสารบัญชีชมรมฟอกเงินชื่อ "เสี่ยวิรัช" เจ้าของหอ... แถมข้อความในมือถือสำรองเขียนถึงลูกชายตัวเองว่า: "ไอ้ต้อม มึงหนีกลับไปนอนหอซะ เรื่องเก็บกวาดชั้น 3 เดี๋ยวพ่อจัดการต่อเอง!!"',
+        },
+      ]);
+      this.saveGame();
+    });
+  }
+
+  private interactBasketballCourt(): void {
+    this.sound.playUIClick();
+    this.openModal(
+      'สนามสตรีทบาสหลังหอ — มินิเกมชู้ตบาสคลายเครียด',
+      `
+      <p style="margin-top:0">รุ่นพี่และพนักงานที่สนามชวนชู้ตบาสคลายความหลอน! กดชู้ตให้ตรงจุดสีส้มกลางห่วง:</p>
+      <div style="height:26px;background:#0f172a;border:1px solid #f97316;border-radius:8px;position:relative;overflow:hidden;margin:14px 0">
+        <div style="position:absolute;left:37%;width:26%;top:0;bottom:0;background:rgba(249,115,22,0.38);border-left:2px solid #fb923c;border-right:2px solid #fb923c"></div>
+        <div id="bball-cursor" style="position:absolute;top:2px;bottom:2px;width:12px;background:#fde047;border-radius:4px;left:0%"></div>
+      </div>
+      <button id="btn-shoot-ball" class="primary-btn" style="width:100%">🏀 ปล่อยบอลชู้ตลงห่วง!</button>
+      `
+    );
+    const cur = document.getElementById('bball-cursor')!;
+    let pos = 0;
+    let dir = 1;
+    const timer = window.setInterval(() => {
+      if (!this.modalOpen) {
+        clearInterval(timer);
+        return;
+      }
+      pos += dir * 3.5;
+      if (pos >= 92) {
+        pos = 92;
+        dir = -1;
+      } else if (pos <= 0) {
+        pos = 0;
+        dir = 1;
+      }
+      cur.style.left = `${pos}%`;
+    }, 28);
+    document.getElementById('btn-shoot-ball')?.addEventListener('click', () => {
+      clearInterval(timer);
+      this.closeModal();
+      const score = pos >= 34 && pos <= 65;
+      if (score) {
+        this.adjustSanity(25);
+        this.sound.playClueChime();
+        if (!this.state.flags.playedBasketball) {
+          this.state.flags.playedBasketball = true;
+          this.addItem('sports_drink');
+          this.showToast('สวบ! ชู้ตลงห่วง 3 แต้มสวยๆ! รุ่นพี่โยน "เกลือแร่เย็น" ให้ดื่ม (+25 สติ)');
+        } else {
+          this.showToast('ลงห่วงเต็มๆ! เหงื่อออกแล้วหัวโล่งขึ้นเยอะ (+25 สติ)');
+        }
+      } else {
+        this.adjustSanity(10);
+        this.showToast('แกร๊ง! ชนห่วงกระดอนออกมา แต่ได้ขยับร่างกาย (+10 สติ)');
+      }
+      this.saveGame();
+    });
+  }
+
+  private interactLaundryShop(): void {
+    const f = this.state.flags;
+    this.sound.playUIClick();
+    if (!f.checkedLaundry) {
+      f.checkedLaundry = true;
+      this.addClue('laundry_clue');
+      this.startDialogue([
+        {
+          speaker: 'ป้าสมร',
+          role: 'เจ้าของร้านซักรีด 24 ชม. "ซักสะอาด"',
+          portrait: 'vendor',
+          text: 'มานั่งตากแอร์ร้านป้าก่อนไหมหนุ่ม! เครื่องซักปั่นตลอดทั้งคืน ไม่ต้องกลัว... เอ้อ ถ้าถามเรื่องคืนฝนตก 14 ต.ค. ปีก่อน ป้าจำได้แม่นเลย ตอนห้าทุ่มครึ่งมีคนขับเก๋งหรูหอบเสื้อกันฝนเทาเปื้อนรอยแดงๆ กะรองเท้าบูทมาซักเร่งด่วน!',
+        },
+        {
+          speaker: 'ป้าสมร',
+          role: 'ร้านซักสะอาด ซอย 9',
+          portrait: 'vendor',
+          text: 'ป้าเดินไปดูที่ตะกร้า เห็นเข็มกลัดตกไว้ในถังปั่น เขียนว่า "วิรัช เรียลเอสเตท"... เอ๊ะ นั่นมันบริษัทเจ้าของหอเรือนจันทร์ไม่ใช่เรอะ?! ลองแวะถาม "ช่างตง" ที่ห้องเครื่องปั่นไฟข้างร้านป้านี่ดูสิ ช่างแกเพิ่งบ่นเรื่องเสี่ยอยู่หยกๆ',
+        },
+      ]);
+      this.saveGame();
+      return;
+    }
+    this.adjustSanity(12);
+    this.showToast('เสียงเครื่องซักผ้าหมุนสม่ำเสมอ พร้อมกลิ่นน้ำยาปรับผ้านุ่ม (+12 สติ)');
+  }
+
+  private interactGeneratorShed(): void {
+    const f = this.state.flags;
+    this.sound.playUIClick();
+    if (!f.talkedElectrician) {
+      f.talkedElectrician = true;
+      this.addClue('electrician_clue');
+      this.startDialogue([
+        {
+          speaker: 'ช่างตง (ตัวจริง!)',
+          role: 'ห้องเครื่องปั่นไฟสำรอง ซอย 9',
+          portrait: 'tom',
+          text: 'เฮ้ย! น้องห้อง 202 มองหน้าพี่แบบนั้นสงสัยเรื่องอักษรย่อ "ต." ล่ะสิ?! คืน 14 ต.ค. พี่ขึ้นรถกลับบ้านต่างจังหวัดตั้งแต่ 6 โมงเย็นแล้ว แต่เช้ามากุญแจสำรองตู้คัตเอาต์กับ "คีย์การ์ดดาดฟ้า" ที่ฝากเสี่ยวิรัชไว้ดันหายไป!',
+        },
+        {
+          speaker: 'ช่างตง',
+          role: 'ชี้ไปที่เครื่องปั่นไฟ',
+          portrait: 'tom',
+          text: 'ถ้าน้องอยากขึ้นไปตรวจบนดาดฟ้าหอพักเหนือชั้น 3 เดี๋ยวช่วยพี่เช็กเรียงลำดับสวิตช์สำรองไฟ (1 → 2 → 3) ให้จบก่อน พี่จะยก "คีย์การ์ดดาดฟ้า" ใบใหม่ให้น้องขึ้นไปเปิดโปงมันเลย!',
+        },
+      ]);
+      this.saveGame();
+      return;
+    }
+
+    if (f.fixedGeneratorMiniGame) {
+      this.adjustSanity(15);
+      this.showToast('ช่างตง: "ไฟสำรองจ่ายเสถียรดีแล้ว ใช้คีย์การ์ดขึ้นดาดฟ้าจากชั้น 3 ฝั่งซ้ายได้เลย!" (+15 สติ)');
+      return;
+    }
+
+    let step = 1;
+    this.openModal(
+      'ห้องเครื่องปั่นไฟ — มินิเกมสลับสวิตช์ตามลำดับ (1 → 2 → 3)',
+      `
+      <p style="margin-top:0">ช่วยช่างตงกดสับสะพานไฟเรียงจาก <strong style="color:#fde047">1 → 2 → 3</strong> เพื่อปลดล็อกคีย์การ์ดดาดฟ้า:</p>
+      <div id="gen-status" style="margin-bottom:10px;color:#38bdf8;font-size:0.9rem">ลำดับต่อไป: สวิตช์ที่ 1</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+        <button class="secondary-btn" data-sw="2">⚡ สวิตช์ 2</button>
+        <button class="secondary-btn" data-sw="3">⚡ สวิตช์ 3</button>
+        <button class="secondary-btn" data-sw="1">⚡ สวิตช์ 1</button>
+      </div>
+      `
+    );
+    this.modalBody.querySelectorAll<HTMLButtonElement>('[data-sw]').forEach((b) => {
+      b.addEventListener('click', () => {
+        const val = Number(b.dataset.sw);
+        this.sound.playSwitchClick();
+        if (val === step) {
+          b.style.borderColor = '#4ade80';
+          b.style.color = '#4ade80';
+          step++;
+          if (step > 3) {
+            f.fixedGeneratorMiniGame = true;
+            this.addItem('master_key_card');
+            this.closeModal();
+            this.sound.playClueChime();
+            this.showToast('เปิดระบบไฟสำรองสำเร็จ! ช่างตงมอบ "คีย์การ์ดดาดฟ้า" ให้คุณแล้ว');
+            this.saveGame();
+          } else {
+            document.getElementById('gen-status')!.textContent = `ถูกต้อง! ลำดับต่อไป: สวิตช์ที่ ${step}`;
+          }
+        } else {
+          step = 1;
+          this.modalBody.querySelectorAll<HTMLButtonElement>('[data-sw]').forEach((x) => {
+            x.style.borderColor = '';
+            x.style.color = '';
+          });
+          document.getElementById('gen-status')!.textContent = 'ผิดลำดับ! รีเซ็ตกลับไปกด สวิตช์ที่ 1 ใหม่';
+          this.showToast('สับสวิตช์ผิดลำดับ ไฟกระตุก!', true);
+        }
+      });
+    });
+  }
+
+  private interactRooftopDoor(): void {
+    const f = this.state.flags;
+    if (!f.unlockedRooftop) {
+      if (!this.state.inventory.includes('master_key_card')) {
+        this.showToast('ประตูเหล็กดาดฟ้าล็อกด้วยระบบคีย์การ์ด — ลองไปคุยกับช่างตงที่ห้องปั่นไฟฝั่งขวาหอ (+35 ม.)');
+        return;
+      }
+      f.unlockedRooftop = true;
+      this.sound.playClueChime();
+      this.showToast('แตะคีย์การ์ดปลดล็อกประตูเหล็กดาดฟ้าหอพักเรือนจันทร์แล้ว!');
+      this.saveGame();
+    }
+    this.enterRoom('rooftop', 3, -11.2);
+  }
+
+  private interactRooftopTank(): void {
+    const f = this.state.flags;
+    if (f.checkedRooftop) {
+      this.showToast('มือถือเครื่องลับของลุงชัยถูกเก็บเป็นหลักฐานแล้ว — ความจริงทั้งหมดรอคุณอยู่ในห้อง 304!');
+      return;
+    }
+    f.checkedRooftop = true;
+    f.uncoveredDoubleTwist = true;
+    this.addClue('rooftop_twist');
+    this.sound.playClueChime();
+    this.startDialogue([
+      {
+        speaker: 'คลิปเสียงจากมือถือเก่า (ซ่อนหลังแท็งก์น้ำ)',
+        role: 'ดาดฟ้าหอพักเรือนจันทร์',
+        portrait: 'uncle',
+        text: '(เสียงฟ้าร้อง & เสียงลุงชัยสั่นๆ) "คืนนั้นผมเห็นคุณต้อมผลักน้องพริมสลบแล้ววิ่งลงบันไดหนีไป... แต่ 10 นาทีต่อมา เสี่ยวิรัชถือเชือกขึ้นมาเจอน้องพริมยังมีลมหายใจ จึงรัดซ้ำแขวนกับพัดลม แล้วยื่นซองขู่จะเอาชีวิตหลานผมถ้าไม่ล็อกโซ่ชั้น 3!!"',
+      },
+      {
+        speaker: 'ต้น',
+        role: 'ขนลุกไปทั้งร่าง!',
+        portrait: 'player',
+        text: 'มิน่าล่ะ... พี่ต้อมคือคนเริ่ม แต่ "เสี่ยวิรัช เจ้าของหอพ่อพี่ต้อม" คือจอมบงการฆ่าปิดปากตัวจริง!! รีบเข้าไปในห้อง 304 เปิดโปงความจริงทั้งหมดนี้เดี๋ยวนี้!',
+      },
+    ]);
+    this.saveGame();
   }
 
   private interactConvenienceStore(): void {
@@ -2435,22 +2928,22 @@ export class GameEngine {
   private openMapModal(): void {
     this.sound.playUIClick();
     this.openModal(
-      'แผนผังหอพักเรือนจันทร์ & ปากซอย 9',
+      'แผนผังหอพักเรือนจันทร์ & ย่านซอย 9 (ฉบับขยาย)',
       [
-        { f: 3, title: 'ชั้น 3 — ชั้นปิดตาย', spots: 'หน้าต่างท้ายตึก • ทางเดินมืด • ห้อง 304' },
+        { f: 3, title: 'ชั้น 3 & ดาดฟ้า — ชั้นปิดตาย', spots: 'ประตูดาดฟ้าซ้ายสุด (-11 ม. → แท็งก์น้ำ & วิว BTS) • ทางเดินมืด • ห้อง 304' },
         { f: 2, title: 'ชั้น 2 — ชั้นพักอาศัย', spots: 'ห้อง 202 (ห้องคุณ) • ห้องน้ำรวม • ห้อง 204' },
         { f: 1, title: 'ชั้น 1 — โถงหอพัก', spots: 'บอร์ดประกาศ • ตู้จดหมาย • ห้องเก็บของ • ตู้คัตเอาต์' },
-        { f: 0, title: 'ชั้น 0 — หน้าหอพัก & นอกซอย', spots: 'ป้อมยาม • ศาลพระภูมิ • โรงจอดรถ • ป้ายรถเมล์ • รถเข็นบะหมี่ • เซเว่น • ตลาดป้ากิม • ร้านอาหารอีสาน • กลุ่มเด็กช่าง & บ้านร้าง (ซ้ายสุด)' },
+        { f: 0, title: 'ชั้น 0 — หน้าหอพัก & นอกซอย (ซ้าย–ขวา)', spots: 'ฝั่งขวา (+19..+36 ม.): สนามสตรีทบาส • ร้านซักรีด 24 ชม. (ป้าสมร) • ห้องปั่นไฟ (ช่างตง)\nกลาง (0): ป้อมยามลุงชัย • ศาลพระภูมิ • ราวผ้า\nฝั่งซ้าย (-15..-118 ม.): โรงจอดรถ • วินมอไซค์ (-20) • บะหมี่ • 24-Seven • ตลาด • ร้านลาบ • แก๊งเด็กช่าง & บ้านร้าง • ป้อมตำรวจ (-104) • สะพานคลองซอย 9 (-118)' },
       ]
         .map(
           (item) => `
       <div class="map-floor ${this.state.floor === item.f ? 'current' : ''}">
         <strong>${item.title}</strong> ${this.state.floor === item.f ? '<span class="badge">อยู่ตรงนี้</span>' : ''}
-        <div style="font-size:0.84rem;color:#9fa6b8;margin-top:4px">${item.spots}</div>
+        <div style="font-size:0.84rem;color:#9fa6b8;margin-top:4px;white-space:pre-line">${item.spots}</div>
       </div>`
         )
         .join('') +
-        '<p style="font-size:0.82rem;color:#9fa6b8">ชั้น 0 สามารถเดินออกไปทางซ้ายผ่านหน้าป้อมยามไปยังโรงจอดรถ ป้ายรถเมล์ รถเข็นบะหมี่ เซเว่น ตลาดป้ากิม ร้านอาหารอีสาน และบ้านร้างท้ายซอยได้</p>'
+        '<p style="font-size:0.82rem;color:#9fa6b8">ทิป: กด [Shift] หรือปุ่ม 🏃 เพื่อวิ่งไว หรือเรียก "วินมอไซค์พี่เบิร์ด" (-20 ม.) นั่งข้ามจุดได้เลย!</p>'
     );
   }
 
@@ -2500,11 +2993,17 @@ export class GameEngine {
     this.saveGame();
 
     const endings: Record<EndingType, { title: string; subtitle: string; body: string }> = {
-      true: {
-        title: 'True Ending — แสงเช้าหลังคืนฝนตก',
-        subtitle: 'ความจริงที่ถูกปิดเงียบมานานหนึ่งปี ถูกเปิดเผยในที่สุด',
-        body: 'จดหมายขู่ คำให้การของลุงชัย เครื่องอัดเสียงจากหน้าห้อง 204 และสมุดบันทึกสีแดงของพริม เพียงพอที่จะรื้อคดีฆาตกรรมอำพรางขึ้นมาใหม่ เช้าวันนั้นตำรวจเข้าจับกุมรุ่นพี่ห้อง 204... คืนต่อๆ มา หอพักเรือนจันทร์ยังคงเก่าและเงียบเหมือนเดิม แต่ไม่เคยมีเสียงฝีเท้าเปียกน้ำหรือเสียงร้องไห้ดังมาจากชั้น 3 อีกเลย',
-      },
+      true: this.state.flags.uncoveredDoubleTwist
+        ? {
+            title: 'True Ending+ (ปมซ้อนปมสมบูรณ์) — พังทลายอาณาจักรเรือนจันทร์',
+            subtitle: 'กระชากหน้ากากทั้งมือผลักและผู้บงการฆ่าปิดปากลงอย่างราบคาบ!',
+            body: 'ทั้งสมุดบันทึกพริม SD Card กล้องวงจรปิด เครื่องอัดเสียงห้อง 204 พร้อมหลักฐานกล่องเหล็กใต้คลองและเทปเสียงลุงชัยบนดาดฟ้า เปิดโปงความจริงสุดช็อกต่อหน้าตำรวจส่วนกลาง! พี่ต้อมถูกจับข้อหาทำร้ายร่างกาย ส่วน "เสี่ยวิรัช" เจ้าของหอพักถูกดำเนินคดีฆ่าอำพราง ฟอกเงิน และติดสินบนเจ้าพนักงาน ดวงวิญญาณพริมยิ้มจางๆ ก้มคำนับขอบคุณต้นก่อนสลายหายไปพร้อมแสงอาทิตย์แรก...',
+          }
+        : {
+            title: 'True Ending — แสงเช้าหลังคืนฝนตก',
+            subtitle: 'ความจริงที่ถูกปิดเงียบมานานหนึ่งปี ถูกเปิดเผยในที่สุด',
+            body: 'จดหมายขู่ คำให้การของลุงชัย เครื่องอัดเสียงจากหน้าห้อง 204 และสมุดบันทึกสีแดงของพริม เพียงพอที่จะรื้อคดีฆาตกรรมอำพรางขึ้นมาใหม่ เช้าวันนั้นตำรวจเข้าจับกุมรุ่นพี่ห้อง 204... คืนต่อๆ มา หอพักเรือนจันทร์ยังคงเก่าและเงียบเหมือนเดิม แต่ไม่เคยมีเสียงฝีเท้าเปียกน้ำหรือเสียงร้องไห้ดังมาจากชั้น 3 อีกเลย',
+          },
       normal: {
         title: 'Normal Ending — เช้าวันที่รอดออกมาได้',
         subtitle: 'คุณหนีออกมาจากชั้น 3 ได้... แต่คดีของห้อง 304 ยังคงคลุมเครือ',
@@ -2605,12 +3104,17 @@ export class GameEngine {
       room204: 'ภายในห้อง 204 (ห้องพี่ต้อม)',
       room304: 'ภายในห้อง 304 (จุดเกิดเหตุ)',
       seven24: 'ภายในร้านสะดวกซื้อ 24-Seven ปากซอย 9',
+      rooftop: 'ดาดฟ้าหอพักเรือนจันทร์ (ชั้นบนสุด)',
     };
     this.hudLocation.textContent =
       this.currentRoom !== 'outside'
         ? roomNames[this.currentRoom]
+        : this.state.floor === 0 && this.state.x < -98
+        ? 'ท้ายซอย 9 — ป้อมตำรวจ & สะพานข้ามคลอง'
         : this.state.floor === 0 && this.state.x < -14.5
-        ? 'นอกหอพัก — ปากซอย 9 (โรงจอดรถ / ป้ายรถเมล์ / ตลาด)'
+        ? 'นอกหอพัก — ปากซอย 9 (วิน / เซเว่น / ตลาด / ร้านลาบ)'
+        : this.state.floor === 0 && this.state.x > 14.5
+        ? 'ข้างหอฝั่งตะวันออก — สนามบาส / ร้านซักรีด 24 ชม. / ห้องปั่นไฟ'
         : FLOOR_NAMES[this.state.floor];
     this.hudSanityVal.textContent = `${this.state.sanity}%`;
     this.hudSanityFill.style.width = `${this.state.sanity}%`;
@@ -2753,11 +3257,43 @@ export class GameEngine {
       targetFloor = 2;
       targetX = 11.4;
       text = 'เดินไปบันไดฝั่งขวาชั้น 2 กด [E] ใช้คีมตัดโซ่ขึ้นชั้น 3';
+    } else if (!f.checkedLaundry && this.currentRoom !== 'room304') {
+      targetRoom = 'outside';
+      targetFloor = 0;
+      targetX = 27.5;
+      text = 'สืบเบาะแสซ่อนปมที่ร้านซักรีด 24 ชม. ป้าสมร (ฝั่งขวาหอ +27 ม.)';
+    } else if (!f.fixedGeneratorMiniGame && this.currentRoom !== 'room304') {
+      targetRoom = 'outside';
+      targetFloor = 0;
+      targetX = 35.8;
+      text = 'คุยกับช่างตงที่ห้องปั่นไฟ (+35 ม.) & สับสวิตช์รับคีย์การ์ดดาดฟ้า';
+    } else if (!f.checkedPoliceBox && this.currentRoom !== 'room304') {
+      targetRoom = 'outside';
+      targetFloor = 0;
+      targetX = -104.5;
+      text = 'นั่งวิน/วิ่งไปป้อมตำรวจซอย 9 (-104 ม.) สอบปากคำดาบวิชัยเรื่องปิดคดีเร็ว';
+    } else if (!f.checkedCanalBridge && this.currentRoom !== 'room304') {
+      targetRoom = 'outside';
+      targetFloor = 0;
+      targetX = -118.5;
+      text = 'เดินต่อไปสะพานคลองซอย 9 (-118 ม.) งมกล่องเหล็กหลักฐานใต้น้ำ!';
+    } else if (!f.checkedRooftop && this.currentRoom !== 'room304') {
+      if (this.currentRoom !== 'rooftop') {
+        targetRoom = 'outside';
+        targetFloor = 3;
+        targetX = -11.2;
+        text = 'ขึ้นชั้น 3 ซ้ายสุด (-11 ม.) ใช้คีย์การ์ดเปิดขึ้น "ดาดฟ้า" พิสูจน์ความจริง!';
+      } else {
+        targetRoom = 'rooftop';
+        targetFloor = 3;
+        targetX = 1.5;
+        text = 'สำรวจหลังแท็งก์น้ำใหญ่บนดาดฟ้าเพื่อเปิดโปงปมซ้อนปม';
+      }
     } else if (this.currentRoom !== 'room304') {
       targetRoom = 'outside';
       targetFloor = 3;
       targetX = 3.5;
-      text = 'ขึ้นบันไดไปชั้น 3 แล้วไขประตูเข้าไปในห้อง 304';
+      text = 'เข้าประตูห้อง 304 (ชั้น 3) เพื่อเปิดโปงผู้บงการตัวจริงต่อหน้าพริม!';
     } else if (!f.checkedRoom304Chair) {
       targetRoom = 'room304';
       targetFloor = 3;
@@ -2779,7 +3315,8 @@ export class GameEngine {
     let direction = '';
     if (this.currentRoom !== targetRoom) {
       if (this.currentRoom !== 'outside') {
-        const dxExit = -4.6 - this.state.x;
+        const exitX = this.currentRoom === 'rooftop' ? -5.2 : -4.6;
+        const dxExit = exitX - this.state.x;
         direction =
           Math.abs(dxExit) <= 1.4
             ? 'กด [E] ออกจากห้องนี้ก่อน'
@@ -2932,18 +3469,35 @@ export class GameEngine {
       }
 
       const isMoving = moveX !== 0 || moveZ !== 0;
+      const wantSprint =
+        isMoving &&
+        (this.codes.has('ShiftLeft') || this.codes.has('ShiftRight') || this.isSprintingTouch);
       if (isMoving) {
         if (moveX !== 0) this.facing = moveX > 0 ? 1 : -1;
+        const speed = wantSprint ? 7.2 : 4.65;
         const minX =
-          this.currentRoom !== 'outside' ? -5.1 : this.state.floor === 0 ? STREET_MIN_X : WORLD_MIN_X;
-        const maxX = this.currentRoom !== 'outside' ? 5.1 : WORLD_MAX_X;
-        this.state.x = Math.max(minX, Math.min(maxX, this.state.x + moveX * 4.45 * dt));
-        this.playerZ = Math.max(-0.35, Math.min(0.95, this.playerZ + moveZ * 2.1 * dt));
+          this.currentRoom === 'rooftop'
+            ? -7.0
+            : this.currentRoom !== 'outside'
+            ? -5.1
+            : this.state.floor === 0
+            ? STREET_MIN_X
+            : WORLD_MIN_X;
+        const maxX =
+          this.currentRoom === 'rooftop'
+            ? 7.0
+            : this.currentRoom !== 'outside'
+            ? 5.1
+            : this.state.floor === 0
+            ? EAST_MAX_X
+            : WORLD_MAX_X;
+        this.state.x = Math.max(minX, Math.min(maxX, this.state.x + moveX * speed * dt));
+        this.playerZ = Math.max(-0.35, Math.min(0.95, this.playerZ + moveZ * (wantSprint ? 2.8 : 2.1) * dt));
         this.updateHUD();
 
         this.stepTimer -= dt;
         if (this.stepTimer <= 0) {
-          this.stepTimer = 0.28;
+          this.stepTimer = wantSprint ? 0.19 : 0.28;
           const surf =
             this.state.floor === 0 && (this.state.weather === 'rain' || this.state.weather === 'storm')
               ? 'wet'

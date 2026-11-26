@@ -551,6 +551,29 @@ export function drawItemIconDataUrl(itemId: string): string {
     ctx.beginPath();
     ctx.arc(24, 29, 3, 0, Math.PI * 2);
     ctx.fill();
+  } else if (itemId === 'canal_lockbox') {
+    ctx.fillStyle = '#334155';
+    ctx.fillRect(10, 14, 28, 22);
+    ctx.strokeStyle = '#94a3b8';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(10, 14, 28, 22);
+    ctx.fillStyle = '#facc15';
+    ctx.fillRect(21, 19, 6, 8);
+  } else if (itemId === 'master_key_card') {
+    ctx.fillStyle = '#0ea5e9';
+    ctx.fillRect(10, 14, 28, 18);
+    ctx.fillStyle = '#facc15';
+    ctx.fillRect(14, 20, 6, 5);
+    ctx.fillStyle = '#e0f2fe';
+    ctx.fillRect(23, 18, 11, 3);
+    ctx.fillRect(23, 24, 9, 3);
+  } else if (itemId === 'sports_drink') {
+    ctx.fillStyle = '#facc15';
+    ctx.fillRect(18, 12, 12, 26);
+    ctx.fillStyle = '#0284c7';
+    ctx.fillRect(20, 8, 8, 4);
+    ctx.fillStyle = '#ef4444';
+    ctx.fillRect(18, 21, 12, 7);
   } else {
     // Prim's diary
     ctx.fillStyle = '#6b1d25';
@@ -945,5 +968,69 @@ export function createAbandonedSignTexture(): THREE.CanvasTexture {
   ctx.fillStyle = '#991b1b';
   ctx.font = 'bold 13px "IBM Plex Sans Thai", sans-serif';
   ctx.fillText('ท้ายซอยเรือนจันทร์ 9', 110, 88);
+  return toTex(c);
+}
+
+/** Royal Thai Police Kiosk sign ("ป้อมตำรวจซอย 9") */
+export function createPoliceBoxSignTexture(): THREE.CanvasTexture {
+  const [c, ctx] = makeCanvas(280, 90);
+  ctx.fillStyle = '#7f1d1d';
+  ctx.fillRect(0, 0, 280, 90);
+  ctx.strokeStyle = '#facc15';
+  ctx.lineWidth = 4;
+  ctx.strokeRect(4, 4, 272, 82);
+  ctx.fillStyle = '#f8fafc';
+  ctx.font = 'bold 26px "IBM Plex Sans Thai", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('ที่พักสายตรวจ ซอย 9', 140, 34);
+  ctx.fillStyle = '#fde68a';
+  ctx.font = 'bold 15px "IBM Plex Sans Thai", sans-serif';
+  ctx.fillText('สน.คลองสามวา • แจ้งเหตุด่วน 191', 140, 66);
+  return toTex(c);
+}
+
+/** 24-Hour Coin Laundry neon sign ("ซักสะอาด ซอย 9 • 24 ชม.") */
+export function createLaundrySignTexture(): THREE.CanvasTexture {
+  const [c, ctx] = makeCanvas(300, 96);
+  const g = ctx.createLinearGradient(0, 0, 300, 96);
+  g.addColorStop(0, '#0284c7');
+  g.addColorStop(1, '#38bdf8');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, 300, 96);
+  ctx.strokeStyle = '#f8fafc';
+  ctx.lineWidth = 4;
+  ctx.strokeRect(4, 4, 292, 88);
+  ctx.fillStyle = '#ffffff';
+  ctx.font = 'bold 26px "IBM Plex Sans Thai", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('ซักสะอาด ซอย 9 • 24 ชม.', 150, 35);
+  ctx.fillStyle = '#fef08a';
+  ctx.font = 'bold 16px "IBM Plex Sans Thai", sans-serif';
+  ctx.fillText('บริการซัก-อบผ้าหยอดเหรียญ ป้าสมร', 150, 68);
+  return toTex(c);
+}
+
+/** Generator / Utility Workshop warning sign */
+export function createGeneratorSignTexture(): THREE.CanvasTexture {
+  const [c, ctx] = makeCanvas(260, 88);
+  ctx.fillStyle = '#eab308';
+  ctx.fillRect(0, 0, 260, 88);
+  ctx.fillStyle = '#111827';
+  for (let i = -20; i < 280; i += 28) {
+    ctx.beginPath();
+    ctx.moveTo(i, 88);
+    ctx.lineTo(i + 14, 88);
+    ctx.lineTo(i + 26, 68);
+    ctx.lineTo(i + 12, 68);
+    ctx.fill();
+  }
+  ctx.fillStyle = '#111827';
+  ctx.font = 'bold 23px "IBM Plex Sans Thai", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('⚡ ห้องเครื่องปั่นไฟหอพัก', 130, 34);
+  ctx.font = 'bold 14px "IBM Plex Sans Thai", sans-serif';
+  ctx.fillText('ช่างตง ประจำซอย 9 • อันตรายไฟแรงสูง', 130, 56);
   return toTex(c);
 }

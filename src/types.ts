@@ -6,7 +6,7 @@ export type EndingType = 'true' | 'normal' | 'bad';
 
 export type FloorIndex = 0 | 1 | 2 | 3;
 
-export type RoomId = 'outside' | 'storage' | 'room202' | 'bathroom2' | 'room204' | 'room304' | 'seven24';
+export type RoomId = 'outside' | 'storage' | 'room202' | 'bathroom2' | 'room204' | 'room304' | 'seven24' | 'rooftop';
 
 export interface ItemDef {
   id: string;
@@ -79,6 +79,17 @@ export interface GameFlags {
   unlockedRoom304: boolean;
   insideRoom304: boolean;
   endingReached: EndingType | null;
+  talkedWinMoto?: boolean;
+  checkedLaundry?: boolean;
+  checkedPoliceBox?: boolean;
+  checkedCanalBridge?: boolean;
+  talkedElectrician?: boolean;
+  playedBasketball?: boolean;
+  unlockedRooftop?: boolean;
+  checkedRooftop?: boolean;
+  fixedGeneratorMiniGame?: boolean;
+  uncleTrueConfession?: boolean;
+  uncoveredDoubleTwist?: boolean;
 }
 
 export interface SaveState {

@@ -32,9 +32,16 @@ import {
   createThaiWindowTexture,
   createZincRoofTexture,
 } from '../art/TextureFactory';
+import {
+  animateDormExtension,
+  buildDormDistrictExtension,
+  buildRooftopRoom,
+  DormExtensionAnimRefs,
+} from './DormDistrictExtension';
 
 export const FLOOR_HEIGHT = 4.2;
-export const STREET_MIN_X = -96.0;
+export const STREET_MIN_X = -128.0;
+export const EAST_MAX_X = 44.0;
 export const WORLD_MIN_X = -13.2;
 export const WORLD_MAX_X = 13.2;
 export const STAIR_X = 12.0;
@@ -140,8 +147,13 @@ export class DormWorld {
     zombie: [],
     prim: [],
     prim_chase: [],
+    win_moto: [],
+    police: [],
+    laundry_lady: [],
+    electrician: [],
   };
 
+  private extRefs!: DormExtensionAnimRefs;
   private animClock = 0;
   private lastThunderCallback?: () => void;
   private lightningTimer = 6;
@@ -158,7 +170,7 @@ export class DormWorld {
       42,
       window.innerWidth / window.innerHeight,
       0.1,
-      100
+      180
     );
     this.camera.position.set(0, 2.2, 12.6);
 
@@ -223,6 +235,10 @@ export class DormWorld {
       this.charFrames.clerk.push(createCharacterTexture('clerk', f));
       this.charFrames.prim.push(createCharacterTexture('prim', f));
       this.charFrames.prim_chase.push(createCharacterTexture('prim_chase', f));
+      this.charFrames.win_moto.push(createCharacterTexture('win_moto', f));
+      this.charFrames.police.push(createCharacterTexture('police', f));
+      this.charFrames.laundry_lady.push(createCharacterTexture('laundry_lady', f));
+      this.charFrames.electrician.push(createCharacterTexture('electrician', f));
     }
 
     this.hangingUniform = new THREE.Mesh();
@@ -251,9 +267,17 @@ export class DormWorld {
     this.scene.add(this.exteriorGroup);
 
     this.buildRoomInteriors();
+    buildRooftopRoom(this.scene, this.roomGroups, this.roomLights, this.addBox.bind(this));
 
     // Lit 2.5D character meshes (receive scene lights, fog, and shadows + real floor contact shadows!)
     const shadowTex = this.createContactShadowTexture();
+    this.extRefs = buildDormDistrictExtension(
+      this.scene,
+      this.exteriorGroup,
+      this.charFrames,
+      shadowTex,
+      this.addBox.bind(this)
+    );
 
     this.playerMesh = this.makeLitCharacter(this.charFrames.player[0], 1.5, 2.25);
     this.playerMesh.position.set(-11.2, 0.94, 0.45);
@@ -1556,9 +1580,9 @@ export class DormWorld {
 
     // 3) Walking Sidewalk Pedestrians (Distinct student, office woman & night worker)
     const pDefs: { kind: 'student' | 'worker' | 'worker_yellow' | 'office_lady'; x: number; z: number; speed: number; minX: number; maxX: number; dir: 1 | -1; dayOnly: boolean; nightOnly: boolean }[] = [
-      { kind: 'student', x: -34, z: 0.4, speed: 1.55, minX: -76, maxX: -17, dir: 1, dayOnly: true, nightOnly: false },
-      { kind: 'office_lady', x: -64, z: 0.65, speed: 1.35, minX: -79, maxX: -24, dir: -1, dayOnly: true, nightOnly: false },
-      { kind: 'worker_yellow', x: -55, z: 0.35, speed: 1.45, minX: -78, maxX: -36, dir: -1, dayOnly: false, nightOnly: true },
+      { kind: 'student', x: -34, z: 0.4, speed: 1.55, minX: -102, maxX: 30, dir: 1, dayOnly: true, nightOnly: false },
+      { kind: 'office_lady', x: -64, z: 0.65, speed: 1.35, minX: -106, maxX: -24, dir: -1, dayOnly: true, nightOnly: false },
+      { kind: 'worker_yellow', x: -55, z: 0.35, speed: 1.45, minX: -84, maxX: 34, dir: -1, dayOnly: false, nightOnly: true },
     ];
     pDefs.forEach((pd) => {
       const mesh = this.makeLitCharacter(this.charFrames[pd.kind][0], 1.45, 2.15);
@@ -2104,6 +2128,7 @@ export class DormWorld {
     });
 
     if (!isInsideRoom) {
+      animateDormExtension(this.extRefs, this.charFrames, this.animClock, dt);
       // Traffic uses the open Side-Street T-Junction (-30.2 .. -24.0) seamlessly—never touching walls or entering the dorm!
       for (const v of this.movingVehicles) {
         if (v.dir === 1) {
@@ -2196,8 +2221,8 @@ export class DormWorld {
       tree.rotation.z = Math.sin(this.animClock * 2.1 + i) * (windPower * 0.35);
     });
 
-    const isOuterStreet = !isInsideRoom && playerFloor === 0 && playerX < -13.5;
-    (this.scene.fog as THREE.FogExp2).density = isOuterStreet ? 0.014 : 0.028;
+    const isOuterStreet = !isInsideRoom && playerFloor === 0 && (playerX < -13.5 || playerX > 13.5);
+    (this.scene.fog as THREE.FogExp2).density = isOuterStreet ? 0.013 : 0.028;
     this.updateTimeLighting(gameMinutes, weather, isOuterStreet);
 
     const period = this.getTimePeriod(gameMinutes);
@@ -2278,9 +2303,9 @@ export class DormWorld {
     }
 
     const camTargetX = isInsideRoom
-      ? THREE.MathUtils.clamp(playerX, -1.2, 1.2)
+      ? THREE.MathUtils.clamp(playerX, currentRoom === 'rooftop' ? -3.0 : -1.2, currentRoom === 'rooftop' ? 3.0 : 1.2)
       : playerFloor === 0
-      ? THREE.MathUtils.clamp(playerX, -89.5, 7.8)
+      ? THREE.MathUtils.clamp(playerX, -122.0, 38.0)
       : THREE.MathUtils.clamp(playerX, -7.8, 7.8);
     const camTargetY = (isInsideRoom ? 0 : playerFloor * FLOOR_HEIGHT) + 2.05;
 
@@ -2363,7 +2388,7 @@ export class DormWorld {
         this.rainPositions[idx] += slantX * dt;
         this.rainPositions[idx + 1] -= speedY * dt;
         if (this.rainPositions[idx + 1] < 0) {
-          this.rainPositions[idx] = -102 + Math.random() * 120;
+          this.rainPositions[idx] = -132 + Math.random() * 178;
           this.rainPositions[idx + 1] = 17 + Math.random() * 2;
         }
         this.rainPositions[idx + 3] = this.rainPositions[idx] - slantX * 0.03;

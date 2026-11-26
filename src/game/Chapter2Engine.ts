@@ -449,7 +449,7 @@ export class Chapter2Engine {
         activePointerId = ev.pointerId;
         this.touchMoveDir = dir;
         btn.classList.add('pressed');
-        try { btn.setPointerCapture(ev.pointerId); } catch {}
+        try { btn.setPointerCapture(ev.pointerId); } catch { }
       };
       const end = (ev: PointerEvent) => {
         if (activePointerId !== null && ev.pointerId !== activePointerId) return;
@@ -491,7 +491,7 @@ export class Chapter2Engine {
         sprintPtr = ev.pointerId;
         this.isSprintingTouch = true;
         this.touchSprint?.classList.add('pressed');
-        try { this.touchSprint?.setPointerCapture(ev.pointerId); } catch {}
+        try { this.touchSprint?.setPointerCapture(ev.pointerId); } catch { }
       };
       const endSprint = (ev: PointerEvent) => {
         if (sprintPtr !== null && ev.pointerId !== sprintPtr) return;
@@ -1988,18 +1988,18 @@ export class Chapter2Engine {
       this.state.clues.length === 0
         ? '<p style="color:#9fa6b8">ยังไม่ได้สืบเบาะแสเพิ่มเติม</p>'
         : this.state.clues
-            .map((id) => {
-              const c = CH2_CLUES[id];
-              return `<div class="clue-item"><div class="clue-title">${c.title}</div><div>${c.detail}</div></div>`;
-            })
-            .join('');
+          .map((id) => {
+            const c = CH2_CLUES[id];
+            return `<div class="clue-item"><div class="clue-title">${c.title}</div><div>${c.detail}</div></div>`;
+          })
+          .join('');
     const photos = this.state.photos ?? [];
     const photoHtml =
       photos.length === 0
         ? '<p style="color:#9fa6b8;font-size:0.85rem">ยังไม่มีภาพถ่ายหลักฐาน (กด [C] หรือปุ่ม 📷 ใกล้สิ่งผิดปกติ)</p>'
         : photos
-            .map((p, idx) => `<div class="clue-item"><div class="clue-title">📷 ภาพหลักฐานที่ ${idx + 1}</div><div>${p}</div></div>`)
-            .join('');
+          .map((p, idx) => `<div class="clue-item"><div class="clue-title">📷 ภาพหลักฐานที่ ${idx + 1}</div><div>${p}</div></div>`)
+          .join('');
     this.openModal(
       `สมุดสืบ & ภาพหลักฐาน (${this.state.clues.length}/${Object.keys(CH2_CLUES).length})`,
       `${clues}<h4 style="color:#f6d594;margin:14px 0 6px">อัลบั้มภาพถ่ายมือถือ (${photos.length})</h4>${photoHtml}`
@@ -2254,8 +2254,8 @@ export class Chapter2Engine {
       mood === 'lockdown'
         ? '📣 [เสียงตามสายผู้ใหญ่บ้าน] "ประกาศด่วน! ขณะนี้พบผีกระสือออกอาละวาดในบ้านทุ่ง! ขอให้ทุกบ้านปิดประตูหน้าต่าง ขัดหนามพุทรา และงดวิ่งรถทุกชนิดหลังค่ำ!"'
         : mood === 'uneasy'
-        ? '📣 [เสียงตามสายผู้ใหญ่บ้าน] "แจ้งข่าวลูกบ้านบ้านทุ่ง... ช่วงนี้มีข่าวลือเรื่องตับหมูหายและดวงไฟประหลาด จึงของดรถแห่ชั่วคราว และอย่าออกจากบ้านยามวิกาลเด้อ!"'
-        : '📣 [เสียงตามสายผู้ใหญ่บ้าน] "สวัสดีพี่น้องบ้านทุ่งอีสาน! มื้อนี้มีงานวัดประจำปีและขบวนรถแห่ ขอให้ทุกคนม่วนซื่นและคอยช่วยสอดส่องดูแลกันนะจ๊ะ!"';
+          ? '📣 [เสียงตามสายผู้ใหญ่บ้าน] "แจ้งข่าวลูกบ้านบ้านทุ่ง... ช่วงนี้มีข่าวลือเรื่องตับหมูหายและดวงไฟประหลาด จึงของดรถแห่ชั่วคราว และอย่าออกจากบ้านยามวิกาลเด้อ!"'
+          : '📣 [เสียงตามสายผู้ใหญ่บ้าน] "สวัสดีพี่น้องบ้านทุ่งอีสาน! มื้อนี้มีงานวัดประจำปีและขบวนรถแห่ ขอให้ทุกคนม่วนซื่นและคอยช่วยสอดส่องดูแลกันนะจ๊ะ!"';
     this.startDialogue([{ speaker: 'เสียงจากหอกระจายข่าว', role: 'ผู้ใหญ่บ้านบ้านทุ่ง', portrait: 'uncle', text }]);
   }
 
@@ -2699,16 +2699,16 @@ export class Chapter2Engine {
         this.currentRoom !== 'outside'
           ? '◀ เดินไปประตูซ้ายเพื่อลงบันไดเรือน/กุฏิ'
           : targetX < this.state.x
-          ? `◀ เดินไปทางซ้าย (${Math.round(Math.abs(targetX - this.state.x))} ม.)`
-          : `▶ เดินไปทางขวา (${Math.round(Math.abs(targetX - this.state.x))} ม.)`;
+            ? `◀ เดินไปทางซ้าย (${Math.round(Math.abs(targetX - this.state.x))} ม.)`
+            : `▶ เดินไปทางขวา (${Math.round(Math.abs(targetX - this.state.x))} ม.)`;
     } else {
       const dx = targetX - this.state.x;
       direction =
         Math.abs(dx) <= 1.8
           ? 'ถึงจุดหมายแล้ว — กด [E]'
           : dx < 0
-          ? `◀ เดินไปทางซ้าย (${Math.round(Math.abs(dx))} ม.)`
-          : `▶ เดินไปทางขวา (${Math.round(Math.abs(dx))} ม.)`;
+            ? `◀ เดินไปทางซ้าย (${Math.round(Math.abs(dx))} ม.)`
+            : `▶ เดินไปทางขวา (${Math.round(Math.abs(dx))} ม.)`;
     }
     return { text, direction };
   }
