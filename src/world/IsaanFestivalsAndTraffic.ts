@@ -108,6 +108,7 @@ export interface MovingVehicle {
 
 export interface SongthaewController {
   group: THREE.Group;
+  banner: THREE.Mesh;
   wheels: THREE.Group[];
   x: number;
   dir: 1 | -1;
@@ -119,6 +120,7 @@ export interface SongthaewController {
 
 export interface RotHaeController {
   group: THREE.Group;
+  banner: THREE.Mesh;
   wheels: THREE.Group[];
   dancers: { group: THREE.Group; offsetX: number; offsetZ: number; phase: number }[];
   discoLight: THREE.PointLight;
@@ -225,7 +227,7 @@ export function buildRotHaeSystem(scene: THREE.Scene): RotHaeController {
     return { group: dg, offsetX: dd.offsetX, offsetZ: dd.offsetZ, phase: idx * 1.15 };
   });
 
-  return { group, wheels, dancers, discoLight, ledMeshes, x: -18, dir: 1 };
+  return { group, banner, wheels, dancers, discoLight, ledMeshes, x: -18, dir: 1 };
 }
 
 /** Builds Thai village Songthaew passenger truck + waiting passengers at the 3 bus stops. */
@@ -284,7 +286,7 @@ export function buildSongthaewSystem(scene: THREE.Scene): SongthaewController {
     return { group: w, stopX: sx };
   });
 
-  return { group, wheels, x: -60, dir: 1, stopTimer: 0, lastStopX: 999, stopWaiters, headlight: hl };
+  return { group, banner: signPlane, wheels, x: -60, dir: 1, stopTimer: 0, lastStopX: 999, stopWaiters, headlight: hl };
 }
 
 /** Builds ambient cars, motorbikes, and commuter bicycles along the village highway + parked roadside vehicles. */
@@ -718,6 +720,8 @@ export function animateIsaanWorldLife(
   else if (rotHae.x < -94) rotHae.dir = 1;
   rotHae.group.position.x = rotHae.x;
   rotHae.group.scale.x = rotHae.dir;
+  // Counter-flip banner text so Thai signage never mirrors backward when driving left
+  rotHae.banner.scale.x = rotHae.dir;
   rotHae.wheels.forEach((w) => (w.rotation.z -= 5.8 * dt));
   // Beat-synced strobe colors at 132 BPM
   const beatIdx = Math.floor(clock * 4.4);
@@ -761,6 +765,7 @@ export function animateIsaanWorldLife(
   }
   songthaew.group.position.x = songthaew.x;
   songthaew.group.scale.x = songthaew.dir;
+  songthaew.banner.scale.x = songthaew.dir;
   songthaew.headlight.intensity = isDay ? 0.5 : 4.2;
   // Waiting passengers step forward excitedly when Songthaew stops near them
   songthaew.stopWaiters.forEach((w) => {
