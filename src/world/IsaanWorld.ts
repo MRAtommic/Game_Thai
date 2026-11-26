@@ -343,6 +343,8 @@ export class IsaanWorld {
   };
 
   private animClock = 0;
+  private zoomFactor = 1.0;
+  private targetCamZ = 13.4;
 
   constructor(canvas: HTMLCanvasElement) {
     this.scene = new THREE.Scene();
@@ -363,6 +365,7 @@ export class IsaanWorld {
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1.12;
+    this.resize();
 
     this.hemiLight = new THREE.HemisphereLight('#788db5', '#211c14', 0.68);
     this.scene.add(this.hemiLight);
@@ -1844,15 +1847,35 @@ export class IsaanWorld {
 
     const camX = isInside ? THREE.MathUtils.clamp(playerX, -1.6, 1.6) : THREE.MathUtils.clamp(playerX, CH2_MIN_X + 5.5, CH2_MAX_X - 5.5);
     this.camera.position.x = THREE.MathUtils.lerp(this.camera.position.x, camX, Math.min(1, dt * 5.5));
-    this.camera.position.y = THREE.MathUtils.lerp(this.camera.position.y, 2.3, Math.min(1, dt * 5.5));
+    this.camera.position.y = THREE.MathUtils.lerp(this.camera.position.y, 2.2, Math.min(1, dt * 5.5));
+    this.camera.position.z = THREE.MathUtils.lerp(this.camera.position.z, this.targetCamZ, Math.min(1, dt * 6.0));
     this.camera.lookAt(this.camera.position.x, this.camera.position.y - 0.2, 0);
     this.renderer.render(this.scene, this.camera);
   }
 
-  public resize(): void {
-    this.camera.aspect = window.innerWidth / window.innerHeight;
+  public setZoomFactor(factor: number): void {
+    this.zoomFactor = THREE.MathUtils.clamp(factor, 0.72, 1.55);
+    this.updateCameraFraming(false);
+  }
+
+  private updateCameraFraming(snapZ = true): void {
+    const w = Math.max(1, window.innerWidth);
+    const h = Math.max(1, window.innerHeight);
+    const aspect = w / h;
+    const isMobileScreen = Math.min(w, h) <= 560 || (navigator.maxTouchPoints > 0 && h <= 640);
+    const baseFov = isMobileScreen && aspect >= 1.15 ? 38 : aspect < 1.15 ? THREE.MathUtils.clamp(42 + (1.15 - aspect) * 24, 42, 58) : 42;
+    const baseZ = isMobileScreen ? (aspect < 1.0 ? THREE.MathUtils.clamp(11.8 + (1.0 - aspect) * 5.5, 11.8, 15.8) : 9.6) : 13.4;
+    this.targetCamZ = baseZ / this.zoomFactor;
+    if (snapZ) this.camera.position.z = this.targetCamZ;
+    this.camera.fov = baseFov;
+    this.camera.aspect = aspect;
     this.camera.updateProjectionMatrix();
-    this.renderer.setSize(window.innerWidth, window.innerHeight);
+  }
+
+  public resize(): void {
+    this.updateCameraFraming(true);
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    this.renderer.setSize(Math.max(1, window.innerWidth), Math.max(1, window.innerHeight));
   }
 
   public dispose(): void {

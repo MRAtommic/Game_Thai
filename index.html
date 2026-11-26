@@ -7,7 +7,12 @@
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
     />
     <meta name="theme-color" content="#07090f" />
+    <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="หอพักเรือนจันทร์" />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="./apple-touch-icon.png" />
     <link
       rel="icon"
       type="image/svg+xml"
@@ -118,7 +123,23 @@
             </svg>
             <span>แผนผัง</span>
           </button>
-          <button id="btn-sound" class="icon-btn" title="เปิด/ปิดเสียง">เสียง: เปิด</button>
+          <button id="btn-zoom" class="icon-btn" title="ปรับระยะกล้อง (ใกล้/พอดี/กว้าง)">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="7" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
+              <line x1="11" y1="8" x2="11" y2="14" />
+              <line x1="8" y1="11" x2="14" y2="11" />
+            </svg>
+            <span>ระยะ: พอดี</span>
+          </button>
+          <button id="btn-sound" class="icon-btn" title="เปิด/ปิดเสียง">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+              <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+              <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+            </svg>
+            <span>เสียง: เปิด</span>
+          </button>
         </div>
       </header>
 
@@ -135,21 +156,24 @@
 
       <!-- Mobile Touch Controls -->
       <div id="mobile-controls" class="hidden">
-        <!-- ซ้าย: D-Pad เดิน + ปุ่มขึ้น/ลงชั้น -->
-        <div class="dpad">
-          <button id="touch-left" class="touch-btn touch-move" aria-label="เดินซ้าย">◀</button>
-          <button id="touch-right" class="touch-btn touch-move" aria-label="เดินขวา">▶</button>
+        <!-- ซ้าย: D-Pad เดิน + ปุ่มลัด (ไฟฉาย, จักรยาน) -->
+        <div class="touch-cluster-left">
+          <div class="dpad">
+            <button id="touch-left" class="touch-btn touch-move" aria-label="เดินซ้าย">◀</button>
+            <button id="touch-right" class="touch-btn touch-move" aria-label="เดินขวา">▶</button>
+          </div>
+          <div class="touch-util-row">
+            <button id="touch-flashlight" class="touch-btn touch-util hidden" aria-label="ไฟฉาย">🔦</button>
+            <button id="touch-bike" class="touch-btn touch-util hidden" aria-label="ปั่นจักรยาน">🚲</button>
+          </div>
         </div>
-        <!-- กลาง: ปุ่มยูทิลิตี้ (ขึ้น/ลง, ไฟฉาย, จักรยาน) -->
-        <div class="touch-util-row">
-          <button id="touch-up" class="touch-btn touch-small hidden" aria-label="ขึ้นชั้นบน">▲ ขึ้น</button>
-          <button id="touch-down" class="touch-btn touch-small hidden" aria-label="ลงชั้นล่าง">▼ ลง</button>
-          <button id="touch-flashlight" class="touch-btn touch-util hidden" aria-label="ไฟฉาย">🔦</button>
-          <button id="touch-bike" class="touch-btn touch-util hidden" aria-label="ปั่นจักรยาน">🚲</button>
-        </div>
-        <!-- ขวา: ยิงปืน + สำรวจ -->
+        <!-- ขวา: ขึ้น/ลงชั้น, ยิงปืน, สำรวจ -->
         <div class="touch-actions">
-          <button id="touch-shoot" class="touch-btn touch-shoot hidden" aria-label="ยิงปืน">ยิงปืน!</button>
+          <div class="touch-stair-row">
+            <button id="touch-up" class="touch-btn touch-small hidden" aria-label="ขึ้นชั้นบน">▲ ขึ้น</button>
+            <button id="touch-down" class="touch-btn touch-small hidden" aria-label="ลงชั้นล่าง">▼ ลง</button>
+            <button id="touch-shoot" class="touch-btn touch-shoot hidden" aria-label="ยิงปืน">ยิงปืน!</button>
+          </div>
           <button id="touch-interact" class="touch-btn touch-act" aria-label="สำรวจ/คุย">สำรวจ</button>
         </div>
       </div>
@@ -200,13 +224,27 @@
             <button id="btn-continue-game" class="secondary-btn hidden">เล่นต่อ Chapter 1</button>
             <button id="btn-start-ch2" class="secondary-btn">เริ่ม Chapter 2: บ้านทุ่งผีกระสือ (อีสาน)</button>
             <button id="btn-continue-ch2" class="secondary-btn hidden">เล่นต่อ Chapter 2</button>
+            <button id="btn-install-app" class="secondary-btn install-app-btn hidden" type="button">📲 ติดตั้งเป็นแอปบนมือถือ</button>
           </div>
+          <p id="ios-install-hint" class="ios-install-hint hidden">
+            <strong>iPhone / iPad:</strong> แตะปุ่ม <strong>แชร์ (⬆️)</strong> ด้านล่าง แล้วเลือก <strong>"เพิ่มไปยังหน้าจอโฮม"</strong> เพื่อเล่นแบบแอปเต็มจอ
+          </p>
           <div class="title-controls-info">
             <span><strong>PC:</strong> W/A/S/D หรือ ลูกศร เดิน &amp; ขึ้นลงบันได (รองรับคีย์บอร์ดไทย) • E สำรวจ/คุย • F ไฟฉาย • R กฎหอพัก</span>
-            <span><strong>มือถือ:</strong> ปุ่มควบคุมบนหน้าจอ + แตะปุ่มสำรวจ / ช่องไอเทมด้านล่าง</span>
+            <span><strong>มือถือ:</strong> เล่นในแนวนอนเต็มจอ • ปุ่มซ้ายเดิน • ปุ่มขวาสำรวจ/ขึ้นลงบันได • ช่องไอเทมด้านล่าง</span>
           </div>
         </div>
       </section>
+
+      <!-- Forced Landscape Prompt on Mobile Portrait -->
+      <div id="rotate-landscape-overlay">
+        <div class="rotate-card">
+          <div class="rotate-phone-icon" aria-hidden="true">📱↻</div>
+          <h2>กรุณาหมุนหน้าจอเป็นแนวนอน</h2>
+          <p>เกมออกแบบมาสำหรับจอมือถือแนวนอนเพื่อไม่ให้ปุ่มบังตัวละครและฉาก</p>
+          <button id="btn-lock-landscape" class="primary-btn" type="button">หมุนจอแนวนอนเต็มจอ</button>
+        </div>
+      </div>
     </div>
 
     <script type="module" src="/src/main.ts"></script>

@@ -2,9 +2,47 @@ import { SoundEngine } from './audio/SoundEngine';
 import { Chapter2Engine } from './game/Chapter2Engine';
 import { GameEngine } from './game/GameEngine';
 
+interface BeforeInstallPromptEvent extends Event {
+  prompt(): Promise<void>;
+  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
+}
+
 const sharedSound = new SoundEngine();
 let ch1: GameEngine | null = null;
 let ch2: Chapter2Engine | null = null;
+let deferredInstallPrompt: BeforeInstallPromptEvent | null = null;
+
+const isCoarseTouch = () =>
+  window.matchMedia?.('(pointer: coarse)').matches || 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+
+async function tryEnterLandscapeMode(): Promise<void> {
+  if (!isCoarseTouch()) return;
+  try {
+    const docEl = document.documentElement as HTMLElement & {
+      webkitRequestFullscreen?: () => Promise<void>;
+    };
+    if (!document.fullscreenElement) {
+      if (docEl.requestFullscreen) await docEl.requestFullscreen();
+      else if (docEl.webkitRequestFullscreen) await docEl.webkitRequestFullscreen();
+    }
+  } catch {
+    // Some browsers disallow fullscreen without direct gesture or on iOS Safari
+  }
+  try {
+    const orientation = screen.orientation as ScreenOrientation & {
+      lock?: (orientation: 'landscape' | 'portrait') => Promise<void>;
+    };
+    await orientation?.lock?.('landscape');
+  } catch {
+    // Fallback handled gracefully by CSS #rotate-landscape-overlay
+  }
+}
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
+  });
+}
 
 function replaceFreshCanvas(): HTMLCanvasElement {
   const old = document.getElementById('game-canvas') as HTMLCanvasElement;
@@ -50,6 +88,9 @@ const btnStart = document.getElementById('btn-start-game')!;
 const btnContinue = document.getElementById('btn-continue-game')!;
 const btnStartCh2 = document.getElementById('btn-start-ch2')!;
 const btnContinueCh2 = document.getElementById('btn-continue-ch2')!;
+const btnInstallApp = document.getElementById('btn-install-app')!;
+const iosInstallHint = document.getElementById('ios-install-hint')!;
+const btnLockLandscape = document.getElementById('btn-lock-landscape');
 
 function syncTitleButtons(): void {
   const hasCh1 = Boolean(localStorage.getItem('reuan_chan_dorm_save_v1'));
@@ -59,10 +100,54 @@ function syncTitleButtons(): void {
 }
 syncTitleButtons();
 
-btnStart.addEventListener('click', () => launchChapter1(false));
-btnContinue.addEventListener('click', () => launchChapter1(true));
-btnStartCh2.addEventListener('click', () => launchChapter2(false));
-btnContinueCh2.addEventListener('click', () => launchChapter2(true));
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredInstallPrompt = e as BeforeInstallPromptEvent;
+  btnInstallApp.classList.remove('hidden');
+});
+
+window.addEventListener('appinstalled', () => {
+  deferredInstallPrompt = null;
+  btnInstallApp.classList.add('hidden');
+});
+
+const isIos = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as unknown as { MSStream?: unknown }).MSStream;
+const isStandalone =
+  window.matchMedia?.('(display-mode: standalone)').matches ||
+  window.matchMedia?.('(display-mode: fullscreen)').matches ||
+  (navigator as Navigator & { standalone?: boolean }).standalone === true;
+if (isIos && !isStandalone) {
+  iosInstallHint.classList.remove('hidden');
+}
+
+btnInstallApp.addEventListener('click', async () => {
+  if (!deferredInstallPrompt) return;
+  await deferredInstallPrompt.prompt();
+  await deferredInstallPrompt.userChoice;
+  deferredInstallPrompt = null;
+  btnInstallApp.classList.add('hidden');
+});
+
+btnLockLandscape?.addEventListener('click', () => {
+  void tryEnterLandscapeMode();
+});
+
+btnStart.addEventListener('click', () => {
+  void tryEnterLandscapeMode();
+  launchChapter1(false);
+});
+btnContinue.addEventListener('click', () => {
+  void tryEnterLandscapeMode();
+  launchChapter1(true);
+});
+btnStartCh2.addEventListener('click', () => {
+  void tryEnterLandscapeMode();
+  launchChapter2(false);
+});
+btnContinueCh2.addEventListener('click', () => {
+  void tryEnterLandscapeMode();
+  launchChapter2(true);
+});
 
 if (sessionStorage.getItem('reuan_chan_active_session') === '1' && localStorage.getItem('reuan_chan_dorm_save_v1')) {
   launchChapter1(true);

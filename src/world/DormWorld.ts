@@ -146,6 +146,8 @@ export class DormWorld {
   private lastThunderCallback?: () => void;
   private lightningTimer = 6;
   private lightningFlashDecay = 0;
+  private zoomFactor = 1.0;
+  private targetCamZ = 12.6;
 
   constructor(canvas: HTMLCanvasElement) {
     this.scene = new THREE.Scene();
@@ -171,6 +173,7 @@ export class DormWorld {
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1.1;
+    this.resize();
 
     this.hemiLight = new THREE.HemisphereLight('#5c729c', '#181414', 0.55);
     this.scene.add(this.hemiLight);
@@ -2285,6 +2288,7 @@ export class DormWorld {
 
     this.camera.position.x = THREE.MathUtils.lerp(this.camera.position.x, camTargetX, Math.min(1, dt * 5.5));
     this.camera.position.y = THREE.MathUtils.lerp(this.camera.position.y, camTargetY, Math.min(1, dt * 5.5));
+    this.camera.position.z = THREE.MathUtils.lerp(this.camera.position.z, this.targetCamZ, Math.min(1, dt * 6.0));
     this.camera.lookAt(this.camera.position.x, this.camera.position.y - 0.16, 0);
     if (drunkMode) {
       this.camera.rotation.z += Math.sin(this.animClock * 3.1) * 0.048;
@@ -2388,10 +2392,30 @@ export class DormWorld {
     }
   }
 
-  public resize(): void {
-    this.camera.aspect = window.innerWidth / window.innerHeight;
+  public setZoomFactor(factor: number): void {
+    this.zoomFactor = THREE.MathUtils.clamp(factor, 0.72, 1.55);
+    this.updateCameraFraming(false);
+  }
+
+  private updateCameraFraming(snapZ = true): void {
+    const w = Math.max(1, window.innerWidth);
+    const h = Math.max(1, window.innerHeight);
+    const aspect = w / h;
+    const isMobileScreen = Math.min(w, h) <= 560 || (navigator.maxTouchPoints > 0 && h <= 640);
+    // Mobile screens zoom closer by default so the player doesn't look tiny
+    const baseFov = isMobileScreen && aspect >= 1.15 ? 38 : aspect < 1.15 ? THREE.MathUtils.clamp(42 + (1.15 - aspect) * 24, 42, 58) : 42;
+    const baseZ = isMobileScreen ? (aspect < 1.0 ? THREE.MathUtils.clamp(11.4 + (1.0 - aspect) * 5.5, 11.4, 15.2) : 9.2) : 12.6;
+    this.targetCamZ = baseZ / this.zoomFactor;
+    if (snapZ) this.camera.position.z = this.targetCamZ;
+    this.camera.fov = baseFov;
+    this.camera.aspect = aspect;
     this.camera.updateProjectionMatrix();
-    this.renderer.setSize(window.innerWidth, window.innerHeight);
+  }
+
+  public resize(): void {
+    this.updateCameraFraming(true);
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    this.renderer.setSize(Math.max(1, window.innerWidth), Math.max(1, window.innerHeight));
   }
 
   public dispose(): void {

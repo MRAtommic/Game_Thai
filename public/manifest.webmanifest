@@ -1,0 +1,26 @@
+{
+  "name": "หอพักเรือนจันทร์ — คืนสืบหลอนห้อง 304",
+  "short_name": "หอพักเรือนจันทร์",
+  "description": "เกมสืบสวนสยองขวัญไทย 2.5D — Chapter 1 หอพักเรือนจันทร์ & Chapter 2 บ้านทุ่งผีกระสือ",
+  "start_url": "./",
+  "scope": "./",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#07090f",
+  "theme_color": "#07090f",
+  "lang": "th",
+  "icons": [
+    {
+      "src": "./icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

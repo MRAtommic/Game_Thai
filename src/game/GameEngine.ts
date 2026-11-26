@@ -2,6 +2,7 @@ import { drawCharacterCanvas, CharacterKind } from '../art/SpriteFactory';
 import { drawItemIconDataUrl } from '../art/TextureFactory';
 import { SoundEngine } from '../audio/SoundEngine';
 import { CLUES, DORM_RULES, FLOOR_NAMES, ITEMS } from '../data/storyData';
+import { bindCameraZoomControls } from '../ui/mobileZoom';
 import {
   DialogueLine,
   EndingType,
@@ -290,6 +291,16 @@ export class GameEngine {
     this.chaseBanner.classList.add('hidden');
     this.drunkBanner.classList.add('hidden');
     this.touchShoot.classList.add('hidden');
+    this.touchUp.classList.add('hidden');
+    this.touchDown.classList.add('hidden');
+    this.touchFlashlight.classList.add('hidden');
+    this.touchBike.classList.add('hidden');
+    this.interactPrompt.classList.add('hidden');
+    this.dialogueBox.classList.add('hidden');
+    this.modalBackdrop.classList.add('hidden');
+    this.mobileControls.classList.remove('overlay-paused');
+    this.interactPrompt.classList.remove('overlay-paused');
+    this.invBar.classList.remove('overlay-paused');
     this.sanityOverlay.classList.remove('drunk-mode');
     this.world.dispose();
   }
@@ -305,8 +316,26 @@ export class GameEngine {
 
   private bindInputs(): void {
     const sig = { signal: this.ac.signal };
-    window.addEventListener('resize', () => this.world.resize(), sig);
-    window.addEventListener('blur', () => this.codes.clear(), sig);
+    const handleResize = () => {
+      this.world.resize();
+      const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0 || window.innerWidth <= 900;
+      this.mobileControls.classList.toggle('hidden', !isTouch);
+      this.touchFlashlight.classList.toggle('hidden', !isTouch);
+    };
+    window.addEventListener('resize', handleResize, sig);
+    window.addEventListener('orientationchange', () => setTimeout(handleResize, 120), sig);
+    window.visualViewport?.addEventListener('resize', handleResize, sig);
+    window.addEventListener('blur', () => {
+      this.codes.clear();
+      this.touchMoveDir = 0;
+    }, sig);
+
+    bindCameraZoomControls(
+      this.world.renderer.domElement,
+      (factor) => this.world.setZoomFactor(factor),
+      this.ac.signal,
+      (msg) => this.showToast(msg)
+    );
 
     window.addEventListener('keydown', (e) => {
       if (!this.running) return;
@@ -396,7 +425,10 @@ export class GameEngine {
       this.sound.init();
       const next = !this.sound.isMuted();
       this.sound.setMuted(next);
-      this.btnSound.textContent = next ? 'เสียง: ปิด' : 'เสียง: เปิด';
+      const label = this.btnSound.querySelector('span');
+      if (label) label.textContent = next ? 'เสียง: ปิด' : 'เสียง: เปิด';
+      else this.btnSound.textContent = next ? 'เสียง: ปิด' : 'เสียง: เปิด';
+      this.btnSound.classList.toggle('muted', next);
     }, sig);
 
     this.dialogueBox.addEventListener('click', (e) => {
@@ -411,21 +443,25 @@ export class GameEngine {
 
     const bindHoldBtn = (id: string, dir: -1 | 1) => {
       const btn = document.getElementById(id)!;
-      const start = (ev: Event) => {
+      let activePointerId: number | null = null;
+      const start = (ev: PointerEvent) => {
         ev.preventDefault();
         this.sound.init();
+        activePointerId = ev.pointerId;
         this.touchMoveDir = dir;
         btn.classList.add('pressed');
+        try { btn.setPointerCapture(ev.pointerId); } catch {}
       };
-      const end = (ev: Event) => {
+      const end = (ev: PointerEvent) => {
+        if (activePointerId !== null && ev.pointerId !== activePointerId) return;
         ev.preventDefault();
+        activePointerId = null;
         if (this.touchMoveDir === dir) this.touchMoveDir = 0;
         btn.classList.remove('pressed');
       };
-      btn.addEventListener('pointerdown', start, sig);
-      btn.addEventListener('pointerup', end, sig);
-      btn.addEventListener('pointercancel', end, sig);
-      btn.addEventListener('pointerleave', end, sig);
+      btn.addEventListener('pointerdown', start as EventListener, sig);
+      btn.addEventListener('pointerup', end as EventListener, sig);
+      btn.addEventListener('pointercancel', end as EventListener, sig);
     };
 
     bindHoldBtn('touch-left', -1);
@@ -455,11 +491,18 @@ export class GameEngine {
     this.touchFlashlight.addEventListener('click', () => {
       this.sound.init();
       this.toggleFlashlight();
-      this.touchFlashlight.textContent = this.state.flashlightOn ? '🔦✓' : '🔦';
     }, sig);
     this.interactPrompt.addEventListener('click', () => {
       this.sound.init();
-      if (this.activeDialogue.length === 0 && !this.modalOpen) this.tryInteract();
+      if (this.activeDialogue.length > 0 || this.modalOpen) return;
+      const nearest = this.getNearestInteractable();
+      if (nearest) {
+        this.tryInteract();
+      } else if (this.currentRoom === 'outside' && Math.abs(this.state.x - STAIR_X) <= 1.55) {
+        if (this.state.floor === 0) this.tryChangeFloor(1);
+        else if (this.state.floor === 3) this.tryChangeFloor(-1);
+        else this.showToast('แตะปุ่ม ▲ ขึ้น หรือ ▼ ลง ทางขวาเพื่อเลือกชั้น');
+      }
     }, sig);
     document.getElementById('btn-sober-up')?.addEventListener('click', () => {
       this.sound.init();
@@ -470,7 +513,7 @@ export class GameEngine {
         this.sound.init();
         this.shootZombieGun();
       }
-    });
+    }, sig);
   }
 
   private toggleFlashlight(): void {
@@ -478,6 +521,8 @@ export class GameEngine {
     this.sound.playSwitchClick();
     this.state.flashlightOn = !this.state.flashlightOn;
     this.btnFlashlight.classList.toggle('active', this.state.flashlightOn);
+    this.touchFlashlight.classList.toggle('active', this.state.flashlightOn);
+    this.touchFlashlight.textContent = this.state.flashlightOn ? '🔦✓' : '🔦';
   }
 
   private addItem(itemId: string): void {
@@ -2869,6 +2914,9 @@ export class GameEngine {
 
     if (!this.paused) {
       const canMove = !this.modalOpen && this.activeDialogue.length === 0;
+      this.mobileControls.classList.toggle('overlay-paused', !canMove);
+      this.interactPrompt.classList.toggle('overlay-paused', !canMove);
+      this.invBar.classList.toggle('overlay-paused', !canMove);
       let moveX = 0;
       let moveZ = 0;
 

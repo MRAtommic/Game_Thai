@@ -2,6 +2,7 @@ import { drawCh2CharacterCanvas, drawCh2ItemIconDataUrl } from '../art/Chapter2S
 import { SoundEngine } from '../audio/SoundEngine';
 import { CH2_CLUES, CH2_ITEMS, CH2_RULES, CH2_ZONE_NAMES } from '../data/chapter2Data';
 import { DialogueLine, EndingType, FloorIndex, TimePeriod, WeatherType } from '../types';
+import { bindCameraZoomControls } from '../ui/mobileZoom';
 import { CH2_MAX_X, CH2_MIN_X, Ch2RoomId, IsaanWorld } from '../world/IsaanWorld';
 
 const CH2_SAVE_KEY = 'reuan_chan_ch2_save_v1';
@@ -262,6 +263,17 @@ export class Chapter2Engine {
     cancelAnimationFrame(this.rafId);
     this.ac.abort();
     this.chaseBanner.classList.add('hidden');
+    this.touchUp.classList.add('hidden');
+    this.touchDown.classList.add('hidden');
+    document.getElementById('touch-shoot')?.classList.add('hidden');
+    this.touchFlashlight.classList.add('hidden');
+    this.touchBike.classList.add('hidden');
+    this.interactPrompt.classList.add('hidden');
+    this.dialogueBox.classList.add('hidden');
+    this.modalBackdrop.classList.add('hidden');
+    this.mobileControls.classList.remove('overlay-paused');
+    this.interactPrompt.classList.remove('overlay-paused');
+    this.invBar.classList.remove('overlay-paused');
     this.world.dispose();
   }
 
@@ -277,8 +289,27 @@ export class Chapter2Engine {
 
   private bindInputs(): void {
     const sig = { signal: this.ac.signal };
-    window.addEventListener('resize', () => this.world.resize(), sig);
-    window.addEventListener('blur', () => this.codes.clear(), sig);
+    const handleResize = () => {
+      this.world.resize();
+      const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0 || window.innerWidth <= 900;
+      this.mobileControls.classList.toggle('hidden', !isTouch);
+      this.touchFlashlight.classList.toggle('hidden', !isTouch);
+      this.touchBike.classList.toggle('hidden', !(isTouch && this.state.inventory.includes('bicycle')));
+    };
+    window.addEventListener('resize', handleResize, sig);
+    window.addEventListener('orientationchange', () => setTimeout(handleResize, 120), sig);
+    window.visualViewport?.addEventListener('resize', handleResize, sig);
+    window.addEventListener('blur', () => {
+      this.codes.clear();
+      this.touchMoveDir = 0;
+    }, sig);
+
+    bindCameraZoomControls(
+      this.world.renderer.domElement,
+      (factor) => this.world.setZoomFactor(factor),
+      this.ac.signal,
+      (msg) => this.showToast(msg)
+    );
 
     window.addEventListener(
       'keydown',
@@ -336,7 +367,10 @@ export class Chapter2Engine {
         this.sound.init();
         const next = !this.sound.isMuted();
         this.sound.setMuted(next);
-        this.btnSound.textContent = next ? 'เสียง: ปิด' : 'เสียง: เปิด';
+        const label = this.btnSound.querySelector('span');
+        if (label) label.textContent = next ? 'เสียง: ปิด' : 'เสียง: เปิด';
+        else this.btnSound.textContent = next ? 'เสียง: ปิด' : 'เสียง: เปิด';
+        this.btnSound.classList.toggle('muted', next);
       },
       sig
     );
@@ -355,20 +389,25 @@ export class Chapter2Engine {
 
     const bindHold = (id: string, dir: -1 | 1) => {
       const btn = document.getElementById(id)!;
-      btn.addEventListener('pointerdown', (ev) => {
+      let activePointerId: number | null = null;
+      const start = (ev: PointerEvent) => {
         ev.preventDefault();
         this.sound.init();
+        activePointerId = ev.pointerId;
         this.touchMoveDir = dir;
         btn.classList.add('pressed');
-      }, sig);
-      const end = (ev: Event) => {
+        try { btn.setPointerCapture(ev.pointerId); } catch {}
+      };
+      const end = (ev: PointerEvent) => {
+        if (activePointerId !== null && ev.pointerId !== activePointerId) return;
         ev.preventDefault();
+        activePointerId = null;
         if (this.touchMoveDir === dir) this.touchMoveDir = 0;
         btn.classList.remove('pressed');
       };
-      btn.addEventListener('pointerup', end, sig);
-      btn.addEventListener('pointercancel', end, sig);
-      btn.addEventListener('pointerleave', end, sig);
+      btn.addEventListener('pointerdown', start as EventListener, sig);
+      btn.addEventListener('pointerup', end as EventListener, sig);
+      btn.addEventListener('pointercancel', end as EventListener, sig);
     };
     bindHold('touch-left', -1);
     bindHold('touch-right', 1);
@@ -385,7 +424,6 @@ export class Chapter2Engine {
     this.touchFlashlight.addEventListener('click', () => {
       this.sound.init();
       this.toggleFlashlight();
-      this.touchFlashlight.textContent = this.state.flashlightOn ? '🔦✓' : '🔦';
     }, sig);
     // ปุ่มจักรยาน (มือถือ) — แสดงเมื่อมีจักรยานในกระเป๋า
     this.touchBike.addEventListener('click', () => {
@@ -598,6 +636,8 @@ export class Chapter2Engine {
   private enterRoom(room: Ch2RoomId, returnX: number): void {
     if (this.ridingBike) {
       this.ridingBike = false;
+      this.touchBike.textContent = '🚲';
+      this.touchBike.classList.remove('active');
       this.renderInventory();
     }
     this.outsideReturnX = returnX;
@@ -1417,6 +1457,7 @@ export class Chapter2Engine {
     this.renderInventory();
     // อัปเดตปุ่มจักรยานบนมือถือ
     this.touchBike.textContent = this.ridingBike ? '🚲✓' : '🚲';
+    this.touchBike.classList.toggle('active', this.ridingBike);
     this.showToast(
       this.ridingBike
         ? 'ขึ้นปั่นจักรยานบ้านทุ่งแล้ว! (ความเร็ว x2.3 — กด [B] หรือคลิกไอเทมเพื่อจอดลง)'
@@ -1457,6 +1498,8 @@ export class Chapter2Engine {
     if (this.state.sanity === 0 && !this.state.flags.endingReached) {
       this.krasueChase = false;
       this.ridingBike = false;
+      this.touchBike.textContent = '🚲';
+      this.touchBike.classList.remove('active');
       this.renderInventory();
       this.chaseBanner.classList.add('hidden');
       this.state.sanity = 60;
@@ -1483,6 +1526,8 @@ export class Chapter2Engine {
     this.sound.playSwitchClick();
     this.state.flashlightOn = !this.state.flashlightOn;
     this.btnFlashlight.classList.toggle('active', this.state.flashlightOn);
+    this.touchFlashlight.classList.toggle('active', this.state.flashlightOn);
+    this.touchFlashlight.textContent = this.state.flashlightOn ? '🔦✓' : '🔦';
   }
 
   private renderInventory(): void {
@@ -1865,6 +1910,9 @@ export class Chapter2Engine {
 
     if (!this.paused) {
       const canMove = !this.modalOpen && this.activeDialogue.length === 0;
+      this.mobileControls.classList.toggle('overlay-paused', !canMove);
+      this.interactPrompt.classList.toggle('overlay-paused', !canMove);
+      this.invBar.classList.toggle('overlay-paused', !canMove);
       let moveX = 0;
       let moveZ = 0;
       if (canMove) {
