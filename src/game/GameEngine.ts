@@ -1420,7 +1420,7 @@ export class GameEngine {
         onInteract: () => this.talkSevenClerk(),
       },
 
-      // Sia Wirat's 3-Story Luxury Mansion (คฤหาสน์เสี่ยวิรัช - Stealth Mission)
+      // Sia Wirat's 3-Story Luxury Mansion (คฤหาสน์เสี่ยวิรัช - Stealth Mission & Enterable Rooms)
       {
         id: 'mansion_exit',
         floor: 0,
@@ -1440,10 +1440,103 @@ export class GameEngine {
         },
       },
       {
-        id: 'mansion_ev1',
+        id: 'mansion_door_1',
         floor: 0,
         room: 'sia_mansion',
         x: 2.8,
+        range: 1.6,
+        label: 'เปิดประตูเข้าห้องรับรองเสี่ย (ชั้น 1)',
+        onInteract: () => {
+          this.sound.playDoorCreak();
+          this.currentRoom = 'sia_study_1';
+          this.state.floor = 0;
+          this.state.x = -4.0;
+          this.isHidden = false;
+          this.updateHUD();
+        },
+      },
+      {
+        id: 'mansion_door_2',
+        floor: 1,
+        room: 'sia_mansion',
+        x: 1.5,
+        range: 1.6,
+        label: 'เปิดประตูเข้าห้องนิรภัยชั้น 2',
+        onInteract: () => {
+          this.sound.playDoorCreak();
+          this.currentRoom = 'sia_gallery_2';
+          this.state.floor = 0;
+          this.state.x = -4.0;
+          this.isHidden = false;
+          this.updateHUD();
+        },
+      },
+      {
+        id: 'mansion_door_3',
+        floor: 2,
+        room: 'sia_mansion',
+        x: 8.5,
+        range: 1.8,
+        label: 'เปิดประตูเข้าห้องทำงานลับเสี่ย (ชั้น 3)',
+        onInteract: () => {
+          this.sound.playDoorCreak();
+          this.currentRoom = 'sia_office_3';
+          this.state.floor = 0;
+          this.state.x = -4.0;
+          this.isHidden = false;
+          this.updateHUD();
+        },
+      },
+      {
+        id: 'mansion_room1_exit',
+        floor: 0,
+        room: 'sia_study_1',
+        x: -4.6,
+        range: 1.6,
+        label: 'กลับออกไปที่โถงคฤหาสน์ชั้น 1',
+        onInteract: () => {
+          this.sound.playDoorCreak();
+          this.currentRoom = 'sia_mansion';
+          this.state.floor = 0;
+          this.state.x = 2.8;
+          this.updateHUD();
+        },
+      },
+      {
+        id: 'mansion_room2_exit',
+        floor: 0,
+        room: 'sia_gallery_2',
+        x: -4.6,
+        range: 1.6,
+        label: 'กลับออกไปที่โถงคฤหาสน์ชั้น 2',
+        onInteract: () => {
+          this.sound.playDoorCreak();
+          this.currentRoom = 'sia_mansion';
+          this.state.floor = 1;
+          this.state.x = 1.5;
+          this.updateHUD();
+        },
+      },
+      {
+        id: 'mansion_room3_exit',
+        floor: 0,
+        room: 'sia_office_3',
+        x: -4.6,
+        range: 1.6,
+        label: 'กลับออกไปที่โถงคฤหาสน์ชั้น 3',
+        onInteract: () => {
+          this.sound.playDoorCreak();
+          this.currentRoom = 'sia_mansion';
+          this.state.floor = 2;
+          this.state.x = 8.5;
+          this.updateHUD();
+        },
+      },
+      {
+        id: 'mansion_ev1',
+        floor: 0,
+        room: 'sia_study_1',
+        x: 2.6,
         range: 1.6,
         condition: () => !this.state.flags.gotMansionEv1,
         label: 'แอบเก็บซองเงินสินบนตำรวจ (หลักฐาน 1/3)',
@@ -1457,9 +1550,9 @@ export class GameEngine {
       },
       {
         id: 'mansion_ev2',
-        floor: 1,
-        room: 'sia_mansion',
-        x: 1.5,
+        floor: 0,
+        room: 'sia_gallery_2',
+        x: 2.6,
         range: 1.6,
         condition: () => !this.state.flags.gotMansionEv2,
         label: 'แอบเก็บสมุดเช็ค & บัญชีฟอกเงินเสี่ย (หลักฐาน 2/3)',
@@ -1473,9 +1566,9 @@ export class GameEngine {
       },
       {
         id: 'mansion_ev3',
-        floor: 2,
-        room: 'sia_mansion',
-        x: 8.8,
+        floor: 0,
+        room: 'sia_office_3',
+        x: 2.6,
         range: 1.8,
         condition: () => !this.state.flags.gotMansionEv3,
         label: 'แอบเก็บบันทึกคำสั่งปิดปากพริมบนโต๊ะเสี่ย (หลักฐาน 3/3)',
@@ -3289,6 +3382,9 @@ export class GameEngine {
       seven24: 'ภายในร้านสะดวกซื้อ 24-Seven ปากซอย 9',
       rooftop: 'ดาดฟ้าหอพักเรือนจันทร์ (ชั้นบนสุด)',
       sia_mansion: 'คฤหาสน์หรู 3 ชั้น (บ้านเสี่ยวิรัช)',
+      sia_study_1: 'ห้องรับรองเสี่ย (คฤหาสน์ชั้น 1)',
+      sia_gallery_2: 'ห้องนิรภัย & แกลเลอรี (คฤหาสน์ชั้น 2)',
+      sia_office_3: 'ห้องทำงานลับเสี่ยวิรัช (คฤหาสน์ชั้น 3)',
     };
     this.hudLocation.textContent =
       this.currentRoom !== 'outside'
@@ -3754,7 +3850,14 @@ export class GameEngine {
 
       const period = this.world.getTimePeriod(this.state.gameMinutes);
       if (canMove) {
-        if (this.currentRoom === 'sia_mansion') {
+        if (this.currentRoom === 'sia_study_1' || this.currentRoom === 'sia_gallery_2' || this.currentRoom === 'sia_office_3') {
+          const f = this.state.flags;
+          this.world.syncMansionEvidence({
+            ev1: !!f.gotMansionEv1,
+            ev2: !!f.gotMansionEv2,
+            ev3: !!f.gotMansionEv3,
+          });
+        } else if (this.currentRoom === 'sia_mansion') {
           const f = this.state.flags;
           const res = this.world.updateSiaMansionState(dt, this.state.x, this.state.floor, this.isSneaking, this.isHidden, {
             ev1: !!f.gotMansionEv1,

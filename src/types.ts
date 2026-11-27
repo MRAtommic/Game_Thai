@@ -6,7 +6,7 @@ export type EndingType = 'true' | 'normal' | 'bad';
 
 export type FloorIndex = 0 | 1 | 2 | 3;
 
-export type RoomId = 'outside' | 'storage' | 'room202' | 'bathroom2' | 'room204' | 'room304' | 'seven24' | 'rooftop' | 'sia_mansion';
+export type RoomId = 'outside' | 'storage' | 'room202' | 'bathroom2' | 'room204' | 'room304' | 'seven24' | 'rooftop' | 'sia_mansion' | 'sia_study_1' | 'sia_gallery_2' | 'sia_office_3';
 
 export interface ItemDef {
   id: string;

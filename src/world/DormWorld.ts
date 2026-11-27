@@ -303,6 +303,7 @@ export class DormWorld {
 
     this.siaMansion = buildSiaMansionWorld(this.charFrames, shadowTex);
     this.scene.add(this.siaMansion.group);
+    Object.values(this.siaMansion.interiorRooms).forEach((rg) => this.scene.add(rg));
 
     this.uncleMesh = this.makeLitCharacter(this.charFrames.uncle[0], 1.5, 2.25);
     this.uncleMesh.position.set(-8.4, 0.94, 0.18);
@@ -2530,6 +2531,9 @@ export class DormWorld {
       const grp = this.roomGroups[rid];
       if (grp) grp.visible = rid === currentRoom;
     });
+    (Object.keys(this.siaMansion.interiorRooms) as Array<keyof typeof this.siaMansion.interiorRooms>).forEach((rid) => {
+      this.siaMansion.interiorRooms[rid].visible = rid === currentRoom;
+    });
     this.rainLines.visible = currentRoom === 'outside';
 
     const yBase = isInsideRoom ? 0 : playerFloor * (isMansion ? MANSION_FLOOR_H : FLOOR_HEIGHT);
@@ -2817,6 +2821,14 @@ export class DormWorld {
     return this.siaMansion.hidingSpots;
   }
 
+  public syncMansionEvidence(collected: { ev1: boolean; ev2: boolean; ev3: boolean }): void {
+    this.siaMansion.evidenceMeshes.forEach((ev) => {
+      const done = collected[ev.id];
+      ev.mesh.visible = !done;
+      ev.light.intensity = done ? 0 : 2.2 + Math.sin(this.animClock * 4) * 0.6;
+    });
+  }
+
   public updateSiaMansionState(
     dt: number,
     playerX: number,
@@ -2825,11 +2837,7 @@ export class DormWorld {
     isHidden: boolean,
     collected: { ev1: boolean; ev2: boolean; ev3: boolean }
   ): { inVision: boolean; nearGuard: boolean } {
-    this.siaMansion.evidenceMeshes.forEach((ev) => {
-      const done = collected[ev.id];
-      ev.mesh.visible = !done;
-      ev.light.intensity = done ? 0 : 2.2 + Math.sin(this.animClock * 4) * 0.6;
-    });
+    this.syncMansionEvidence(collected);
 
     let inVision = false;
     let nearGuard = false;
