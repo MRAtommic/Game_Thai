@@ -3,6 +3,7 @@ import { drawItemIconDataUrl } from '../art/TextureFactory';
 import { SoundEngine } from '../audio/SoundEngine';
 import { CLUES, DORM_RULES, FLOOR_NAMES, ITEMS } from '../data/storyData';
 import { renderSharedInventoryBar } from '../ui/InventoryBar';
+import { CutscenePlayer, IsaanCutsceneId } from '../ui/CutscenePlayer';
 import { bindCameraZoomControls } from '../ui/mobileZoom';
 import {
   DialogueLine,
@@ -117,6 +118,7 @@ export class GameEngine {
   }[] = [];
 
   // Dialogue & Modal state
+  private cutscene = new CutscenePlayer();
   private activeDialogue: DialogueLine[] = [];
   private dialogueIndex = 0;
   private modalOpen = false;
@@ -218,20 +220,28 @@ export class GameEngine {
     this.primShowTimer = 0;
     this.saveGame();
     this.beginPlay();
-    this.startDialogue([
-      {
-        speaker: 'ต้น',
-        role: 'นักศึกษาปี 2',
-        portrait: 'player',
-        text: 'ซอยลึกเอาเรื่องแฮะ... แต่หอนี้ค่าเช่าถูกกว่าที่อื่นเกือบครึ่ง เดินเข้าม. ก็แป๊บเดียว',
-      },
-      {
-        speaker: 'ต้น',
-        role: 'นักศึกษาปี 2',
-        portrait: 'player',
-        text: 'ลมเริ่มแรงแล้ว เดี๋ยวแวะไปรับกุญแจห้อง 202 กับลุงยามตรงป้อมหน้าหอก่อนดีกว่า',
-      },
-    ]);
+    this.playCutscene('dorm_arrival', () => {
+      this.startDialogue([
+        {
+          speaker: 'ต้น',
+          role: 'นักศึกษาปี 2',
+          portrait: 'player',
+          text: 'ซอยลึกเอาเรื่องแฮะ... แต่หอนี้ค่าเช่าถูกกว่าที่อื่นเกือบครึ่ง เดินเข้าม. ก็แป๊บเดียว',
+        },
+        {
+          speaker: 'ต้น',
+          role: 'นักศึกษาปี 2',
+          portrait: 'player',
+          text: 'ลมเริ่มแรงแล้ว เดี๋ยวแวะไปรับกุญแจห้อง 202 กับลุงยามตรงป้อมหน้าหอก่อนดีกว่า',
+        },
+      ]);
+    });
+  }
+
+  private playCutscene(id: IsaanCutsceneId, after?: () => void): void {
+    this.codes.clear();
+    this.touchMoveDir = 0;
+    this.cutscene.play(id, after);
   }
 
   public continueGame(): void {
@@ -297,6 +307,7 @@ export class GameEngine {
   }
 
   public destroy(): void {
+    this.cutscene.stop();
     this.running = false;
     cancelAnimationFrame(this.rafId);
     this.ac.abort();
@@ -888,8 +899,8 @@ export class GameEngine {
       {
         id: 'win_moto_stand',
         floor: 0,
-        x: -20.5,
-        range: 2.3,
+        x: -22.2,
+        range: 2.4,
         label: 'วินมอไซค์ซอย 9 (คุยกับพี่เบิร์ด / นั่งวินข้ามจุด)',
         onInteract: () => this.interactWinMotoStand(),
       },
@@ -1526,21 +1537,23 @@ export class GameEngine {
       this.removeItem('incense_soda');
       this.addItem('holy_thread');
       this.adjustSanity(100);
-      this.startDialogue([
-        {
-          speaker: 'ต้น',
-          role: 'นักศึกษาปี 2',
-          portrait: 'player',
-          text: 'เพิ่งย้ายมาอยู่ใหม่ครับเจ้าที่เจ้าทาง... ขอถวายธูปกับน้ำแดง ฝากเนื้อฝากตัวด้วยนะครับ อย่าให้เจออะไรไม่ดีเลย',
-        },
-        {
-          speaker: 'ต้น',
-          role: 'นักศึกษาปี 2',
-          portrait: 'player',
-          text: 'เอ๊ะ... ตรงขอบศาลมีม้วนด้ายสายสิญจน์วางไว้ด้วย ยังใหม่ๆ อยู่เลย ขออนุญาตหยิบไปพกติดตัวนะครับ',
-        },
-      ]);
       this.saveGame();
+      this.playCutscene('dorm_spirit_shrine', () => {
+        this.startDialogue([
+          {
+            speaker: 'ต้น',
+            role: 'นักศึกษาปี 2',
+            portrait: 'player',
+            text: 'เพิ่งย้ายมาอยู่ใหม่ครับเจ้าที่เจ้าทาง... ขอถวายธูปกับน้ำแดง ฝากเนื้อฝากตัวด้วยนะครับ อย่าให้เจออะไรไม่ดีเลย',
+          },
+          {
+            speaker: 'ต้น',
+            role: 'นักศึกษาปี 2',
+            portrait: 'player',
+            text: 'เอ๊ะ... ตรงขอบศาลมีม้วนด้ายสายสิญจน์วางไว้ด้วย ยังใหม่ๆ อยู่เลย ขออนุญาตหยิบไปพกติดตัวนะครับ',
+          },
+        ]);
+      });
       return;
     }
 
@@ -1702,21 +1715,23 @@ export class GameEngine {
     }
 
     f.sawBathroomGhost = true;
-    this.triggerScare(
-      20,
-      'ก๊อกน้ำหมุนเปิดเองดังซ่า! ในกระจกมีเงาผู้หญิงผมยาวเปียกโชกยืนซ้อนหลังคุณอยู่ ก่อนจะชี้ลงไปที่ท่อระบายน้ำ...',
-      2,
-      -0.2
-    );
-    this.startDialogue([
-      {
-        speaker: 'ต้น',
-        role: 'ภายในห้องน้ำรวม',
-        portrait: 'player',
-        text: 'เชี่ย...! อะไรวะเนี่ย?! เธอชี้ไปตรงท่อระบายน้ำกลางห้องน้ำ... ลองเดินไปก้มดูตรงท่อระบายน้ำซิ!',
-      },
-    ]);
     this.saveGame();
+    this.playCutscene('dorm_bath_ghost', () => {
+      this.triggerScare(
+        20,
+        'ก๊อกน้ำหมุนเปิดเองดังซ่า! ในกระจกมีเงาผู้หญิงผมยาวเปียกโชกยืนซ้อนหลังคุณอยู่ ก่อนจะชี้ลงไปที่ท่อระบายน้ำ...',
+        2,
+        -0.2
+      );
+      this.startDialogue([
+        {
+          speaker: 'ต้น',
+          role: 'ภายในห้องน้ำรวม',
+          portrait: 'player',
+          text: 'เชี่ย...! อะไรวะเนี่ย?! เธอชี้ไปตรงท่อระบายน้ำกลางห้องน้ำ... ลองเดินไปก้มดูตรงท่อระบายน้ำซิ!',
+        },
+      ]);
+    });
   }
 
   private interactBathDrain(): void {
@@ -1791,27 +1806,29 @@ export class GameEngine {
         f.gotVoiceRecorder = true;
         this.addItem('voice_recorder');
         this.addClue('tom_recording');
-        this.startDialogue([
-          {
-            speaker: 'ต้น',
-            role: 'ภายในห้อง 204',
-            portrait: 'player',
-            text: '4 ทุ่ม วันที่ 14 -> รหัส 414 เปิดออกแล้ว! ข้างในกล่องเหล็กมีเครื่องอัดเสียงรุ่นเก่าที่หน้าจอแตกอยู่ ลองกดเล่นดูซิ',
-          },
-          {
-            speaker: 'เสียงจากเครื่องอัดเสียง',
-            role: 'ไฟล์บันทึก 14 ต.ค.',
-            portrait: 'narrator',
-            text: '[เสียงฝนตกซ่า...] "มึงคิดจะเอาเรื่องชมรมไปแจ้งความเหรอพริม! ส่งโทรศัพท์มานี่!" — [เสียงตบตี ผลักกระแทกพื้น และเสียงสำลักก่อนเงียบหายไป...]',
-          },
-          {
-            speaker: 'ต้น',
-            role: 'ภายในห้อง 204',
-            portrait: 'player',
-            text: 'มือสั่นไปหมดแล้ว... พี่ต้อมเป็นคนทำจริงๆ เหรอ?! ต้องรีบขึ้นไปตรวจดูหลักฐานในห้อง 304 ให้ครบ!',
-          },
-        ]);
         this.saveGame();
+        this.playCutscene('dorm_tom_confront', () => {
+          this.startDialogue([
+            {
+              speaker: 'ต้น',
+              role: 'ภายในห้อง 204',
+              portrait: 'player',
+              text: '4 ทุ่ม วันที่ 14 -> รหัส 414 เปิดออกแล้ว! ข้างในกล่องเหล็กมีเครื่องอัดเสียงรุ่นเก่าที่หน้าจอแตกอยู่ ลองกดเล่นดูซิ',
+            },
+            {
+              speaker: 'เสียงจากเครื่องอัดเสียง',
+              role: 'ไฟล์บันทึก 14 ต.ค.',
+              portrait: 'narrator',
+              text: '[เสียงฝนตกซ่า...] "มึงคิดจะเอาเรื่องชมรมไปแจ้งความเหรอพริม! ส่งโทรศัพท์มานี่!" — [เสียงตบตี ผลักกระแทกพื้น และเสียงสำลักก่อนเงียบหายไป...]',
+            },
+            {
+              speaker: 'ต้น',
+              role: 'ภายในห้อง 204',
+              portrait: 'player',
+              text: 'มือสั่นไปหมดแล้ว... พี่ต้อมเป็นคนทำจริงๆ เหรอ?! ต้องรีบขึ้นไปตรวจดูหลักฐานในห้อง 304 ให้ครบ!',
+            },
+          ]);
+        });
       }
     );
   }
@@ -1855,6 +1872,8 @@ export class GameEngine {
 
       f.unlockedRoom304 = true;
       this.saveGame();
+      this.playCutscene('dorm_climax_304', () => this.enterRoom('room304', 3, 3.5));
+      return;
     }
 
     this.enterRoom('room304', 3, 3.5);
@@ -3447,7 +3466,7 @@ export class GameEngine {
     this.lastTime = now;
 
     if (!this.paused) {
-      const canMove = !this.modalOpen && this.activeDialogue.length === 0;
+      const canMove = !this.modalOpen && this.activeDialogue.length === 0 && !this.cutscene.isPlaying();
       this.mobileControls.classList.toggle('overlay-paused', !canMove);
       this.interactPrompt.classList.toggle('overlay-paused', !canMove);
       this.invBar.classList.toggle('overlay-paused', !canMove);

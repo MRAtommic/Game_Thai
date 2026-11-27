@@ -1,5 +1,7 @@
 import * as THREE from 'three';
 import { FloorIndex, RoomId, TimePeriod, WeatherType } from '../types';
+import { buildRealisticCar, buildRealisticMotorcycle } from './VehicleModels';
+import { build25DBananaClump, build25DStreetTree } from './NatureModels';
 import {
   CharacterKind,
   createCharacterTexture,
@@ -7,7 +9,6 @@ import {
 } from '../art/SpriteFactory';
 import {
   createAbandonedSignTexture,
-  createBananaTreeTexture,
   createBathroomTileTexture,
   createBusStopSignTexture,
   createCalendarTexture,
@@ -22,8 +23,6 @@ import {
   createNoodleCartSignTexture,
   createNoticeBoardTexture,
   createRugTexture,
-  createStorefrontGlassTexture,
-  createStreetTreeTexture,
   createThaiAlleySignTexture,
   createThaiDoorTexture,
   createThaiRoadTexture,
@@ -477,7 +476,7 @@ export class DormWorld {
       side: THREE.DoubleSide,
     });
     const mesh = new THREE.Mesh(new THREE.PlaneGeometry(w, h), mat);
-    mesh.receiveShadow = true;
+    mesh.receiveShadow = false;
     return mesh;
   }
 
@@ -569,8 +568,8 @@ export class DormWorld {
     bulb.position.set(x, y, -0.35);
     this.scene.add(bulb);
 
-    const light = new THREE.PointLight(color, intensity, 8.8, 1.5);
-    light.position.set(x, y - 0.15, 0.25);
+    const light = new THREE.PointLight(color, intensity, 10.5, 1.35);
+    light.position.set(x, y - 0.15, 1.45);
     this.scene.add(light);
 
     // Soft additive light cone below fixture
@@ -1063,8 +1062,8 @@ export class DormWorld {
     poleBulb.position.set(-4.0, 3.65, -0.8);
     this.scene.add(poleBulb);
 
-    const streetLight = new THREE.PointLight('#ffcc70', 2.4, 10.5, 1.45);
-    streetLight.position.set(-4.0, 3.55, -0.5);
+    const streetLight = new THREE.PointLight('#ffcc70', 2.8, 11.5, 1.35);
+    streetLight.position.set(-4.0, 3.55, 1.25);
     this.scene.add(streetLight);
 
     const streetConeMat = new THREE.MeshBasicMaterial({
@@ -1087,16 +1086,7 @@ export class DormWorld {
       flickerSeed: 1.7,
     });
 
-    // Tangled Thai electric & telecom wires sweeping across the alley!
-    [
-      { y1: 4.55, y2: 4.45, sag: 0.45, r: 0.022 },
-      { y1: 4.2, y2: 4.15, sag: 0.68, r: 0.026 },
-      { y1: 3.9, y2: 3.85, sag: 0.9, r: 0.018 },
-      { y1: 3.65, y2: 3.6, sag: 0.55, r: 0.016 },
-    ].forEach((w) => {
-      this.addHangingWire(new THREE.Vector3(-16.5, w.y1, -1.0), new THREE.Vector3(-4.8, w.y2, -0.95), w.sag, w.r);
-      this.addHangingWire(new THREE.Vector3(-4.8, w.y2, -0.95), new THREE.Vector3(12.8, w.y1 - 0.15, -0.95), w.sag + 0.1, w.r);
-    });
+    // Overhead Soi electric poles stay strictly outside Dorm walls (x < -16, NEVER running cables across inside Floor 1!)
 
     // Ornate Thai Spirit House (ศาลพระภูมิ) at x = 6.2
     const ped = new THREE.Mesh(
@@ -1139,11 +1129,12 @@ export class DormWorld {
     this.spiritCandleLight.position.set(6.2, 1.75, -0.25);
     this.scene.add(this.spiritCandleLight);
 
-    // Organic Banana Trees behind Spirit House & Yard
-    const bananaTex = createBananaTreeTexture();
+    // 2.5D Volumetric Banana Clumps behind Spirit House & Yard
     [4.4, 7.6].forEach((bx, idx) => {
-      const tree = this.addTexturedPlane(2.7, 3.2, bananaTex, bx, 1.55, -1.55 - idx * 0.1, 0.85, true);
-      this.bananaTrees.push(tree);
+      const clump = build25DBananaClump(0.95);
+      clump.position.set(bx, 0, -1.55 - idx * 0.12);
+      clump.rotation.y = idx === 0 ? 0.35 : -0.4;
+      this.scene.add(clump);
     });
 
     // Clothesline with swaying Thai student uniform (x = 8.9)
@@ -1173,7 +1164,6 @@ export class DormWorld {
     // Spaced-out Thai Soi backdrop: shophouses, graffiti walls & lush street trees (-15 to -86)
     const wallTex = createThaiWallTexture(false);
     const graffitiTex = createGraffitiWallTexture();
-    const treeTex = createStreetTreeTexture();
 
     // Main outer soi back walls cleanly split around the open Side-Street T-Junction (-30.2 .. -24.0)!
     this.addTexturedPlane(10.0, 4.8, wallTex, -19.0, 2.4, -2.35, 0.95);
@@ -1218,22 +1208,24 @@ export class DormWorld {
       this.addBox(this.scene, 0.52, 0.78, 0.52, idx % 2 === 0 ? '#15803d' : '#1d4ed8', bx, 0.39, -1.65);
     });
 
-    // Lush tropical Thai street trees flanking sidewalks cleanly away from the open side-street
-    [-23.4, -31.0, -38.2, -46.8, -56.2, -66.5, -78.5].forEach((tx, idx) => {
-      const tree = this.addTexturedPlane(3.2, 3.9, treeTex, tx, 1.9, -1.75 - (idx % 2) * 0.15, 0.85, true);
-      this.bananaTrees.push(tree);
+    // 2.5D Volumetric Thai Street Trees flanking sidewalks cleanly in open gaps
+    [-23.5, -37.0, -45.2, -57.6, -67.0, -78.0].forEach((tx, idx) => {
+      const tree = build25DStreetTree({ scale: idx % 2 === 0 ? 1.04 : 0.96 });
+      tree.position.set(tx, 0, -2.02 - (idx % 2) * 0.08);
+      tree.rotation.y = idx * 0.8;
+      this.scene.add(tree);
     });
 
-    // Tall Thai Concrete Utility Poles (6.8m) + High Curved Streetlamps (extending all the way past the Abandoned House!)
-    const poles = [-16.5, -23.6, -32.8, -46.0, -59.5, -74.0, -88.5];
+    // Tall Thai Concrete Utility Poles (6.8m) + High Curved Streetlamps placed strictly in open gaps between shops along back curb
+    const poles = [-15.8, -31.2, -37.6, -46.4, -56.8, -67.8, -79.5, -94.8];
     poles.forEach((px, pIdx) => {
-      // Tall concrete square pole
-      this.addBox(this.scene, 0.28, 6.9, 0.28, '#5a5f66', px, 3.45, -1.15);
+      // Tall concrete square pole (pushed cleanly back to z = -1.88 so it never pierces shop roofs or awnings)
+      this.addBox(this.scene, 0.28, 6.9, 0.28, '#5a5f66', px, 3.45, -1.88);
       // Upper steel cross-arms & ceramic insulators
-      this.addBox(this.scene, 1.35, 0.1, 0.12, '#3d424a', px, 6.25, -1.15);
-      this.addBox(this.scene, 1.05, 0.08, 0.1, '#3d424a', px, 5.45, -1.15);
+      this.addBox(this.scene, 1.35, 0.1, 0.12, '#3d424a', px, 6.25, -1.88);
+      this.addBox(this.scene, 1.05, 0.08, 0.1, '#3d424a', px, 5.45, -1.88);
       [-0.5, 0, 0.5].forEach((ix) => {
-        this.addBox(this.scene, 0.08, 0.16, 0.08, '#94a3b8', px + ix, 6.38, -1.15);
+        this.addBox(this.scene, 0.08, 0.16, 0.08, '#94a3b8', px + ix, 6.38, -1.88);
       });
       // Coiled black telecom cable loop hanging mid-pole (classic Bangkok soi detail!)
       if (pIdx % 2 === 1) {
@@ -1241,20 +1233,20 @@ export class DormWorld {
           new THREE.TorusGeometry(0.24, 0.032, 6, 14),
           new THREE.MeshBasicMaterial({ color: '#111318' })
         );
-        coil.position.set(px + 0.18, 4.25, -0.98);
+        coil.position.set(px + 0.18, 4.45, -1.72);
         this.scene.add(coil);
         // Utility transformer cylinder
         const tr = new THREE.Mesh(
           new THREE.CylinderGeometry(0.26, 0.26, 0.65, 12),
           new THREE.MeshStandardMaterial({ color: '#474c54', metalness: 0.4 })
         );
-        tr.position.set(px - 0.28, 5.05, -0.92);
+        tr.position.set(px - 0.28, 5.15, -1.66);
         this.scene.add(tr);
       }
 
       // High curved Thai streetlamp arm reaching forward over sidewalk & road (height ~5.8m)
-      this.addBox(this.scene, 0.1, 0.1, 1.65, '#64748b', px, 5.85, -0.35);
-      this.addBox(this.scene, 0.42, 0.14, 0.55, '#475569', px, 5.8, 0.52);
+      this.addBox(this.scene, 0.1, 0.1, 1.75, '#64748b', px, 5.85, -1.02);
+      this.addBox(this.scene, 0.42, 0.14, 0.55, '#475569', px, 5.8, -0.14);
 
       const warmLamp = pIdx % 2 === 0;
       const bulbColor = warmLamp ? '#ffd580' : '#e6f3ff';
@@ -1263,11 +1255,11 @@ export class DormWorld {
         new THREE.BoxGeometry(0.32, 0.08, 0.4),
         new THREE.MeshBasicMaterial({ color: bulbColor })
       );
-      highBulb.position.set(px, 5.71, 0.52);
+      highBulb.position.set(px, 5.71, -0.14);
       this.scene.add(highBulb);
 
       const highLight = new THREE.PointLight(bulbColor, 11.5, 26, 0.72);
-      highLight.position.set(px, 5.45, 1.65);
+      highLight.position.set(px, 5.45, 1.15);
       this.scene.add(highLight);
 
       const coneMat = new THREE.MeshBasicMaterial({
@@ -1275,10 +1267,10 @@ export class DormWorld {
         transparent: true,
         blending: THREE.AdditiveBlending,
         depthWrite: false,
-        opacity: 0.42,
+        opacity: 0.38,
       });
-      const highCone = new THREE.Mesh(new THREE.PlaneGeometry(5.6, 5.8), coneMat);
-      highCone.position.set(px, 2.85, 0.65);
+      const highCone = new THREE.Mesh(new THREE.PlaneGeometry(5.2, 5.8), coneMat);
+      highCone.position.set(px, 2.85, -0.05);
       this.scene.add(highCone);
 
       this.corridorLights.push({
@@ -1291,64 +1283,45 @@ export class DormWorld {
       });
     });
 
-    // Multi-tier tangled Thai electric & fiber cables spanning every pole cleanly
+    // Multi-tier tangled Thai electric & fiber cables spanning every pole cleanly along back sidewalk
     for (let i = 0; i < poles.length - 1; i++) {
       const x1 = poles[i];
       const x2 = poles[i + 1];
-      this.addHangingWire(new THREE.Vector3(x1, 6.25, -1.15), new THREE.Vector3(x2, 6.25, -1.15), 0.45, 0.024);
-      this.addHangingWire(new THREE.Vector3(x1, 5.45, -1.15), new THREE.Vector3(x2, 5.45, -1.15), 0.58, 0.024);
-      this.addHangingWire(new THREE.Vector3(x1, 4.7, -1.05), new THREE.Vector3(x2, 4.75, -1.05), 0.85, 0.032);
-      this.addHangingWire(new THREE.Vector3(x1, 4.45, -1.02), new THREE.Vector3(x2, 4.35, -1.02), 1.05, 0.022);
-      this.addHangingWire(new THREE.Vector3(x1, 4.2, -1.0), new THREE.Vector3(x2, 4.15, -1.0), 0.68, 0.018);
+      this.addHangingWire(new THREE.Vector3(x1, 6.25, -1.88), new THREE.Vector3(x2, 6.25, -1.88), 0.42, 0.024);
+      this.addHangingWire(new THREE.Vector3(x1, 5.45, -1.88), new THREE.Vector3(x2, 5.45, -1.88), 0.55, 0.024);
+      this.addHangingWire(new THREE.Vector3(x1, 4.75, -1.78), new THREE.Vector3(x2, 4.8, -1.78), 0.78, 0.032);
+      this.addHangingWire(new THREE.Vector3(x1, 4.5, -1.75), new THREE.Vector3(x2, 4.42, -1.75), 0.92, 0.022);
+      this.addHangingWire(new THREE.Vector3(x1, 4.25, -1.73), new THREE.Vector3(x2, 4.22, -1.73), 0.62, 0.018);
     }
 
-    // 1) Parking Shed (โรงจอดรถยนต์ & มอเตอร์ไซค์ at x = -19.5)
+    // 1) Parking Shed (โรงจอดรถยนต์ & มอเตอร์ไซค์ at x = -17.6, completely clear of Win-Moto Stand at -22.2!)
     const zincMat = new THREE.MeshStandardMaterial({
       map: createZincRoofTexture(),
       roughness: 0.65,
       metalness: 0.35,
     });
-    const shedRoof = new THREE.Mesh(new THREE.BoxGeometry(6.8, 0.12, 3.6), zincMat);
-    shedRoof.position.set(-19.5, 2.75, -0.5);
+    const shedRoof = new THREE.Mesh(new THREE.BoxGeometry(4.6, 0.12, 3.4), zincMat);
+    shedRoof.position.set(-17.6, 2.75, -0.5);
     shedRoof.rotation.x = 0.12;
     this.scene.add(shedRoof);
-    [-22.6, -16.4].forEach((sx) => {
-      this.addBox(this.scene, 0.1, 2.75, 0.1, '#4b5563', sx, 1.37, 0.9);
-      this.addBox(this.scene, 0.1, 2.75, 0.1, '#4b5563', sx, 1.37, -1.7);
+    [-19.8, -15.4].forEach((sx) => {
+      this.addBox(this.scene, 0.1, 2.75, 0.1, '#4b5563', sx, 1.37, 0.85);
+      this.addBox(this.scene, 0.1, 2.75, 0.1, '#4b5563', sx, 1.37, -1.65);
     });
     const shedLight = new THREE.PointLight('#ffe0a8', 4.5, 14, 0.95);
-    shedLight.position.set(-19.5, 2.5, 0.9);
+    shedLight.position.set(-17.6, 2.5, 0.9);
     this.scene.add(shedLight);
 
-    // Parked Sedan + Two Motorcycles
-    this.addBox(this.scene, 2.55, 0.65, 1.15, '#2b3b4e', -20.8, 0.55, -0.55, 0.4);
-    this.addBox(this.scene, 1.4, 0.52, 1.05, '#233142', -20.7, 1.08, -0.55, 0.35);
-    this.addBox(this.scene, 0.45, 0.36, 1.07, '#111a26', -20.1, 1.06, -0.55, 0.2);
-    [-21.55, -20.05].forEach((wx) => {
-      const wheel = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.24, 0.24, 0.2, 14),
-        new THREE.MeshStandardMaterial({ color: '#111318', roughness: 0.85 })
-      );
-      wheel.rotation.x = Math.PI / 2;
-      wheel.position.set(wx, 0.24, 0.04);
-      this.scene.add(wheel);
-    });
-    [
-      { x: -18.3, col: '#8c2222' },
-      { x: -17.1, col: '#1c2433' },
-    ].forEach((bike) => {
-      [-0.36, 0.36].forEach((dx) => {
-        const tire = new THREE.Mesh(
-          new THREE.TorusGeometry(0.2, 0.06, 8, 16),
-          new THREE.MeshStandardMaterial({ color: '#121418', roughness: 0.8 })
-        );
-        tire.position.set(bike.x + dx, 0.24, -0.35);
-        this.scene.add(tire);
-      });
-      this.addBox(this.scene, 0.88, 0.28, 0.24, bike.col, bike.x, 0.52, -0.35, 0.4);
-      this.addBox(this.scene, 0.5, 0.12, 0.24, '#18181b', bike.x - 0.1, 0.7, -0.35, 0.6);
-      this.addBox(this.scene, 0.14, 0.55, 0.12, '#9ca3af', bike.x + 0.28, 0.68, -0.35, 0.3);
-    });
+    // Realistic Parked Sedan + Realistic Parked Scooter cleanly spaced inside shed
+    const shedSedan = buildRealisticCar({ bodyColor: '#2b3b4e', roofColor: '#233142', variant: 'sedan', facing: 1 }).group;
+    shedSedan.scale.multiplyScalar(0.84);
+    shedSedan.position.set(-18.2, 0, -0.62);
+    this.scene.add(shedSedan);
+
+    const shedBike = buildRealisticMotorcycle({ bodyColor: '#8c2222', withRider: false, facing: -1 }).group;
+    shedBike.position.set(-16.1, 0, -0.35);
+    shedBike.rotation.y = 0.15;
+    this.scene.add(shedBike);
 
     // 2) Thai Bus Stop (ป้ายรถเมล์ at x = -34.5)
     this.addBox(this.scene, 3.2, 0.12, 1.8, '#3f4552', -34.5, 2.55, -0.65);
@@ -1374,10 +1347,53 @@ export class DormWorld {
     busLight.position.set(-34.5, 2.35, 0.6);
     this.scene.add(busLight);
 
-    // 3) Thai Noodle Cart (รถเข็นบะหมี่เกี๊ยวหมูแดง at x = -42.0)
-    this.addBox(this.scene, 2.2, 0.92, 0.85, '#991b1b', -42.0, 0.58, -0.55); // cart lower body
-    this.addBox(this.scene, 1.15, 0.75, 0.72, '#e2e8f0', -42.45, 1.4, -0.55, 0.25); // glass noodle display
-    this.addBox(this.scene, 0.45, 0.45, 0.45, '#cbd5e1', -41.4, 1.25, -0.55, 0.2); // steaming broth pot
+    // 3) Detailed Thai Noodle Cart (รถเข็นบะหมี่เกี๊ยวหมูแดง at x = -42.0) with transparent glass showcase!
+    this.addBox(this.scene, 2.25, 0.92, 0.88, '#991b1b', -42.0, 0.58, -0.55); // cart lower body
+    this.addBox(this.scene, 2.2, 0.08, 0.92, '#cbd5e1', -42.0, 1.06, -0.55, 0.25); // stainless counter top
+    // Transparent glass display cabinet (stainless frame + crystal clear glass + bright food visible inside!)
+    this.addBox(this.scene, 1.24, 0.05, 0.72, '#cbd5e1', -42.45, 1.78, -0.55, 0.25); // glass cabinet top
+    [-43.04, -41.86].forEach((gx) => {
+      this.addBox(this.scene, 0.04, 0.72, 0.04, '#cbd5e1', gx, 1.42, -0.21, 0.25);
+      this.addBox(this.scene, 0.04, 0.72, 0.04, '#cbd5e1', gx, 1.42, -0.89, 0.25);
+    });
+    // Back reflector mirror + visible hanging red BBQ pork, egg noodle bundles & green veggies inside glass!
+    this.addBox(this.scene, 1.16, 0.68, 0.04, '#fef9c3', -42.45, 1.42, -0.86, 0.2);
+    [-42.85, -42.65, -42.45].forEach((px) => {
+      this.addBox(this.scene, 0.11, 0.34, 0.14, '#b91c1c', px, 1.54, -0.55, 0.4); // mu daeng strips
+    });
+    [-42.2, -42.0].forEach((nx) => {
+      const noodleBall = new THREE.Mesh(
+        new THREE.SphereGeometry(0.11, 10, 8),
+        new THREE.MeshStandardMaterial({ color: '#facc15', roughness: 0.65 })
+      );
+      noodleBall.position.set(nx, 1.22, -0.52);
+      this.scene.add(noodleBall);
+    });
+    this.addBox(this.scene, 0.24, 0.12, 0.22, '#22c55e', -42.68, 1.16, -0.45, 0.6); // crisp greens
+    this.addBox(this.scene, 0.22, 0.1, 0.2, '#f8fafc', -42.36, 1.15, -0.45, 0.5); // pork meatballs
+    const glassMat = new THREE.MeshStandardMaterial({
+      color: '#bae6fd',
+      transparent: true,
+      opacity: 0.24,
+      roughness: 0.08,
+      metalness: 0.15,
+      depthWrite: false,
+    });
+    const glassFront = new THREE.Mesh(new THREE.BoxGeometry(1.18, 0.7, 0.03), glassMat);
+    glassFront.position.set(-42.45, 1.42, -0.2);
+    this.scene.add(glassFront);
+    // Warm showcase tungsten bulb illuminating glass cabinet food
+    const showcaseLight = new THREE.PointLight('#fde68a', 2.4, 5.5, 1.1);
+    showcaseLight.position.set(-42.45, 1.68, -0.45);
+    this.scene.add(showcaseLight);
+    // Steaming stainless broth pot + ladle
+    const soupPot = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.24, 0.22, 0.42, 14),
+      new THREE.MeshStandardMaterial({ color: '#e2e8f0', metalness: 0.7, roughness: 0.22 })
+    );
+    soupPot.position.set(-41.35, 1.3, -0.55);
+    this.scene.add(soupPot);
+    this.addBox(this.scene, 0.04, 0.45, 0.04, '#cbd5e1', -41.25, 1.56, -0.55);
     [-42.85, -41.15].forEach((wx) => {
       const cw = new THREE.Mesh(
         new THREE.TorusGeometry(0.18, 0.05, 8, 14),
@@ -1421,25 +1437,63 @@ export class DormWorld {
       stool.position.set(sx, 0.21, 0.2);
       this.scene.add(stool);
     });
-    this.noodleLight.position.set(-42.0, 2.35, 0.45);
+    this.noodleLight.position.set(-42.0, 2.45, 1.45);
     this.scene.add(this.noodleLight);
 
-    // 4) 24-Seven Convenience Store (เซเว่นปากซอย at x = -51.5)
-    this.addBox(this.scene, 6.4, 3.9, 2.2, '#e2e8f0', -51.5, 1.95, -1.3, 0.7);
+    // 4) True 3D Recessed 24-Seven Convenience Store Front (เซเว่นปากซอย at x = -51.5) — Deep interior visible through real glass!
+    const sX = -51.5;
+    // Recessed store back wall (z = -2.25) + interior light ceiling, terrazzo floor & framing pillars
+    this.addBox(this.scene, 6.4, 2.75, 0.16, '#f8fafc', sX, 1.4, -2.25, 0.35);
+    this.addBox(this.scene, 6.4, 0.08, 2.2, '#e2e8f0', sX, 0.04, -1.2, 0.25); // bright floor
+    this.addBox(this.scene, 6.4, 0.14, 2.2, '#ffffff', sX, 2.78, -1.2, 0.25); // clean ceiling
+    [-54.45, -48.55].forEach((wx) => {
+      this.addBox(this.scene, 0.55, 2.8, 2.2, '#f1f5f9', wx, 1.4, -1.2, 0.45);
+    });
+    // Glowing interior 7-Eleven tri-color frieze + 3D stocked snack shelves & brightly lit cooler visible inside!
+    this.addBox(this.scene, 5.4, 0.12, 0.05, '#f97316', sX, 2.48, -2.15);
+    this.addBox(this.scene, 5.4, 0.1, 0.05, '#16a34a', sX, 2.36, -2.15);
+    this.addBox(this.scene, 5.4, 0.08, 0.05, '#ef4444', sX, 2.25, -2.15);
+    // 3D snack gondola racks & colorful products inside the window depth (z = -1.78 .. -1.45)
+    [-53.2, -49.8].forEach((gx) => {
+      this.addBox(this.scene, 1.55, 1.55, 0.45, '#e2e8f0', gx, 0.8, -1.72, 0.45);
+      ['#ef4444', '#facc15', '#22c55e', '#38bdf8'].forEach((pc, pi) => {
+        this.addBox(this.scene, 0.24, 0.28, 0.22, pc, gx - 0.52 + pi * 0.35, 1.28, -1.56, 0.35);
+        this.addBox(this.scene, 0.24, 0.26, 0.22, pc, gx - 0.52 + pi * 0.35, 0.78, -1.56, 0.35);
+      });
+    });
+    // Interior checkout desk & glowing cooler backlight inside shopfront
+    this.addBox(this.scene, 1.35, 0.85, 0.55, '#ffffff', sX + 0.1, 0.44, -1.65, 0.35);
+    this.addBox(this.scene, 1.38, 0.08, 0.58, '#16a34a', sX + 0.1, 0.88, -1.65, 0.35);
+    const inShopLight = new THREE.PointLight('#ffffff', 4.2, 8.5, 0.9);
+    inShopLight.position.set(sX, 2.45, -1.15);
+    this.scene.add(inShopLight);
+    // Protruding 3D Sign Canopy (z = -0.18 .. +0.32) with stepped bezel & glowing fascia!
+    this.addBox(this.scene, 6.65, 1.15, 0.55, '#f8fafc', sX, 3.32, -0.08, 0.35);
+    this.addBox(this.scene, 6.72, 0.14, 0.62, '#cbd5e1', sX, 3.88, -0.05, 0.3);
     const fascia = new THREE.Mesh(
-      new THREE.PlaneGeometry(6.35, 1.05),
+      new THREE.PlaneGeometry(6.35, 0.98),
       new THREE.MeshBasicMaterial({ map: createConvenienceStoreSignTexture() })
     );
-    fascia.position.set(-51.5, 3.25, -0.18);
+    fascia.position.set(sX, 3.3, 0.21);
     this.scene.add(fascia);
-    const storeGlass = new THREE.Mesh(
-      new THREE.PlaneGeometry(5.6, 2.35),
-      new THREE.MeshBasicMaterial({ map: createStorefrontGlassTexture() })
+    // Real aluminum frame + slightly parted automatic transparent sliding glass doors & side display panes (z = -0.18)
+    [-54.15, -52.5, -50.5, -48.85].forEach((mx) => {
+      this.addBox(this.scene, 0.08, 2.7, 0.1, '#334155', mx, 1.35, -0.18, 0.4);
+    });
+    this.addBox(this.scene, 5.4, 0.1, 0.1, '#334155', sX, 2.68, -0.18, 0.4);
+    const shopFrontGlass = new THREE.Mesh(
+      new THREE.BoxGeometry(5.3, 2.55, 0.03),
+      glassMat
     );
-    storeGlass.position.set(-51.5, 1.32, -0.18);
-    this.scene.add(storeGlass);
-    const storeLight = new THREE.PointLight('#eef8ff', 2.6, 10.5, 1.4);
-    storeLight.position.set(-51.5, 2.4, 1.1);
+    shopFrontGlass.position.set(sX, 1.32, -0.18);
+    this.scene.add(shopFrontGlass);
+    // Exterior threshold step, green welcome mat & sidewalk ATM kiosk flanking storefront!
+    this.addBox(this.scene, 5.8, 0.06, 0.65, '#cbd5e1', sX, 0.03, 0.12, 0.6);
+    this.addBox(this.scene, 1.5, 0.07, 0.42, '#16a34a', sX, 0.04, 0.16, 0.85);
+    this.addBox(this.scene, 0.55, 1.45, 0.42, '#1d4ed8', sX - 2.95, 0.72, -0.04, 0.35); // sidewalk ATM
+    this.addBox(this.scene, 0.38, 0.32, 0.05, '#bae6fd', sX - 2.95, 1.08, 0.18);
+    const storeLight = new THREE.PointLight('#eef8ff', 3.8, 13.5, 1.15);
+    storeLight.position.set(sX, 2.65, 1.65);
     this.scene.add(storeLight);
 
     // 5) Thai Street Market Stalls (ตลาดร้านค้า & แผงป้ากิม at x = -61.0)
@@ -1461,13 +1515,24 @@ export class DormWorld {
     });
     this.addBox(this.scene, 3.6, 0.88, 0.9, '#6b442a', -61.0, 0.44, -0.65);
     this.addBox(this.scene, 2.8, 0.85, 0.85, '#593722', -64.6, 0.42, -0.65);
-    [-61.9, -61.2, -60.5].forEach((px) => {
+    // Transparent sneeze-guard showcase over curry pots showing colored curries inside!
+    const mGlass = new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.48, 0.03), glassMat);
+    mGlass.position.set(-61.2, 1.15, -0.22);
+    this.scene.add(mGlass);
+    [-61.9, -61.2, -60.5].forEach((px, pi) => {
       const pot = new THREE.Mesh(
         new THREE.CylinderGeometry(0.18, 0.16, 0.24, 12),
         new THREE.MeshStandardMaterial({ color: '#cbd5e1', metalness: 0.65, roughness: 0.25 })
       );
       pot.position.set(px, 1.0, -0.55);
       this.scene.add(pot);
+      // Visible curry / stew surface inside each pot
+      const stew = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.16, 0.16, 0.03, 12),
+        new THREE.MeshStandardMaterial({ color: ['#65a30d', '#ea580c', '#78350f'][pi], roughness: 0.3 })
+      );
+      stew.position.set(px, 1.12, -0.55);
+      this.scene.add(stew);
     });
     this.addBox(this.scene, 2.34, 0.69, 0.04, '#3b2416', -61.0, 2.26, 0.62);
     const marketSign = new THREE.Mesh(
@@ -1476,8 +1541,8 @@ export class DormWorld {
     );
     marketSign.position.set(-61.0, 2.26, 0.65);
     this.scene.add(marketSign);
-    const marketLight = new THREE.PointLight('#ffca78', 2.2, 9.5, 1.45);
-    marketLight.position.set(-61.2, 2.35, 0.6);
+    const marketLight = new THREE.PointLight('#ffca78', 3.0, 11, 1.3);
+    marketLight.position.set(-61.2, 2.45, 1.45);
     this.scene.add(marketLight);
 
     // 6) Thai Isaan Food & Drink Restaurant (ร้านลาบ-ส้มตำ แซ่บซอย 9 at x = -72.5)
@@ -1496,9 +1561,23 @@ export class DormWorld {
     );
     isaanSign.position.set(-71.5, 2.52, 1.42);
     this.scene.add(isaanSign);
-    // Charcoal grill with glowing embers + red ice cooler + drinking table with bottles
-    this.addBox(this.scene, 1.15, 0.82, 0.65, '#334155', -74.9, 0.41, -0.85);
-    this.addBox(this.scene, 0.85, 0.08, 0.45, '#ea580c', -74.9, 0.84, -0.85); // glowing charcoal!
+    // Glass Somtam & Sticky Rice Cabinet + Mortar + Charcoal Grill with sizzling pork!
+    this.addBox(this.scene, 1.35, 0.85, 0.72, '#334155', -73.6, 0.42, -0.78);
+    const sGlass = new THREE.Mesh(new THREE.BoxGeometry(1.15, 0.52, 0.56), glassMat);
+    sGlass.position.set(-73.6, 1.12, -0.78);
+    this.scene.add(sGlass);
+    this.addBox(this.scene, 0.34, 0.18, 0.24, '#84cc16', -73.85, 0.96, -0.78); // shredded green papaya
+    this.addBox(this.scene, 0.24, 0.14, 0.2, '#ef4444', -73.45, 0.95, -0.78); // red tomatoes
+    const kratib = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.14, 0.14, 0.22, 10),
+      new THREE.MeshStandardMaterial({ color: '#ca8a04', roughness: 0.85 })
+    );
+    kratib.position.set(-73.12, 0.98, -0.68);
+    this.scene.add(kratib);
+    // Charcoal grill with glowing embers + pork neck skewers + red ice cooler
+    this.addBox(this.scene, 1.15, 0.82, 0.65, '#334155', -75.05, 0.41, -0.85);
+    this.addBox(this.scene, 0.85, 0.08, 0.45, '#ea580c', -75.05, 0.84, -0.85);
+    this.addBox(this.scene, 0.55, 0.06, 0.32, '#9a3412', -75.05, 0.91, -0.85); // grilling pork neck
     this.addBox(this.scene, 0.72, 0.56, 0.52, '#b91c1c', -69.8, 0.28, -0.65); // red ice box
     // Round drinking table + amber bottles & ice bucket
     const tableTop = new THREE.Mesh(
@@ -1511,7 +1590,7 @@ export class DormWorld {
     [-72.3, -72.05, -71.85].forEach((bx, i) => {
       this.addBox(this.scene, 0.07, 0.25, 0.07, i === 1 ? '#e2e8f0' : '#78350f', bx, 0.87, -0.15);
     });
-    this.isaanLight.position.set(-72.5, 2.35, 0.45);
+    this.isaanLight.position.set(-72.5, 2.45, 1.5);
     this.scene.add(this.isaanLight);
 
     // 7) Abandoned House at end of Soi 9 (บ้านร้างท้ายซอย at x = -88.6) + Rusted Fence & Gangster Hangout
@@ -1540,83 +1619,45 @@ export class DormWorld {
     abadSign.position.set(-85.4, 1.65, -0.08);
     abadSign.rotation.z = -0.06;
     this.scene.add(abadSign);
-    // Overgrown dead bush / twisted tree by the abandoned gate + dim creepy porch glow
-    const darkTree = this.addTexturedPlane(3.4, 4.1, treeTex, -93.4, 2.0, -1.2, 0.92, true);
-    this.bananaTrees.push(darkTree);
+    // 2.5D gnarled dark tree by the abandoned gate + dim creepy porch glow
+    const darkTree = build25DStreetTree({ dark: true, scale: 1.06 });
+    darkTree.position.set(-93.4, 0, -1.25);
+    this.scene.add(darkTree);
     const abadLight = new THREE.PointLight('#648270', 2.6, 12, 1.2);
     abadLight.position.set(-88.6, 2.6, 0.8);
     this.scene.add(abadLight);
   }
 
   private buildAmbientTrafficAndPedestrians(shadowTex: THREE.CanvasTexture): void {
-    // 1) Moving Motorcycles along road (strictly west of the dorm, turning via the open side-street at -27.2!)
+    // 1) Realistic Moving Motorcycles with articulated riders along Soi 9 road
     [
-      { x: -46, z: 3.1, speed: 6.8, dir: 1 as const, col: '#b91c1c' },
-      { x: -58, z: 3.45, speed: 7.4, dir: -1 as const, col: '#1d4ed8' },
+      { x: -46, z: 3.1, speed: 6.8, dir: 1 as const, col: '#b91c1c', jacket: '#f97316', winVest: true },
+      { x: -58, z: 3.45, speed: 7.4, dir: -1 as const, col: '#1d4ed8', jacket: '#1e293b', winVest: false },
     ].forEach((cfg) => {
-      const grp = new THREE.Group();
-      [-0.38, 0.38].forEach((dx) => {
-        const tire = new THREE.Mesh(
-          new THREE.TorusGeometry(0.21, 0.06, 8, 14),
-          new THREE.MeshStandardMaterial({ color: '#0f172a' })
-        );
-        tire.position.set(dx, 0.24, 0);
-        grp.add(tire);
-      });
-      this.addBox(grp, 0.92, 0.3, 0.26, cfg.col, 0, 0.52, 0, 0.4);
-      // Rider silhouette + helmet
-      this.addBox(grp, 0.34, 0.62, 0.28, '#1e293b', -0.05 * cfg.dir, 0.95, 0);
-      const helmet = new THREE.Mesh(
-        new THREE.SphereGeometry(0.18, 10, 10),
-        new THREE.MeshStandardMaterial({ color: '#e2e8f0', roughness: 0.3 })
-      );
-      helmet.position.set(0.02 * cfg.dir, 1.4, 0);
-      grp.add(helmet);
-      // Glowing Headlight + Taillight
-      const head = new THREE.Mesh(
-        new THREE.SphereGeometry(0.08, 8, 8),
-        new THREE.MeshBasicMaterial({ color: '#fef08a' })
-      );
-      head.position.set(0.5 * cfg.dir, 0.65, 0);
-      grp.add(head);
-      const tail = new THREE.Mesh(
-        new THREE.SphereGeometry(0.06, 8, 8),
-        new THREE.MeshBasicMaterial({ color: '#ef4444' })
-      );
-      tail.position.set(-0.5 * cfg.dir, 0.62, 0);
-      grp.add(tail);
-
+      const grp = buildRealisticMotorcycle({
+        bodyColor: cfg.col,
+        withRider: true,
+        riderJacket: cfg.jacket,
+        winVest: cfg.winVest,
+        facing: cfg.dir,
+      }).group;
       grp.position.set(cfg.x, 0, cfg.z);
       this.exteriorGroup.add(grp);
       this.movingVehicles.push({ group: grp, speed: cfg.speed, minX: -90, maxX: -27.2, baseZ: cfg.z, dir: cfg.dir });
     });
 
-    // 2) Moving Thai Cars (Green-Yellow Bangkok Taxi & Silver Sedan at z = +4.15)
+    // 2) Realistic Moving Thai Cars (Green-Yellow Bangkok Taxi & Silver Sedan at z = +4.15)
     [
-      { x: -75, z: 4.1, speed: 8.6, dir: 1 as const, body: '#16a34a', roof: '#eab308' },
-      { x: -36, z: 4.55, speed: 9.2, dir: -1 as const, body: '#475569', roof: '#64748b' },
+      { x: -75, z: 4.1, speed: 8.6, dir: 1 as const, variant: 'taxi' as const, body: '#16a34a', roof: '#eab308' },
+      { x: -36, z: 4.55, speed: 9.2, dir: -1 as const, variant: 'sedan' as const, body: '#475569', roof: '#64748b' },
     ].forEach((car) => {
-      const grp = new THREE.Group();
-      this.addBox(grp, 2.7, 0.62, 1.2, car.body, 0, 0.52, 0, 0.35);
-      this.addBox(grp, 1.45, 0.5, 1.08, car.roof, -0.1 * car.dir, 1.05, 0, 0.3);
-      this.addBox(grp, 0.5, 0.36, 1.1, '#0f172a', 0.55 * car.dir, 1.02, 0, 0.15);
-      [-0.85, 0.85].forEach((wx) => {
-        const wheel = new THREE.Mesh(
-          new THREE.CylinderGeometry(0.24, 0.24, 0.22, 14),
-          new THREE.MeshStandardMaterial({ color: '#0f172a' })
-        );
-        wheel.rotation.x = Math.PI / 2;
-        wheel.position.set(wx, 0.24, 0.55);
-        grp.add(wheel);
-      });
-      // Headlight & taillight
-      const hl = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.14, 0.8), new THREE.MeshBasicMaterial({ color: '#fef9c3' }));
-      hl.position.set(1.36 * car.dir, 0.55, 0);
-      grp.add(hl);
-      const tl = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.14, 0.8), new THREE.MeshBasicMaterial({ color: '#dc2626' }));
-      tl.position.set(-1.36 * car.dir, 0.55, 0);
-      grp.add(tl);
-
+      const grp = buildRealisticCar({
+        bodyColor: car.body,
+        roofColor: car.roof,
+        variant: car.variant,
+        facing: car.dir,
+      }).group;
+      grp.scale.multiplyScalar(0.84);
       grp.position.set(car.x, 0, car.z);
       this.exteriorGroup.add(grp);
       this.movingVehicles.push({ group: grp, speed: car.speed, minX: -90, maxX: -27.2, baseZ: car.z, dir: car.dir });
@@ -1869,8 +1910,8 @@ export class DormWorld {
       cone.position.set(0, 2.0, -0.2);
       g.add(cone);
 
-      const light = new THREE.PointLight(lightColor, lightIntensity, 12, 1.3);
-      light.position.set(0, 3.6, 0.4);
+      const light = new THREE.PointLight(lightColor, lightIntensity, 14, 1.1);
+      light.position.set(0, 3.6, 1.65);
       g.add(light);
       this.roomLights.push({ room, light, baseIntensity: lightIntensity });
 
@@ -2032,35 +2073,74 @@ export class DormWorld {
     this.addBox(r304, 1.4, 0.26, 1.14, '#5e3c47', 3.9, 0.5, -0.78);
     this.addBox(r304, 0.48, 0.14, 0.68, '#cbd5e1', 2.65, 0.08, 0.1); // fallen pillow on floor
 
-    // 6. 24-Seven Convenience Store Interior ('seven24')
-    const seven = createShell('seven24', false, '#f8fafc', '240, 248, 255', 2.8, false);
-    // Clean white & green/orange 24-Seven interior accent stripes along upper wall
-    this.addBox(seven, 12.2, 0.18, 0.06, '#ea580c', 0, 3.35, -1.46);
-    this.addBox(seven, 12.2, 0.16, 0.06, '#16a34a', 0, 3.16, -1.46);
-    this.addBox(seven, 12.2, 0.12, 0.06, '#dc2626', 0, 3.0, -1.46);
-    // Snack & Bento Gondola Shelf + Illuminated Drink Chiller Fridge (x = -1.6)
-    this.addBox(seven, 2.5, 2.35, 0.65, '#1e293b', -1.8, 1.18, -1.18);
-    this.addBox(seven, 2.25, 1.95, 0.1, '#bae6fd', -1.8, 1.25, -0.84); // glass chiller front glow
+    // 6. 24-Seven Convenience Store Interior ('seven24') — Super bright crisp Thai convenience store!
+    const seven = createShell('seven24', false, '#ffffff', '255, 255, 255', 7.5, false);
+    // Crisp bright white interior walls, ceiling panels & clean terrazzo floor covering dark shell
+    this.addBox(seven, 12.2, 3.9, 0.08, '#f8fafc', 0, 2.0, -1.49, 0.35);
+    this.addBox(seven, 0.1, 3.9, 4.8, '#f1f5f9', -5.9, 2.0, 0.6, 0.4);
+    this.addBox(seven, 0.1, 3.9, 4.8, '#f1f5f9', 5.9, 2.0, 0.6, 0.4);
+    this.addBox(seven, 12.0, 0.08, 4.8, '#ffffff', 0, 3.96, 0.6, 0.25);
+    this.addBox(seven, 12.0, 0.04, 4.8, '#e2e8f0', 0, 0.02, 0.6, 0.22);
+    // 3 overhead 6000K bright LED ceiling panels + front-aligned lights (illuminates player & shelf fronts!)
+    [-3.6, 0, 3.4].forEach((lx) => {
+      const panel = new THREE.Mesh(
+        new THREE.BoxGeometry(2.1, 0.08, 0.55),
+        new THREE.MeshBasicMaterial({ color: '#ffffff' })
+      );
+      panel.position.set(lx, 3.88, 0.5);
+      seven.add(panel);
+      const ledPt = new THREE.PointLight('#ffffff', 4.8, 15, 0.8);
+      ledPt.position.set(lx, 3.45, 1.75);
+      seven.add(ledPt);
+      this.roomLights.push({ room: 'seven24', light: ledPt, baseIntensity: 4.8 });
+    });
+    // Clean white & iconic 24-Seven tri-color horizontal wall stripes
+    this.addBox(seven, 12.0, 0.2, 0.05, '#f97316', 0, 3.42, -1.43);
+    this.addBox(seven, 12.0, 0.18, 0.05, '#16a34a', 0, 3.22, -1.43);
+    this.addBox(seven, 12.0, 0.14, 0.05, '#ef4444', 0, 3.05, -1.43);
+    // Center snack rack island (-3.8)
+    this.addBox(seven, 1.45, 1.45, 0.65, '#f8fafc', -3.7, 0.72, -1.1);
+    [-4.15, -3.7, -3.25].forEach((sx, si) => {
+      this.addBox(seven, 0.26, 0.32, 0.18, ['#ef4444', '#f59e0b', '#22c55e'][si], sx, 1.15, -0.82);
+      this.addBox(seven, 0.26, 0.3, 0.18, ['#ec4899', '#3b82f6', '#eab308'][si], sx, 0.65, -0.82);
+    });
+    // Illuminated Drink Chiller Fridge (x = -1.6) with transparent glass door!
+    this.addBox(seven, 2.55, 2.45, 0.65, '#e2e8f0', -1.65, 1.22, -1.15);
+    this.addBox(seven, 2.3, 2.0, 0.04, '#bae6fd', -1.65, 1.25, -0.86);
+    const chGlass = new THREE.Mesh(
+      new THREE.BoxGeometry(2.34, 2.04, 0.03),
+      new THREE.MeshStandardMaterial({ color: '#e0f2fe', transparent: true, opacity: 0.26, roughness: 0.08, depthWrite: false })
+    );
+    chGlass.position.set(-1.65, 1.25, -0.58);
+    seven.add(chGlass);
     // Colored drinks & snacks stocked inside chiller/rack!
-    [-2.5, -2.15, -1.8, -1.45, -1.1].forEach((dx, di) => {
-      const cols = ['#38bdf8', '#dc2626', '#f59e0b', '#22c55e', '#3b2416'];
-      this.addBox(seven, 0.16, 0.34, 0.16, cols[di], dx, 1.65, -0.78);
-      this.addBox(seven, 0.18, 0.3, 0.16, '#fb923c', dx, 1.05, -0.78);
+    [-2.45, -2.05, -1.65, -1.25, -0.85].forEach((dx, di) => {
+      const cols = ['#38bdf8', '#dc2626', '#f59e0b', '#22c55e', '#7c3aed'];
+      this.addBox(seven, 0.18, 0.36, 0.16, cols[di], dx, 1.68, -0.72);
+      this.addBox(seven, 0.2, 0.32, 0.16, '#fb923c', dx, 1.05, -0.72);
     });
-    // Liquor & Beer Shelf Cabinet (x = +0.7)
-    this.addBox(seven, 1.7, 2.35, 0.65, '#292524', 0.7, 1.18, -1.18);
-    this.addBox(seven, 1.5, 1.85, 0.1, '#fef3c7', 0.7, 1.25, -0.84);
-    [0.25, 0.55, 0.85, 1.15].forEach((lx, li) => {
-      this.addBox(seven, 0.14, 0.42, 0.14, li % 2 === 0 ? '#14532d' : '#78350f', lx, 1.68, -0.78);
-      this.addBox(seven, 0.14, 0.38, 0.14, '#ca8a04', lx, 1.08, -0.78);
+    // Liquor & Bento/Ready-Meal Cabinet (x = +0.8) with transparent glass door!
+    this.addBox(seven, 1.75, 2.45, 0.65, '#f8fafc', 0.85, 1.22, -1.15);
+    this.addBox(seven, 1.55, 1.92, 0.04, '#fef9c3', 0.85, 1.25, -0.86);
+    const cabGlass = new THREE.Mesh(
+      new THREE.BoxGeometry(1.58, 1.96, 0.03),
+      new THREE.MeshStandardMaterial({ color: '#fef9c3', transparent: true, opacity: 0.24, roughness: 0.08, depthWrite: false })
+    );
+    cabGlass.position.set(0.85, 1.25, -0.58);
+    seven.add(cabGlass);
+    [0.35, 0.68, 1.0, 1.32].forEach((lx, li) => {
+      this.addBox(seven, 0.16, 0.42, 0.14, li % 2 === 0 ? '#16a34a' : '#b45309', lx, 1.7, -0.72);
+      this.addBox(seven, 0.16, 0.38, 0.14, '#eab308', lx, 1.08, -0.72);
     });
-    // Checkout Counter & Friendly Clerk NPC (x = +3.1)
-    this.addBox(seven, 2.4, 1.02, 0.9, '#e2e8f0', 3.1, 0.51, -0.65);
-    this.addBox(seven, 2.45, 0.1, 0.96, '#15803d', 3.1, 1.04, -0.65);
-    this.addBox(seven, 0.52, 0.42, 0.35, '#0f172a', 2.45, 1.28, -0.58); // POS monitor
-    this.addBox(seven, 0.46, 0.32, 0.05, '#38bdf8', 2.45, 1.28, -0.4);
+    // Bright Checkout Counter + Steamed Bun Warmer (ตู้ซาลาเปา) + Slurpee + Clerk NPC (x = +3.2)
+    this.addBox(seven, 2.7, 1.02, 0.9, '#ffffff', 3.25, 0.51, -0.65);
+    this.addBox(seven, 2.75, 0.12, 0.96, '#16a34a', 3.25, 1.04, -0.65);
+    this.addBox(seven, 0.44, 0.5, 0.38, '#fef08a', 2.25, 1.34, -0.58); // glowing steamed bun warmer!
+    this.addBox(seven, 0.52, 0.42, 0.35, '#0f172a', 2.85, 1.28, -0.58); // POS monitor
+    this.addBox(seven, 0.46, 0.32, 0.05, '#38bdf8', 2.85, 1.28, -0.4);
+    this.addBox(seven, 0.46, 0.62, 0.42, '#ef4444', 4.15, 1.38, -0.72); // Slurpee dispenser!
     const storeClerk = this.makeLitCharacter(this.charFrames.clerk[0], 1.48, 2.2);
-    storeClerk.position.set(3.25, 1.02, -1.05);
+    storeClerk.position.set(3.4, 1.02, -1.05);
     seven.add(storeClerk);
   }
 
@@ -2261,13 +2341,14 @@ export class DormWorld {
     const windPower =
       weather === 'storm' ? 0.22 : weather === 'windy' ? 0.16 : weather === 'rain' ? 0.09 : 0.03;
     this.hangingUniform.rotation.z = Math.sin(this.animClock * 3.4) * windPower;
-    this.bananaTrees.forEach((tree, i) => {
-      tree.rotation.z = Math.sin(this.animClock * 2.1 + i) * (windPower * 0.35);
+    // Keep trees firmly planted & upright in concrete (no unnatural trunk wobbling!)
+    this.bananaTrees.forEach((tree) => {
+      tree.rotation.z = 0;
     });
 
     const isOuterStreet = !isInsideRoom && playerFloor === 0 && (playerX < -13.5 || playerX > 13.5);
     (this.scene.fog as THREE.FogExp2).density = isOuterStreet ? 0.013 : 0.028;
-    this.updateTimeLighting(gameMinutes, weather, isOuterStreet);
+    this.updateTimeLighting(gameMinutes, weather, isOuterStreet, currentRoom === 'seven24');
 
     const period = this.getTimePeriod(gameMinutes);
     const isDay = period === 'morning' || period === 'noon';
@@ -2288,7 +2369,8 @@ export class DormWorld {
     }
 
     for (const rl of this.roomLights) {
-      rl.light.intensity = rl.room === currentRoom && !breakerTripped ? rl.baseIntensity : 0;
+      rl.light.intensity =
+        rl.room === currentRoom && (!breakerTripped || rl.room === 'seven24') ? rl.baseIntensity : 0;
     }
 
     this.spiritCandleLight.intensity = 1.35 + Math.sin(this.animClock * 2.8) * 0.1;
@@ -2366,7 +2448,12 @@ export class DormWorld {
     this.renderer.render(this.scene, this.camera);
   }
 
-  private updateTimeLighting(gameMinutes: number, weather: WeatherType, isOuterStreet = false): void {
+  private updateTimeLighting(
+    gameMinutes: number,
+    weather: WeatherType,
+    isOuterStreet = false,
+    isBrightStore = false
+  ): void {
     const h = gameMinutes / 60;
     const sky = new THREE.Color('#070b16');
     let hemiInt = 0.34;
@@ -2406,6 +2493,12 @@ export class DormWorld {
       sky.multiplyScalar(weather === 'storm' ? 0.55 : 0.72);
       hemiInt *= isOuterStreet ? 0.9 : 0.78;
       sunInt *= isOuterStreet ? 0.8 : 0.6;
+    }
+
+    if (isBrightStore) {
+      hemiInt = 1.95;
+      sunInt = 1.45;
+      sunColor.set('#ffffff');
     }
 
     this.scene.background = sky;

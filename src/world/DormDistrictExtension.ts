@@ -3,13 +3,14 @@ import {
   createGeneratorSignTexture,
   createLaundrySignTexture,
   createPoliceBoxSignTexture,
-  createStreetTreeTexture,
   createThaiDoorTexture,
   createThaiRoadTexture,
   createThaiWallTexture,
 } from '../art/TextureFactory';
-import { FloorIndex, RoomId } from '../types';
+import { RoomId } from '../types';
 import { CharacterKind } from '../art/SpriteFactory';
+import { buildRealisticCar, buildRealisticMotorcycle } from './VehicleModels';
+import { build25DStreetTree } from './NatureModels';
 
 export const FLOOR_HEIGHT = 4.2;
 
@@ -19,8 +20,10 @@ export interface DormExtensionAnimRefs {
   policeRedLight: THREE.PointLight;
   policeBeaconBlue: THREE.Mesh;
   policeBeaconRed: THREE.Mesh;
+  carBeaconBlue: THREE.Mesh;
+  carBeaconRed: THREE.Mesh;
   laundryDrums: THREE.Object3D[];
-  acFans: THREE.Mesh[];
+  courtBall: THREE.Mesh;
   canalRipples: THREE.Mesh[];
   winMotoMesh: THREE.Mesh;
   policeMesh: THREE.Mesh;
@@ -55,7 +58,6 @@ export function buildDormDistrictExtension(
     metalness: 0.12,
   });
   const wallTex = createThaiWallTexture(false);
-  const treeTex = createStreetTreeTexture();
 
   const makeNpc = (kind: CharacterKind, x: number, y: number, z: number, facing: 1 | -1 = 1) => {
     const mat = new THREE.MeshStandardMaterial({
@@ -119,23 +121,8 @@ export function buildDormDistrictExtension(
   });
   exteriorGroup.add(skytrainGroup);
 
-  // ================= 2. 3D DORM ARCHITECTURAL DETAILS & ROOFTOP ACCESS =================
-  const acFans: THREE.Mesh[] = [];
-  ([1, 2, 3] as FloorIndex[]).forEach((fl) => {
-    const fy = fl * FLOOR_HEIGHT;
-    [-11.0, -3.5, 5.2].forEach((ax, idx) => {
-      if (fl === 3 && idx === 0) return; // keep x=-11.2 clean for Rooftop Door!
-      // Protruding exterior AC compressor + spinning exhaust blade
-      addBox(exteriorGroup, 0.85, 0.56, 0.42, '#cbd5e1', ax, fy + 2.85, -1.25, 0.5);
-      const fan = new THREE.Mesh(
-        new THREE.BoxGeometry(0.32, 0.08, 0.04),
-        new THREE.MeshBasicMaterial({ color: '#334155' })
-      );
-      fan.position.set(ax - 0.14, fy + 2.85, -1.03);
-      exteriorGroup.add(fan);
-      acFans.push(fan);
-    });
-  });
+  // ================= 2. ROOFTOP ACCESS & ROOF WATER TANK =================
+  // Removed protruding corridor wall AC boxes cleanly per user request!
 
   // Rooftop Access Door on Floor 3 Left Wing (x = -11.2) + visible roof tank above Dorm
   const roofDoor = new THREE.Mesh(
@@ -154,21 +141,16 @@ export function buildDormDistrictExtension(
   exteriorTank.position.set(1.5, roofY + 1.1, -0.5);
   exteriorGroup.add(exteriorTank);
 
-  // ================= 3. WIN-MOTO STAND NEAR SIDE-STREET (-20.5) =================
-  addBox(exteriorGroup, 2.4, 0.12, 1.8, '#ea580c', -20.5, 2.45, -1.15, 0.6); // orange umbrella roof
-  addBox(exteriorGroup, 0.08, 2.45, 0.08, '#475569', -20.5, 1.22, -1.15);
-  addBox(exteriorGroup, 2.0, 0.45, 0.55, '#64748b', -20.5, 0.24, -1.25); // bench
-  // Parked orange-vest Win Motorcycle
-  addBox(exteriorGroup, 1.45, 0.52, 0.38, '#f97316', -22.1, 0.55, -0.95);
-  [-22.6, -21.6].forEach((wx) => {
-    const wh = new THREE.Mesh(
-      new THREE.TorusGeometry(0.24, 0.07, 8, 12),
-      new THREE.MeshStandardMaterial({ color: '#111827', roughness: 0.9 })
-    );
-    wh.position.set(wx, 0.26, -0.95);
-    exteriorGroup.add(wh);
-  });
-  const winMotoMesh = makeNpc('win_moto', -19.8, 0, -0.65, -1);
+  // ================= 3. WIN-MOTO STAND CLEAR OF PARKING SHED (-22.2) =================
+  addBox(exteriorGroup, 2.3, 0.12, 1.75, '#ea580c', -22.2, 2.45, -1.15, 0.6); // orange umbrella roof
+  addBox(exteriorGroup, 0.08, 2.45, 0.08, '#475569', -22.2, 1.22, -1.15);
+  addBox(exteriorGroup, 1.85, 0.45, 0.55, '#64748b', -22.2, 0.24, -1.25); // bench
+  // Realistic Parked Orange Win Motorcycle cleanly beside bench
+  const winBike = buildRealisticMotorcycle({ bodyColor: '#f97316', withRider: false, facing: -1 }).group;
+  winBike.position.set(-23.05, 0, -0.78);
+  winBike.rotation.y = 0.14;
+  exteriorGroup.add(winBike);
+  const winMotoMesh = makeNpc('win_moto', -21.5, 0, -0.58, -1);
 
   // ================= 4. FAR-WEST SOI 9: POLICE KIOSK (-104.5) & CANAL BRIDGE (-118.5) =================
   // Road west from -96 .. -114.8 & -122.2 .. -134
@@ -224,7 +206,14 @@ export function buildDormDistrictExtension(
   policeRedLight.position.set(-104.0, 3.4, 0.6);
   exteriorGroup.add(policeBlueLight, policeRedLight);
 
-  const policeMesh = makeNpc('police', -102.6, 0, -0.25, -1);
+  const policeMesh = makeNpc('police', -102.2, 0, 0.05, 1);
+
+  // Thai Police Patrol Car ("รถสายตรวจตำรวจ 191") parked cleanly beside standing officer & booth
+  const policeCarRes = buildRealisticCar({ bodyColor: '#7f1d1d', variant: 'police', facing: -1 });
+  policeCarRes.group.position.set(-99.3, 0, -0.78);
+  exteriorGroup.add(policeCarRes.group);
+  const carBeaconBlue = policeCarRes.carBeaconBlue!;
+  const carBeaconRed = policeCarRes.carBeaconRed!;
 
   // Canal (คลองซอย 9) at x = -118.5 & Concrete/Steel Bridge spanning -114.6 .. -122.4
   const canalWater = new THREE.Mesh(
@@ -262,11 +251,8 @@ export function buildDormDistrictExtension(
       addBox(exteriorGroup, 0.1, 1.05, 0.1, '#64748b', px, 0.52, bz);
     }
   });
-  const bridgeTree = new THREE.Mesh(
-    new THREE.PlaneGeometry(3.4, 4.1),
-    new THREE.MeshStandardMaterial({ map: treeTex, transparent: true, alphaTest: 0.35, side: THREE.DoubleSide })
-  );
-  bridgeTree.position.set(-124.2, 2.0, -1.8);
+  const bridgeTree = build25DStreetTree({ scale: 1.05 });
+  bridgeTree.position.set(-124.2, 0, -1.8);
   exteriorGroup.add(bridgeTree);
 
   const canalLight = new THREE.PointLight('#67e8f9', 4.5, 15, 1.1);
@@ -289,27 +275,68 @@ export function buildDormDistrictExtension(
   eastWall.position.set(31.5, 2.4, -2.35);
   exteriorGroup.add(eastWall);
 
-  // A) Outdoor Street Basketball Court (x = +19.5)
-  addBox(exteriorGroup, 7.2, 0.03, 5.2, '#14532d', 19.5, 0.025, 0.7, 0.85);
-  addBox(exteriorGroup, 2.6, 0.035, 2.1, '#b91c1c', 19.5, 0.03, -0.6, 0.85); // key area
-  addBox(exteriorGroup, 7.2, 0.04, 0.08, '#f8fafc', 19.5, 0.032, 3.25); // court front line
-  // Basketball hoop pole & illuminated backboard
-  addBox(exteriorGroup, 0.18, 3.85, 0.18, '#334155', 19.5, 1.92, -1.75);
-  addBox(exteriorGroup, 1.65, 1.05, 0.1, '#f8fafc', 19.5, 3.45, -1.45, 0.4);
-  addBox(exteriorGroup, 0.55, 0.42, 0.04, '#ea580c', 19.5, 3.38, -1.39);
+  // A) 3D Outdoor Street Basketball Half-Court (x = +19.5) with Backboard Truss, Net, 3-Pt Arc & Natural Shooting Match!
+  addBox(exteriorGroup, 7.6, 0.03, 5.4, '#14532d', 19.5, 0.025, 0.7, 0.85);
+  addBox(exteriorGroup, 2.5, 0.035, 2.2, '#b91c1c', 19.5, 0.03, -0.75, 0.85); // key area
+  addBox(exteriorGroup, 7.6, 0.04, 0.08, '#f8fafc', 19.5, 0.032, 3.35); // front boundary line
+  addBox(exteriorGroup, 7.6, 0.04, 0.08, '#f8fafc', 19.5, 0.032, -1.95); // baseline
+  addBox(exteriorGroup, 0.08, 0.04, 5.4, '#f8fafc', 15.75, 0.032, 0.7);
+  addBox(exteriorGroup, 0.08, 0.04, 5.4, '#f8fafc', 23.25, 0.032, 0.7);
+  const arc3 = new THREE.Mesh(
+    new THREE.RingGeometry(2.35, 2.45, 24, 1, 0, Math.PI),
+    new THREE.MeshBasicMaterial({ color: '#f8fafc', side: THREE.DoubleSide })
+  );
+  arc3.rotation.x = -Math.PI / 2;
+  arc3.position.set(19.5, 0.042, -0.75);
+  exteriorGroup.add(arc3);
+
+  // Heavy 3D Stanchion Pole + Angled Boom Arm + Glass Backboard + Orange Rim + Hanging White Net!
+  addBox(exteriorGroup, 0.22, 4.05, 0.22, '#334155', 19.5, 2.02, -1.95);
+  addBox(exteriorGroup, 0.18, 0.18, 0.68, '#334155', 19.5, 3.55, -1.62);
+  addBox(exteriorGroup, 1.78, 1.15, 0.1, '#f8fafc', 19.5, 3.52, -1.32, 0.3);
+  addBox(exteriorGroup, 1.84, 0.08, 0.12, '#1e293b', 19.5, 4.1, -1.32, 0.4);
+  addBox(exteriorGroup, 0.62, 0.46, 0.04, '#dc2626', 19.5, 3.44, -1.25);
   const rim = new THREE.Mesh(
-    new THREE.TorusGeometry(0.26, 0.035, 8, 16),
-    new THREE.MeshStandardMaterial({ color: '#f97316', roughness: 0.4 })
+    new THREE.TorusGeometry(0.28, 0.038, 10, 18),
+    new THREE.MeshStandardMaterial({ color: '#f97316', roughness: 0.35 })
   );
   rim.rotation.x = Math.PI / 2;
-  rim.position.set(19.5, 3.05, -1.08);
-  exteriorGroup.add(rim);
-  const courtLight = new THREE.PointLight('#fff4d6', 7.5, 18, 1.0);
-  courtLight.position.set(19.5, 4.6, 1.2);
+  rim.position.set(19.5, 3.1, -0.94);
+  const hoopNet = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.26, 0.14, 0.46, 10, 1, true),
+    new THREE.MeshBasicMaterial({ color: '#f8fafc', wireframe: true })
+  );
+  hoopNet.position.set(19.5, 2.86, -0.94);
+  exteriorGroup.add(rim, hoopNet);
+
+  // Textured 3D Basketball for natural dribble & shot physics
+  const bbCanv = document.createElement('canvas');
+  bbCanv.width = 64;
+  bbCanv.height = 64;
+  const bbCtx = bbCanv.getContext('2d')!;
+  bbCtx.fillStyle = '#ea580c';
+  bbCtx.fillRect(0, 0, 64, 64);
+  bbCtx.strokeStyle = '#1f2937';
+  bbCtx.lineWidth = 4;
+  bbCtx.beginPath();
+  bbCtx.moveTo(0, 32);
+  bbCtx.lineTo(64, 32);
+  bbCtx.moveTo(32, 0);
+  bbCtx.lineTo(32, 64);
+  bbCtx.stroke();
+  const courtBall = new THREE.Mesh(
+    new THREE.SphereGeometry(0.18, 14, 14),
+    new THREE.MeshStandardMaterial({ map: new THREE.CanvasTexture(bbCanv), roughness: 0.45 })
+  );
+  courtBall.position.set(17.8, 0.5, 0.2);
+  exteriorGroup.add(courtBall);
+
+  const courtLight = new THREE.PointLight('#fff4d6', 8.5, 20, 1.0);
+  courtLight.position.set(19.5, 4.8, 1.4);
   exteriorGroup.add(courtLight);
   const courtNpcMeshes = [
-    makeNpc('student', 17.6, 0, -0.4, 1),
-    makeNpc('worker_yellow', 21.4, 0, -0.35, -1),
+    makeNpc('student', 17.6, 0, -0.2, 1),
+    makeNpc('worker_yellow', 21.4, 0, 0.15, -1),
   ];
 
   // B) 24-Hour Coin Laundry Shop with True 3D Recessed Room & Deep Front-Load Washers (x = +27.5)
@@ -410,8 +437,8 @@ export function buildDormDistrictExtension(
   exteriorGroup.add(genLight);
   const electricianMesh = makeNpc('electrician', 34.1, 0, 0.1, 1);
 
-  // Streetlamps for East Wing & West Wing
-  [-104.5, -118.5, 21.0, 34.5].forEach((lx) => {
+  // Streetlamps cleanly outside Basketball Court & East Wing
+  [-104.5, -118.5, 23.6, 34.5].forEach((lx) => {
     addBox(exteriorGroup, 0.22, 5.5, 0.22, '#525862', lx, 2.75, -1.15);
     const bulb = new THREE.Mesh(
       new THREE.BoxGeometry(0.32, 0.08, 0.35),
@@ -427,8 +454,10 @@ export function buildDormDistrictExtension(
     policeRedLight,
     policeBeaconBlue,
     policeBeaconRed,
+    carBeaconBlue,
+    carBeaconRed,
     laundryDrums,
-    acFans,
+    courtBall,
     canalRipples,
     winMotoMesh,
     policeMesh,
@@ -529,21 +558,74 @@ export function animateDormExtension(
   refs.skytrainGroup.position.x += 9.5 * dt;
   if (refs.skytrainGroup.position.x > 65) refs.skytrainGroup.position.x = -140;
 
-  // Alternate flashing red/blue police beacon
+  // Alternate flashing red/blue police beacon (booth + patrol car)
   const blueOn = Math.floor(clock * 4.5) % 2 === 0;
   refs.policeBlueLight.intensity = blueOn ? 3.2 : 0.25;
   refs.policeRedLight.intensity = blueOn ? 0.25 : 3.2;
   (refs.policeBeaconBlue.material as THREE.MeshBasicMaterial).color.set(blueOn ? '#60a5fa' : '#1e3a8a');
   (refs.policeBeaconRed.material as THREE.MeshBasicMaterial).color.set(blueOn ? '#7f1d1d' : '#f87171');
+  (refs.carBeaconBlue.material as THREE.MeshBasicMaterial).color.set(blueOn ? '#60a5fa' : '#1e3a8a');
+  (refs.carBeaconRed.material as THREE.MeshBasicMaterial).color.set(blueOn ? '#7f1d1d' : '#f87171');
 
-  // Spin 24h laundromat washer drums & AC fans & generator rotor
+  // Spin 24h laundromat washer drums & generator rotor
   refs.laundryDrums.forEach((drum, idx) => {
     drum.rotation.z += dt * (4.2 + idx * 0.7);
   });
-  refs.acFans.forEach((fan, idx) => {
-    fan.rotation.z += dt * (9.0 + (idx % 3) * 2.5);
-  });
   refs.generatorRotor.rotation.z += dt * 7.5;
+
+  // Natural half-court basketball shooting loop: dribble in -> jump shot -> parabolic rim arc -> net swish & bounce back!
+  const cyc = (clock % 4.4) / 4.4;
+  const fromLeft = Math.floor(clock / 4.4) % 2 === 0;
+  const shooterIdx = fromLeft ? 0 : 1;
+  const shooterStartX = fromLeft ? 16.9 : 22.1;
+  const shooterSpotX = fromLeft ? 18.2 : 20.8;
+  const dir: 1 | -1 = fromLeft ? 1 : -1;
+  let bx = shooterSpotX;
+  let by = 0.25;
+  let bz = -0.1;
+  let sJump = 0;
+
+  if (cyc < 0.44) {
+    const t = cyc / 0.44;
+    const curX = shooterStartX + (shooterSpotX - shooterStartX) * t;
+    bx = curX + dir * 0.35;
+    by = 0.2 + Math.abs(Math.sin(t * Math.PI * 4)) * 0.82;
+    bz = 0.2 - t * 0.35;
+  } else if (cyc < 0.56) {
+    const t = (cyc - 0.44) / 0.12;
+    sJump = Math.sin(t * Math.PI) * 0.55;
+    bx = shooterSpotX + dir * (0.25 + t * 0.3);
+    by = 1.4 + t * 0.75 + sJump * 0.35;
+    bz = -0.15 - t * 0.2;
+  } else if (cyc < 0.82) {
+    const s = (cyc - 0.56) / 0.26;
+    bx = shooterSpotX + dir * 0.55 + (19.5 - (shooterSpotX + dir * 0.55)) * s;
+    by = 2.15 + (3.1 - 2.15) * s + Math.sin(s * Math.PI) * 1.45;
+    bz = -0.35 + (-0.94 + 0.35) * s;
+    refs.courtBall.rotation.x += dt * 9;
+    refs.courtBall.rotation.z -= dir * dt * 9;
+  } else {
+    const sw = (cyc - 0.82) / 0.18;
+    bx = 19.5 - dir * sw * 0.85;
+    by = sw < 0.55 ? 3.1 - Math.pow(sw / 0.55, 1.5) * 2.88 : 0.22 + Math.sin(((sw - 0.55) / 0.45) * Math.PI) * 0.6;
+    bz = -0.94 + sw * 0.75;
+  }
+  refs.courtBall.position.set(bx, by, bz);
+
+  refs.courtNpcMeshes.forEach((npc, idx) => {
+    const isShooter = idx === shooterIdx;
+    const xPos = isShooter
+      ? cyc < 0.44
+        ? shooterStartX + (shooterSpotX - shooterStartX) * (cyc / 0.44)
+        : shooterSpotX
+      : idx === 0
+      ? 17.5 + Math.sin(clock * 1.6) * 0.5
+      : 21.3 + Math.sin(clock * 1.6) * 0.5;
+    npc.position.set(xPos, 0.94 + (isShooter ? sJump : 0), isShooter ? 0.1 - Math.min(0.4, cyc) : 0.2);
+    npc.scale.x = xPos < 19.5 ? 1 : -1;
+    (npc.material as THREE.MeshStandardMaterial).map =
+      charFrames[idx === 0 ? 'student' : 'worker_yellow'][isShooter && cyc < 0.44 ? Math.floor(clock * 7) % 2 : 0];
+  });
 
   // Expand canal water ripples gently
   refs.canalRipples.forEach((rip, idx) => {
@@ -552,13 +634,10 @@ export function animateDormExtension(
     (rip.material as THREE.MeshBasicMaterial).opacity = Math.max(0, 0.45 * (1 - ((clock * 0.65 + idx * 0.33) % 1)));
   });
 
-  // Subtle idle frame animations for new NPCs
+  // Subtle idle frame animations for remaining NPCs
   const f2 = Math.floor(clock * 1.7) % 2;
   (refs.winMotoMesh.material as THREE.MeshStandardMaterial).map = charFrames.win_moto[f2];
   (refs.policeMesh.material as THREE.MeshStandardMaterial).map = charFrames.police[f2];
   (refs.laundryMesh.material as THREE.MeshStandardMaterial).map = charFrames.laundry_lady[f2];
   (refs.electricianMesh.material as THREE.MeshStandardMaterial).map = charFrames.electrician[f2];
-  refs.courtNpcMeshes.forEach((npc, idx) => {
-    npc.position.y = 0.94 + Math.abs(Math.sin(clock * 2.8 + idx * 1.4)) * 0.14;
-  });
 }

@@ -10,6 +10,7 @@ import {
   createThaiWindowTexture,
 } from '../art/TextureFactory';
 import { FloorIndex } from '../types';
+import { buildRealisticCar, buildRealisticMotorcycle, buildRealisticSchoolBus } from './VehicleModels';
 
 export const CH3_FLOOR_H = 4.2;
 
@@ -145,10 +146,10 @@ export function buildSchoolRooms(
     addBox(g, w, 0.25, 5.2, '#0f172a', 0, 4.35, 0.2);
 
     const pt = new THREE.PointLight(lightCol, intensity, 22, 1.0);
-    pt.position.set(0, 3.65, 0.8);
+    pt.position.set(0, 3.65, 1.75);
     g.add(pt);
     const pt2 = new THREE.PointLight(lightCol, intensity * 0.65, 18, 1.1);
-    pt2.position.set(w * 0.3, 3.65, 0.8);
+    pt2.position.set(w * 0.3, 3.65, 1.75);
     g.add(pt2);
 
     const door = new THREE.Mesh(
@@ -364,16 +365,24 @@ export function buildCampusGroundProps(
   );
   bamiSign.position.set(0, 2.72, 0.71);
   bamiGrp.add(bamiSign);
-  // Glass display case showing hanging red BBQ pork & steaming stainless noodle soup pot
-  addBox(bamiGrp, 1.1, 0.72, 0.65, '#bae6fd', -0.58, 1.55, 0.08, 0.15);
-  [-0.78, -0.55, -0.35].forEach((px) => addBox(bamiGrp, 0.12, 0.42, 0.16, '#b91c1c', px, 1.6, 0.1, 0.5));
+  // Crystal-clear transparent glass showcase cabinet showing hanging red BBQ pork, egg noodles & greens + soup pot!
+  const bamiCaseGlass = new THREE.Mesh(
+    new THREE.BoxGeometry(1.12, 0.72, 0.65),
+    new THREE.MeshStandardMaterial({ color: '#bae6fd', transparent: true, opacity: 0.24, roughness: 0.08, depthWrite: false })
+  );
+  bamiCaseGlass.position.set(-0.58, 1.55, 0.08);
+  bamiGrp.add(bamiCaseGlass);
+  addBox(bamiGrp, 1.15, 0.04, 0.68, '#cbd5e1', -0.58, 1.92, 0.08, 0.25); // stainless top trim
+  [-0.78, -0.58, -0.38].forEach((px) => addBox(bamiGrp, 0.11, 0.36, 0.14, '#b91c1c', px, 1.65, 0.08, 0.4));
+  addBox(bamiGrp, 0.22, 0.14, 0.2, '#facc15', -0.68, 1.28, 0.1, 0.5); // yellow egg noodles
+  addBox(bamiGrp, 0.22, 0.12, 0.2, '#22c55e', -0.4, 1.27, 0.1, 0.55); // fresh choy sum
   const soupPot = new THREE.Mesh(
     new THREE.CylinderGeometry(0.26, 0.24, 0.38, 12),
     new THREE.MeshStandardMaterial({ color: '#e2e8f0', metalness: 0.7, roughness: 0.25 })
   );
   soupPot.position.set(0.55, 1.38, 0.08);
-  const bamiBulb = new THREE.PointLight('#fde047', 5.2, 12, 1.0);
-  bamiBulb.position.set(0, 2.25, 0.65);
+  const bamiBulb = new THREE.PointLight('#fde047', 5.6, 13, 1.0);
+  bamiBulb.position.set(0, 2.25, 1.55);
   bamiGrp.add(soupPot, bamiBulb);
   // Plastic red stools & folding condiment table beside the cart
   addBox(bamiGrp, 1.3, 0.06, 0.75, '#f8fafc', 2.2, 0.72, 0.1, 0.5);
@@ -772,12 +781,8 @@ export function buildCampusGroundProps(
     dir: d.dir,
   }));
 
-  // Yellow School Bus that drives in & DROPS OFF STUDENTS at the gate (-56.5)!
-  const busGroup = new THREE.Group();
-  addBox(busGroup, 4.4, 1.6, 1.5, '#eab308', 0, 1.05, 0, 0.35);
-  addBox(busGroup, 4.2, 0.55, 1.54, '#f8fafc', 0, 1.52, 0, 0.25);
-  addBox(busGroup, 0.9, 0.65, 1.56, '#1e293b', 1.65, 1.38, 0, 0.15); // front windshield
-  [-1.35, 1.35].forEach((wx) => addBox(busGroup, 0.55, 0.55, 1.58, '#0f172a', wx, 0.3, 0));
+  // Detailed Realistic Yellow School Bus that drives in & DROPS OFF STUDENTS at the gate (-56.5)!
+  const busGroup = buildRealisticSchoolBus();
   busGroup.position.set(-108, 0, 3.25);
   exteriorGroup.add(busGroup);
 
@@ -798,15 +803,21 @@ export function buildCampusGroundProps(
   void createThaiRoadTexture;
 
   const vehicles: SchoolLifeRefs['vehicles'] = [];
-  [{ x: -68, z: 4.1, speed: 8.6, dir: -1 as const, col: '#dc2626' }].forEach((vc) => {
-    const grp = new THREE.Group();
-    addBox(grp, 2.8, 0.95, 1.2, vc.col, 0, 0.72, 0, 0.4);
-    addBox(grp, 1.9, 0.55, 1.08, '#f8fafc', 0, 1.38, 0, 0.3);
-    [-0.95, 0.95].forEach((wx) => addBox(grp, 0.42, 0.42, 1.26, '#0f172a', wx, 0.24, 0));
-    grp.position.set(vc.x, 0, vc.z);
-    exteriorGroup.add(grp);
-    vehicles.push({ group: grp, speed: vc.speed, dir: vc.dir });
-  });
+  const townCar = buildRealisticCar({ bodyColor: '#dc2626', roofColor: '#e2e8f0', variant: 'sedan', facing: -1 }).group;
+  townCar.scale.multiplyScalar(0.86);
+  townCar.position.set(-68, 0, 4.1);
+  exteriorGroup.add(townCar);
+  vehicles.push({ group: townCar, speed: 8.6, dir: -1 });
+
+  const townBike = buildRealisticMotorcycle({
+    bodyColor: '#2563eb',
+    withRider: true,
+    riderJacket: '#0f172a',
+    facing: 1,
+  }).group;
+  townBike.position.set(-96, 0, 3.15);
+  exteriorGroup.add(townBike);
+  vehicles.push({ group: townBike, speed: 7.2, dir: 1 });
 
   return {
     flagMesh,

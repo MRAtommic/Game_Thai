@@ -2,17 +2,16 @@ import * as THREE from 'three';
 import { TimePeriod, WeatherType } from '../types';
 import { Ch2CharacterKind, createCh2BikeRiderTexture, createCh2CharacterTexture } from '../art/Chapter2Sprites';
 import {
-  createBananaTreeTexture,
   createLightConeTexture,
   createMarketAwningTexture,
   createRugTexture,
-  createStreetTreeTexture,
   createThaiDoorTexture,
   createThaiTileFloorTexture,
   createThaiWallTexture,
   createThaiWindowTexture,
   createZincRoofTexture,
 } from '../art/TextureFactory';
+import { build25DBananaClump, build25DStreetTree } from './NatureModels';
 
 import {
   animateIsaanWorldLife,
@@ -846,21 +845,14 @@ export class IsaanWorld {
       this.scene.add(coop);
     });
 
-    const bananaTex = createBananaTreeTexture();
-    const streetTreeTex = createStreetTreeTexture();
     const treePositions = [-103, -90, -77, -64, -60.5, -21, -18.8, -14, -7.2, 7.2, 13.0, 16.0, 93.8, 100.5, 106.0, 117.0];
     treePositions.forEach((tx, idx) => {
-      const tr = this.addPlane(
-        idx % 2 === 0 ? 3.5 : 2.9,
-        idx % 2 === 0 ? 4.3 : 3.5,
-        idx % 2 === 0 ? streetTreeTex : bananaTex,
-        tx,
-        1.9,
-        -2.9 - (idx % 3) * 0.45,
-        true
-      );
-      this.swayingPlants.push(tr);
+      const tr = idx % 2 === 0 ? build25DStreetTree({ scale: 1.12 }) : build25DBananaClump(1.08);
+      tr.position.set(tx, 0, -2.9 - (idx % 3) * 0.45);
+      tr.rotation.y = idx * 0.7;
+      this.scene.add(tr);
     });
+    void this.addPlane;
 
     const riceZones = [-22, -19, -16, -13, 13.2, 15.8];
     riceZones.forEach((rx) => {
@@ -918,8 +910,8 @@ export class IsaanWorld {
       );
       bulb.position.set(px, 6.56, -2.05);
       this.scene.add(bulb);
-      const l = new THREE.PointLight('#ffcc78', 8.5, 22, 0.78);
-      l.position.set(px, 5.2, 0.6);
+      const l = new THREE.PointLight('#ffcc78', 8.5, 24, 0.78);
+      l.position.set(px, 5.2, 1.95);
       this.scene.add(l);
       this.villageLights.push({ light: l, base: 8.5 });
     });
@@ -1314,8 +1306,8 @@ export class IsaanWorld {
     }
     this.addBox(this.scene, 1.9, 0.08, 0.08, '#78350f', 6.1, 1.55, -0.08).rotation.z = -0.68;
 
-    const houseLight = new THREE.PointLight('#ffbe6b', 5.6, 16, 1.0);
-    houseLight.position.set(0, 3.2, 0.6);
+    const houseLight = new THREE.PointLight('#ffbe6b', 5.6, 18, 1.0);
+    houseLight.position.set(0, 3.2, 1.9);
     this.scene.add(houseLight);
 
     // Classic Bicycle parked left of Grand Stilt House (-6.5) & E-taen cart at +7.8
@@ -1362,8 +1354,8 @@ export class IsaanWorld {
     const gateSignFront = new THREE.Mesh(new THREE.PlaneGeometry(1.9, 0.62), new THREE.MeshStandardMaterial({ map: gateTex }));
     gateSignFront.position.set(26.5, 3.85, 2.99);
     this.scene.add(gateSignFront);
-    const gateLight = new THREE.PointLight('#ffcf78', 5.2, 14, 1.1);
-    gateLight.position.set(26.5, 4.1, 0.22);
+    const gateLight = new THREE.PointLight('#ffcf78', 5.2, 16, 1.1);
+    gateLight.position.set(26.5, 4.1, 1.85);
     this.scene.add(gateLight);
 
     // Authentic Thai Temple Boundary Wall (กำแพงแก้ววัดไทย: ฐานบัว + เสาหัวเม็ดทรงมัณฑ์ + สันหลังคาแดงทอง + ช่องซุ้มลายไทย!)
@@ -1461,8 +1453,8 @@ export class IsaanWorld {
     );
     salaDoor.position.set(40.5, 1.9, -1.0);
     this.scene.add(salaDoor);
-    const salaLight = new THREE.PointLight('#ffd278', 8.2, 19, 1.0);
-    salaLight.position.set(40.5, 3.8, 0.8);
+    const salaLight = new THREE.PointLight('#ffd278', 8.2, 20, 1.0);
+    salaLight.position.set(40.5, 3.8, 1.85);
     this.scene.add(salaLight);
 
     // Temple Timber Bell Tower (หอระฆังไม้สัก at x = +47.8, z = -2.55)
@@ -1643,8 +1635,8 @@ export class IsaanWorld {
       cone.position.set(0, 2.0, -0.2);
       g.add(cone);
 
-      const l = new THREE.PointLight(lightCol, intensity, 15, 1.2);
-      l.position.set(0, 3.5, 0.4);
+      const l = new THREE.PointLight(lightCol, intensity, 16, 1.15);
+      l.position.set(0, 3.5, 1.85);
       g.add(l);
       this.roomLights.push({ room, light: l, baseIntensity: intensity });
       return g;

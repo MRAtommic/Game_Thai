@@ -8,13 +8,13 @@ import {
 import { Ch3RoomId } from '../data/chapter3Data';
 import {
   createLightConeTexture,
-  createStreetTreeTexture,
   createThaiDoorTexture,
   createThaiRoadTexture,
   createThaiTileFloorTexture,
   createThaiWallTexture,
   createThaiWindowTexture,
 } from '../art/TextureFactory';
+import { build25DStreetTree } from './NatureModels';
 import { FloorIndex, TimePeriod, WeatherType } from '../types';
 import {
   animateSchoolLife,
@@ -275,14 +275,11 @@ export class SchoolWorld {
     this.addBox(this.exteriorGroup, 30, 1.25, 0.35, '#e2e8f0', -28.5, 0.62, -2.55, 0.85);
     this.addBox(this.exteriorGroup, 30, 0.22, 0.42, '#7f1d1d', -28.5, 1.32, -2.55, 0.75);
 
-    const treeTex = createStreetTreeTexture();
-    // Place trees strictly in open clear gaps BETWEEN houses, shophouses, gate & campus facilities (ZERO overlap!)
+    // 2.5D Volumetric Campus Street Trees in open clear gaps (ZERO flat planes!)
     [-102.2, -89.0, -75.5, -64.2, -41.0, -17.5, 39.5, 60.0, 74.5, 102.5, 120.0].forEach((tx, idx) => {
-      const tr = new THREE.Mesh(
-        new THREE.PlaneGeometry(3.5, 4.4),
-        new THREE.MeshStandardMaterial({ map: treeTex, transparent: true, alphaTest: 0.35, side: THREE.DoubleSide })
-      );
-      tr.position.set(tx, 2.15, -3.35 - (idx % 2) * 0.3);
+      const tr = build25DStreetTree({ scale: 1.12 });
+      tr.position.set(tx, 0, -3.35 - (idx % 2) * 0.3);
+      tr.rotation.y = idx * 0.75;
       this.exteriorGroup.add(tr);
     });
 
@@ -329,9 +326,16 @@ export class SchoolWorld {
         this.addBox(this.exteriorGroup, 0.38, 0.32, 0.28, mc, sh.x - 1.7 + mi * 0.68, 0.96, bz - 0.95, 0.4);
       });
       this.addBox(this.exteriorGroup, 3.6, 0.92, 0.62, '#b45309', sh.x + 0.4, 0.62, frontZ - 0.65, 0.55);
-      const shopBulb = new THREE.PointLight('#fde68a', 4.8, 10, 1.0);
-      shopBulb.position.set(sh.x, 2.35, frontZ - 0.35);
+      const shopBulb = new THREE.PointLight('#fde68a', 5.2, 12, 1.0);
+      shopBulb.position.set(sh.x, 2.45, frontZ + 1.1);
       this.exteriorGroup.add(shopBulb);
+      // Clear see-through glass display counter front on shopfront
+      const sGlass = new THREE.Mesh(
+        new THREE.BoxGeometry(3.45, 0.52, 0.03),
+        new THREE.MeshStandardMaterial({ color: '#bae6fd', transparent: true, opacity: 0.24, roughness: 0.08, depthWrite: false })
+      );
+      sGlass.position.set(sh.x + 0.4, 1.32, frontZ - 0.35);
+      this.exteriorGroup.add(sGlass);
 
       const staffMesh = new THREE.Mesh(
         new THREE.PlaneGeometry(1.36, 1.94),
@@ -624,10 +628,10 @@ export class SchoolWorld {
 
       [-6, 10, 26, 33].forEach((lx, idx) => {
         const lCol = fl === 3 ? '#ff9980' : '#eef6ff';
-        const pt = new THREE.PointLight(lCol, fl === 3 ? 0.95 : 2.2, 16, 1.2);
-        pt.position.set(lx, y + 3.45, 0.4);
+        const pt = new THREE.PointLight(lCol, fl === 3 ? 0.95 : 2.5, 16, 1.15);
+        pt.position.set(lx, y + 3.45, 1.45);
         this.exteriorGroup.add(pt);
-        this.corridorLights.push({ floor: fl, light: pt, baseInt: fl === 3 ? 0.95 : 2.2, seed: fl * 10 + idx });
+        this.corridorLights.push({ floor: fl, light: pt, baseInt: fl === 3 ? 0.95 : 2.5, seed: fl * 10 + idx });
       });
 
       const wTex = fl === 3 ? winDark : winLit;
@@ -785,7 +789,20 @@ export class SchoolWorld {
     (this.playerMesh.material as THREE.MeshStandardMaterial).map = riding
       ? this.peemBikeFrames[pf]
       : this.charFrames.peem[pf];
-    this.playerMesh.scale.x = facing;
+    // Flip UV horizontally instead of negative scale.x so front normal always faces +Z toward street/room lights!
+    const uv = this.playerMesh.geometry.attributes.uv as THREE.BufferAttribute;
+    if (facing === 1) {
+      uv.setXY(0, 0, 1);
+      uv.setXY(1, 1, 1);
+      uv.setXY(2, 0, 0);
+      uv.setXY(3, 1, 0);
+    } else {
+      uv.setXY(0, 1, 1);
+      uv.setXY(1, 0, 1);
+      uv.setXY(2, 1, 0);
+      uv.setXY(3, 0, 0);
+    }
+    uv.needsUpdate = true;
 
     // Detailed Chapter-2-grade Diamond Bicycle + crank + headlight tracking under Peem!
     this.ridingBikeGroup.visible = riding;

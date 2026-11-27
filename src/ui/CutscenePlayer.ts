@@ -1,7 +1,13 @@
+import { CharacterKind, drawCharacterCanvas } from '../art/SpriteFactory';
 import { Ch2CharacterKind, drawCh2CharacterCanvas } from '../art/Chapter2Sprites';
 import { Ch3CharKind, drawCh3CharacterCanvas } from '../art/Chapter3Sprites';
 
 export type IsaanCutsceneId =
+  | 'dorm_arrival'
+  | 'dorm_spirit_shrine'
+  | 'dorm_bath_ghost'
+  | 'dorm_tom_confront'
+  | 'dorm_climax_304'
   | 'homecoming'
   | 'family_dinner'
   | 'cast_net_fishing'
@@ -31,6 +37,51 @@ interface CutsceneMeta {
 }
 
 const CUTSCENE_META: Record<IsaanCutsceneId, CutsceneMeta> = {
+  dorm_arrival: {
+    title: '🎬 บทนำ Chapter 1 — คืนฝนพรำหน้าหอพักเรือนจันทร์ ซอย 9',
+    durationMs: 4900,
+    captions: [
+      'สายฝนกลางดึกโปรยปรายลงบนซอย 9 เสาไฟเก่าๆ ส่องแสงสลัวหน้าหอพักเรือนจันทร์...',
+      'ต้นหิ้วกระเป๋าเดินทางมาหยุดหน้าป้อมยามลุงชัย พร้อมแสงเทียนจากศาลพระภูมิที่สั่นไหวตามลม',
+      'คืนแรกในห้อง 202 กำลังจะเริ่มต้นขึ้น — ท่ามกลางปริศนาที่ยังไม่มีใครกล้าพูดถึงบนชั้น 3!',
+    ],
+  },
+  dorm_spirit_shrine: {
+    title: '🎬 คัทซีน — จุดธูปน้ำแดงไหว้ศาลพระภูมิ & สายสิญจน์คุ้มภัย',
+    durationMs: 4700,
+    captions: [
+      'ควันธูปลอยเอื่อยขึ้นสู่ราตรี ต้นวางน้ำแดงถวายเจ้าที่เจ้าทางใต้ร่มเงาศาลพระภูมิหน้าหอ...',
+      'ม้วนสายสิญจน์สีขาวเปล่งประกายอุ่นขึ้นมาอย่างประหลาด ก่อนที่ลมเย็นวูบหนึ่งจะพัดผ่านไหล่',
+      'เงาร่างจางๆ ของ "พริม" ปรากฏชั่วพริบตา พร้อมแววตาเศร้าที่เหมือนกำลังขอให้ช่วยค้นหาความจริง...',
+    ],
+  },
+  dorm_bath_ghost: {
+    title: '🎬 คัทซีนสยอง — เงาเปียกโชกในกระจกห้องน้ำรวมชั้น 2',
+    durationMs: 4600,
+    captions: [
+      'หลอดฟลูออเรสเซนต์เหนือกระจกห้องน้ำรวมกะพริบวาบ... เสียงหยดน้ำดังติ๋ง... ติ๋ง... จากด้านหลัง!',
+      'คราบน้ำสีคล้ำค่อยๆ ซึมตามรอยร้าวของกระจก ก่อนที่เงาหญิงสาวผมยาวเปียกโชกจะโผล่ซ้อนหลังต้น!!',
+      'นิ้วซีดเซียวของเธอชี้ตรงลงไปยังตะแกรงท่อระบายน้ำกลางห้องน้ำ ก่อนจะเลือนหายไปกับความมืด...',
+    ],
+  },
+  dorm_tom_confront: {
+    title: '🎬 คัทซีน — เปิดกล่องเหล็กห้อง 204 & ไฟล์เสียงคืน 14 ต.ค.',
+    durationMs: 5000,
+    captions: [
+      'รหัส 414 คลายล็อกกล่องเหล็กใต้เตียง เผยให้เห็นเครื่องอัดเสียงที่หน้าจอแตกร้าวของพริม...',
+      'คลื่นเสียงบันทึกคืนฝนตกหนัก 14 ต.ค. ดังสะท้อนห้อง — ทั้งเสียงทะเลาะและเสียงผลักกระแทกพื้น!',
+      'เงาอำมหิตของรุ่นพี่ต้อมและข้อความปริศนาจากผู้บงการชี้ตรงสู่กุญแจดอกสุดท้ายบนชั้น 3!',
+    ],
+  },
+  dorm_climax_304: {
+    title: '🎬 คัทซีนไคลแมกซ์ — เปิดประตูห้อง 304 สู่ความจริงรุ่งอรุณ',
+    durationMs: 5400,
+    captions: [
+      'สายสิญจน์ศักดิ์สิทธิ์และเครื่องรางช่วยคุ้มภัย ขณะลูกบิดเย็นเฉียบของห้อง 304 ค่อยๆ หมุนเปิดออก...',
+      'ด้านนอกซอย 9 ไฟไซเรนสีแดง-น้ำเงินของรถสายตรวจตำรวจ 191 และดาบวิชัยส่องวาบเตรียมปิดคดี!',
+      'ความจริงทั้งหมดกำลังจะถูกเปิดโปงใต้แสงสีทองของเช้าวันใหม่ — เพื่อปลดปล่อยวิญญาณพริมสู่สุคติ!',
+    ],
+  },
   homecoming: {
     title: '🎬 คัทซีน — กลับคืนสู่เรือนไม้บ้านทุ่งอีสาน',
     durationMs: 4800,
@@ -228,8 +279,19 @@ export class CutscenePlayer {
   private playing = false;
   private skipHandler: (() => void) | null = null;
 
+  private ch1Cache = new Map<string, HTMLCanvasElement>();
   private ch2Cache = new Map<string, HTMLCanvasElement>();
   private ch3Cache = new Map<string, HTMLCanvasElement>();
+
+  private getCh1Sprite(kind: CharacterKind, frame = 0): HTMLCanvasElement {
+    const key = `${kind}_${frame}`;
+    let c = this.ch1Cache.get(key);
+    if (!c) {
+      c = drawCharacterCanvas(kind, frame);
+      this.ch1Cache.set(key, c);
+    }
+    return c;
+  }
 
   private getCh2Sprite(kind: Ch2CharacterKind, frame = 0): HTMLCanvasElement {
     const k = `${kind}_${frame}`;
@@ -512,6 +574,21 @@ export class CutscenePlayer {
     ctx.clearRect(0, 0, w, h);
     ctx.save();
     switch (id) {
+      case 'dorm_arrival':
+        this.drawDormArrival(ctx, w, h, p, t);
+        break;
+      case 'dorm_spirit_shrine':
+        this.drawDormSpiritShrine(ctx, w, h, p, t);
+        break;
+      case 'dorm_bath_ghost':
+        this.drawDormBathGhost(ctx, w, h, p, t);
+        break;
+      case 'dorm_tom_confront':
+        this.drawDormTomConfront(ctx, w, h, p, t);
+        break;
+      case 'dorm_climax_304':
+        this.drawDormClimax304(ctx, w, h, p, t);
+        break;
       case 'homecoming':
         this.drawHomecoming(ctx, w, h, p, t);
         break;
@@ -1500,5 +1577,227 @@ export class CutscenePlayer {
       ctx.arc(wx, ty + 150, 16, t * 18, t * 18 + Math.PI * 1.3);
       ctx.stroke();
     });
+  }
+
+  private drawDormArrival(ctx: CanvasRenderingContext2D, w: number, h: number, p: number, t: number): void {
+    this.applyCameraTransform(ctx, w, h, 1 + p * 0.08, (1 - p) * 26, 0);
+    const sky = ctx.createLinearGradient(0, 0, 0, h * 0.72);
+    sky.addColorStop(0, '#070b18');
+    sky.addColorStop(1, '#1c243b');
+    ctx.fillStyle = sky;
+    ctx.fillRect(0, 0, w, h);
+
+    // Distant Bangkok skyline + 3-story Reuan Chan Dormitory silhouette
+    ctx.fillStyle = '#0f172a';
+    [80, 190, 820, 960].forEach((bx, i) => ctx.fillRect(bx, 110 + (i % 2) * 35, 95, 290));
+    ctx.fillStyle = '#252b34';
+    ctx.fillRect(280, 82, 520, 310);
+    // Warm dorm hallway lights & shuttered 304 window
+    for (let fl = 0; fl < 3; fl++) {
+      for (let rm = 0; rm < 4; rm++) {
+        const is304 = fl === 0 && rm === 3;
+        ctx.fillStyle = is304 ? 'rgba(239,68,68,0.22)' : 'rgba(255,210,125,0.65)';
+        ctx.fillRect(325 + rm * 112, 115 + fl * 92, 58, 42);
+      }
+    }
+    this.drawPerspectiveFloor(ctx, w, h, 388, '#1e242e', '#0d1118');
+
+    // Warm spirit house + glowing guard booth
+    ctx.fillStyle = '#5a3a22';
+    ctx.fillRect(145, 290, 96, 102);
+    ctx.fillStyle = '#fde68a';
+    ctx.fillRect(160, 305, 66, 44);
+    this.drawGlowOrb(ctx, 193, 330, 120, '255, 200, 100', 0.35 + Math.sin(t * 4) * 0.05);
+
+    this.drawSprite(ctx, this.getCh1Sprite('uncle', 0), 210, 412, 0.78, 1, 0, 0);
+    const walkX = 760 - p * 340;
+    const walkFrame = Math.floor(t * 7) % 4;
+    this.drawSprite(ctx, this.getCh1Sprite('player', walkFrame), walkX, 418, 0.85, -1, 0, Math.abs(Math.sin(t * 14)) * -4);
+
+    // Diagonal night rain streaks across scene
+    ctx.strokeStyle = 'rgba(186, 230, 253, 0.28)';
+    ctx.lineWidth = 1.5;
+    for (let r = 0; r < 52; r++) {
+      const rx = ((r * 89 + t * 180) % (w + 120)) - 60;
+      const ry = ((r * 67 + t * 620) % h);
+      ctx.beginPath();
+      ctx.moveTo(rx, ry);
+      ctx.lineTo(rx - 10, ry + 28);
+      ctx.stroke();
+    }
+  }
+
+  private drawDormSpiritShrine(ctx: CanvasRenderingContext2D, w: number, h: number, p: number, t: number): void {
+    this.applyCameraTransform(ctx, w, h, 1.02 + Math.sin(p * Math.PI) * 0.06, 0, -4 * p);
+    const bg = ctx.createLinearGradient(0, 0, 0, h);
+    bg.addColorStop(0, '#090e1c');
+    bg.addColorStop(1, '#1a2634');
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, w, h);
+    this.drawPerspectiveFloor(ctx, w, h, 392, '#222a33', '#0e131b');
+
+    // Ornate Thai Spirit House pedestal + multi-tier gold/crimson roof
+    ctx.fillStyle = '#d4c4a1';
+    ctx.fillRect(508, 255, 24, 138);
+    ctx.fillRect(468, 244, 104, 14);
+    ctx.fillStyle = '#efe3c8';
+    ctx.fillRect(482, 188, 76, 56);
+    ctx.fillStyle = '#8f2424';
+    ctx.beginPath();
+    ctx.moveTo(465, 190);
+    ctx.lineTo(520, 146);
+    ctx.lineTo(575, 190);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = '#facc15';
+    ctx.beginPath();
+    ctx.moveTo(510, 146);
+    ctx.lineTo(520, 114);
+    ctx.lineTo(530, 146);
+    ctx.closePath();
+    ctx.fill();
+
+    // Red Fanta + glowing incense embers & rising golden smoke ribbons
+    ctx.fillStyle = '#dc2626';
+    ctx.fillRect(542, 224, 10, 20);
+    this.drawGlowOrb(ctx, 520, 210, 175, '251, 191, 36', 0.42 + Math.sin(t * 5) * 0.12);
+    for (let s = 0; s < 14; s++) {
+      const sy = 232 - ((t * 55 + s * 16) % 160);
+      const sx = 520 + Math.sin(t * 2.5 + s) * 14;
+      ctx.fillStyle = `rgba(253, 230, 138, ${Math.max(0, 0.35 - (232 - sy) / 480)})`;
+      ctx.beginPath();
+      ctx.arc(sx, sy, 4 + (232 - sy) * 0.04, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    this.drawSprite(ctx, this.getCh1Sprite('player', 0), 400, 412, 0.88, 1, 0, 0);
+    if (p > 0.32) {
+      ctx.save();
+      ctx.globalAlpha = Math.sin(((p - 0.32) / 0.68) * Math.PI) * 0.72;
+      this.drawGlowOrb(ctx, 690, 290, 130, '186, 230, 253', 0.4);
+      this.drawSprite(ctx, this.getCh1Sprite('prim', 0), 690, 404, 0.86, -1, 0, Math.sin(t * 3) * 6);
+      ctx.restore();
+    }
+  }
+
+  private drawDormBathGhost(ctx: CanvasRenderingContext2D, w: number, h: number, p: number, t: number): void {
+    const flicker = Math.sin(t * 28) > -0.35 ? 1 : 0.25;
+    const shakeX = p > 0.48 && p < 0.8 ? (Math.random() - 0.5) * 7 : 0;
+    this.applyCameraTransform(ctx, w, h, 1.04 + p * 0.1, shakeX, 0);
+
+    ctx.fillStyle = '#0f171b';
+    ctx.fillRect(0, 0, w, h);
+    // Green-white cracked bathroom tiles + mirror frame
+    ctx.strokeStyle = 'rgba(148,163,184,0.14)';
+    for (let x = 0; x < w; x += 48) {
+      ctx.beginPath();
+      ctx.moveTo(x, 40);
+      ctx.lineTo(x, 385);
+      ctx.stroke();
+    }
+    this.drawPerspectiveFloor(ctx, w, h, 385, '#1e292b', '#0b1013');
+
+    // Overhead flickering fluorescent bar
+    ctx.fillStyle = `rgba(224, 242, 254, ${0.85 * flicker})`;
+    ctx.fillRect(420, 46, 200, 12);
+    this.drawGlowOrb(ctx, 520, 75, 220, '186, 230, 253', 0.28 * flicker);
+
+    // Cracked bathroom mirror + porcelain sink
+    ctx.fillStyle = '#334155';
+    ctx.fillRect(390, 96, 260, 185);
+    ctx.fillStyle = '#475569';
+    ctx.fillRect(402, 108, 236, 161);
+    ctx.fillStyle = '#e2e8f0';
+    ctx.fillRect(435, 305, 170, 32);
+
+    // Reflection of Ton + sudden ghostly Prim looming inside mirror!
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(402, 108, 236, 161);
+    ctx.clip();
+    this.drawSprite(ctx, this.getCh1Sprite('player', 0), 475, 295, 0.72, 1, 0, 0);
+    if (p > 0.35) {
+      ctx.globalAlpha = Math.min(0.92, (p - 0.35) * 2.2) * flicker;
+      this.drawGlowOrb(ctx, 555, 190, 110, '220, 38, 38', 0.45);
+      this.drawSprite(ctx, this.getCh1Sprite('prim_chase', Math.floor(t * 6) % 2), 560, 285, 0.76, -1, 0, 0);
+    }
+    ctx.restore();
+
+    // Floor drain highlight + foreground Ton backing away
+    this.drawGlowOrb(ctx, 735, 420, 85, '56, 189, 248', 0.35 + Math.sin(t * 5) * 0.15);
+    this.drawSprite(ctx, this.getCh1Sprite('player', 1), 275 - p * 45, 422, 0.92, 1, 0, 0);
+  }
+
+  private drawDormTomConfront(ctx: CanvasRenderingContext2D, w: number, h: number, p: number, t: number): void {
+    this.applyCameraTransform(ctx, w, h, 1.05 + p * 0.08, 0, 0);
+    const bg = ctx.createRadialGradient(w / 2, h / 2, 40, w / 2, h / 2, w * 0.65);
+    bg.addColorStop(0, '#1e1b2e');
+    bg.addColorStop(1, '#070910');
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, w, h);
+    this.drawPerspectiveFloor(ctx, w, h, 385, '#251e28', '#0d090f');
+
+    // Open rusted iron lockbox + glowing broken voice recorder in center
+    ctx.fillStyle = '#475569';
+    ctx.fillRect(455, 290, 130, 72);
+    ctx.fillStyle = '#334155';
+    ctx.fillRect(450, 265, 140, 26);
+    ctx.fillStyle = '#0f172a';
+    ctx.fillRect(500, 306, 40, 48);
+    ctx.fillStyle = '#ef4444';
+    ctx.beginPath();
+    ctx.arc(520, 322, 5, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Expanding red/amber soundwave rings from tape playback
+    for (let ring = 0; ring < 4; ring++) {
+      const r = 24 + ((t * 95 + ring * 45) % 190);
+      ctx.strokeStyle = `rgba(248, 113, 113, ${Math.max(0, 0.55 - r / 340)})`;
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(520, 322, r, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+
+    this.drawSprite(ctx, this.getCh1Sprite('player', 0), 340, 412, 0.88, 1, 0, 0);
+    ctx.save();
+    ctx.globalAlpha = 0.3 + Math.sin(t * 4) * 0.16;
+    this.drawSprite(ctx, this.getCh1Sprite('tom', 0), 705, 406, 0.9, -1, 0, 0);
+    ctx.restore();
+  }
+
+  private drawDormClimax304(ctx: CanvasRenderingContext2D, w: number, h: number, p: number, t: number): void {
+    this.applyCameraTransform(ctx, w, h, 1 + p * 0.08, 0, 0);
+    // Dark corridor slowly bathed in golden dawn & police siren light!
+    const sky = ctx.createLinearGradient(0, 0, 0, h);
+    sky.addColorStop(0, p > 0.45 ? '#312e59' : '#0b1020');
+    sky.addColorStop(1, p > 0.45 ? '#7c3aed' : '#181c2c');
+    ctx.fillStyle = sky;
+    ctx.fillRect(0, 0, w, h);
+
+    // Police red-blue siren washes on left/right edges!
+    const blue = Math.floor(t * 6) % 2 === 0;
+    this.drawGlowOrb(ctx, 140, 210, 280, blue ? '59, 130, 246' : '239, 68, 68', 0.45);
+    this.drawGlowOrb(ctx, 900, 210, 280, blue ? '239, 68, 68' : '59, 130, 246', 0.45);
+
+    this.drawPerspectiveFloor(ctx, w, h, 392, '#2d2938', '#14121b');
+
+    // Room 304 door opening + warm golden sunrise beam pouring into frame!
+    ctx.fillStyle = '#090d16';
+    ctx.fillRect(465, 132, 110, 260);
+    ctx.fillStyle = '#78350f';
+    ctx.fillRect(465, 132, Math.max(12, 110 * (1 - p * 0.85)), 260);
+    this.drawGlowOrb(ctx, 520, 240, 260, '251, 191, 36', 0.25 + p * 0.55);
+
+    this.drawSprite(ctx, this.getCh1Sprite('police', 0), 210, 412, 0.86, 1, 0, 0);
+    this.drawSprite(ctx, this.getCh1Sprite('uncle', 0), 320, 414, 0.86, 1, 0, 0);
+    this.drawSprite(ctx, this.getCh1Sprite('player', Math.floor(t * 4) % 2), 435 + p * 35, 418, 0.88, 1, 0, 0);
+
+    // Prim smiling calmly in golden peace before ascending
+    ctx.save();
+    ctx.globalAlpha = Math.max(0.15, Math.sin(p * Math.PI));
+    this.drawGlowOrb(ctx, 665, 280, 150, '254, 240, 138', 0.5);
+    this.drawSprite(ctx, this.getCh1Sprite('prim', 0), 665, 395 - p * 32, 0.88, -1, 0, 0);
+    ctx.restore();
   }
 }

@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { buildRealisticCar, buildRealisticMotorcycle } from './VehicleModels';
 
 function addPart(
   parent: THREE.Object3D,
@@ -308,58 +309,30 @@ export function buildTrafficAndParkedVehicles(scene: THREE.Scene): MovingVehicle
   const vehicles: MovingVehicle[] = [];
 
   const spawnCar = (x: number, dir: 1 | -1, bodyCol: string, laneZ: number, speed: number, isPickup: boolean) => {
-    const g = new THREE.Group();
-    const wheels: THREE.Group[] = [];
-    if (isPickup) {
-      addPart(g, 3.3, 0.45, 1.38, bodyCol, 0, 0.52, 0, 0.4, 0.3);
-      addPart(g, 1.4, 0.58, 1.28, bodyCol, 0.25, 1.0, 0, 0.4, 0.25);
-      addPart(g, 0.9, 0.42, 1.3, '#93c5fd', 0.28, 1.02, 0, 0.2, 0.4);
-    } else {
-      addPart(g, 3.2, 0.5, 1.35, bodyCol, 0, 0.52, 0, 0.35, 0.35);
-      addPart(g, 1.75, 0.52, 1.24, bodyCol, -0.1, 1.0, 0, 0.35, 0.3);
-      addPart(g, 1.2, 0.38, 1.26, '#7dd3fc', -0.08, 1.02, 0, 0.2, 0.45);
-    }
-    [-1.02, 1.02].forEach((wx) => {
-      const w = makeWheel(0.26, 0.16);
-      w.position.set(wx, 0.26, 0.68);
-      g.add(w);
-      wheels.push(w);
+    const res = buildRealisticCar({
+      bodyColor: bodyCol,
+      variant: isPickup ? 'pickup' : 'sedan',
+      facing: 1,
+      withPointHeadlight: true,
     });
-    const hl = new THREE.PointLight('#fef9c3', 3.5, 9, 1.3);
-    hl.position.set(1.8, 0.6, 0.2);
-    g.add(hl);
-    g.position.set(x, 0, laneZ);
-    g.scale.x = dir;
-    scene.add(g);
-    vehicles.push({ group: g, wheels, headlight: hl, x, dir, speed, laneZ, minX: -108, maxX: 122 });
+    res.group.position.set(x, 0, laneZ);
+    res.group.scale.x = dir;
+    scene.add(res.group);
+    vehicles.push({ group: res.group, wheels: res.wheels, headlight: res.headlight, x, dir, speed, laneZ, minX: -108, maxX: 122 });
   };
 
   const spawnMotorbike = (x: number, dir: 1 | -1, bodyCol: string, jacketCol: string, laneZ: number, speed: number) => {
-    const g = new THREE.Group();
-    const wheels: THREE.Group[] = [];
-    [-0.45, 0.45].forEach((wx) => {
-      const w = makeWheel(0.22, 0.1);
-      w.position.set(wx, 0.22, 0);
-      g.add(w);
-      wheels.push(w);
+    const res = buildRealisticMotorcycle({
+      bodyColor: bodyCol,
+      withRider: true,
+      riderJacket: jacketCol,
+      helmetColor: '#f8fafc',
+      facing: 1,
     });
-    addPart(g, 0.95, 0.28, 0.24, bodyCol, 0, 0.48, 0, 0.4, 0.3);
-    addPart(g, 0.12, 0.52, 0.34, '#cbd5e1', 0.36, 0.68, 0, 0.4, 0.6); // handlebar
-    // Rider + helmet
-    addPart(g, 0.32, 0.56, 0.24, jacketCol, -0.06, 0.88, 0);
-    const helmet = new THREE.Mesh(
-      new THREE.SphereGeometry(0.15, 10, 8),
-      new THREE.MeshStandardMaterial({ color: '#f8fafc', roughness: 0.3 })
-    );
-    helmet.position.set(-0.02, 1.28, 0);
-    g.add(helmet);
-    const hl = new THREE.PointLight('#fef08a', 2.6, 7.5, 1.4);
-    hl.position.set(0.68, 0.68, 0.15);
-    g.add(hl);
-    g.position.set(x, 0, laneZ);
-    g.scale.x = dir;
-    scene.add(g);
-    vehicles.push({ group: g, wheels, headlight: hl, x, dir, speed, laneZ, minX: -108, maxX: 122 });
+    res.group.position.set(x, 0, laneZ);
+    res.group.scale.x = dir;
+    scene.add(res.group);
+    vehicles.push({ group: res.group, wheels: res.wheels, headlight: res.headlight, x, dir, speed, laneZ, minX: -108, maxX: 122 });
   };
 
   const spawnVillagerBike = (x: number, dir: 1 | -1, shirtCol: string, laneZ: number, speed: number) => {
@@ -389,16 +362,13 @@ export function buildTrafficAndParkedVehicles(scene: THREE.Scene): MovingVehicle
   spawnVillagerBike(-30, 1, '#f59e0b', 2.85, 3.2);
   spawnVillagerBike(60, -1, '#10b981', 2.9, 3.0);
 
-  // Parked motorbikes & bicycles cleanly parked at the market & temple fair roadside
+  // Parked realistic motorbikes cleanly parked at the market & temple fair roadside
   [-58.8, -34.0, 27.6, 62.5].forEach((px, idx) => {
-    const parked = new THREE.Group();
-    [-0.38, 0.38].forEach((wx) => {
-      const w = makeWheel(0.2, 0.08);
-      w.position.set(wx, 0.2, 0);
-      parked.add(w);
-    });
-    addPart(parked, 0.85, 0.26, 0.22, idx % 2 === 0 ? '#dc2626' : '#2563eb', 0, 0.45, 0, 0.4, 0.35);
-    addPart(parked, 0.1, 0.46, 0.3, '#cbd5e1', 0.32, 0.62, 0, 0.4, 0.6);
+    const parked = buildRealisticMotorcycle({
+      bodyColor: idx % 2 === 0 ? '#dc2626' : '#2563eb',
+      withRider: false,
+      facing: idx % 2 === 0 ? 1 : -1,
+    }).group;
     parked.position.set(px, 0, -0.32);
     parked.rotation.y = idx % 2 === 0 ? 0.18 : -0.2;
     scene.add(parked);
