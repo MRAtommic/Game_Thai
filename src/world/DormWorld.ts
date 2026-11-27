@@ -2538,9 +2538,9 @@ export class DormWorld {
     this.rainLines.visible = currentRoom === 'outside';
 
     const yBase = isInsideRoom ? 0 : playerFloor * (isMansion ? MANSION_FLOOR_H : FLOOR_HEIGHT);
-    const sneakDrop = isSneaking ? 0.24 : 0;
-    const footGroundedY = yBase + 0.94 - sneakDrop;
-    this.playerMesh.scale.y = isSneaking ? 0.72 : 1.0;
+    const sneakDrop = isSneaking ? 0.11 : 0;
+    const footGroundedY = yBase + (isMansion ? 1.08 : 0.94) - sneakDrop;
+    this.playerMesh.scale.y = isSneaking ? 0.88 : 1.0;
     this.playerMesh.position.set(playerX, footGroundedY, playerZ);
     this.playerShadow.position.set(playerX, yBase + 0.026, playerZ);
 
