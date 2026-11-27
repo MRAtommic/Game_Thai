@@ -315,11 +315,20 @@ export class SchoolWorld {
       }
     }
 
-    // Road curbstone edge & dashed yellow road lane centerline along Town Street (-132 .. -52)
-    this.addBox(this.exteriorGroup, 80, 0.14, 0.28, '#cbd5e1', -92, 0.07, -3.3, 0.8);
-    for (let rx = -124; rx <= -56; rx += 6.0) {
-      this.addBox(this.exteriorGroup, 2.8, 0.03, 0.14, '#facc15', rx, 0.025, 1.15, 0.5);
+    // Road curbstone, bold White/Yellow Dashed Road Markings, Bike Lane Stripes & School Crosswalk (-128 .. -53)
+    this.addBox(this.exteriorGroup, 76, 0.14, 0.28, '#cbd5e1', -91, 0.07, -3.3, 0.8);
+    this.addBox(this.exteriorGroup, 75, 0.02, 0.14, '#e2e8f0', -91, 0.025, 0.85, 0.5); // shoulder bike lane solid edge line
+    this.addBox(this.exteriorGroup, 75, 0.02, 0.14, '#e2e8f0', -91, 0.025, 5.1, 0.5);  // outer road shoulder line
+    for (let rx = -126; rx <= -58; rx += 4.8) {
+      this.addBox(this.exteriorGroup, 2.5, 0.024, 0.2, '#f8fafc', rx, 0.03, 2.95, 0.4); // crisp white center dashed lane line
+      this.addBox(this.exteriorGroup, 2.2, 0.022, 0.12, '#facc15', rx, 0.028, 0.15, 0.4); // yellow bike-shoulder guide dash
     }
+    // Zebra Pedestrian Crosswalk (ทางม้าลาย) outside School Gate (-56.5) & Songthaew Stop (-88)
+    [-56.5, -88.0].forEach((zx) => {
+      for (let zBar = -0.3; zBar <= 4.7; zBar += 0.82) {
+        this.addBox(this.exteriorGroup, 2.4, 0.026, 0.42, '#f8fafc', zx, 0.032, zBar, 0.45);
+      }
+    });
 
     // Fence pillars + black wrought-iron school fence bars strictly AFTER gate entrance (-47 .. -14, NO pole inside gate at -52!)
     for (let fx = -47; fx <= -14; fx += 6.5) {
