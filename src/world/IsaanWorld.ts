@@ -1955,9 +1955,10 @@ export class IsaanWorld {
       finial.position.set(ux, topBaseY + 1.84 * hScale, -1.65);
       this.scene.add(finial);
 
-      // Deep Niche Dark Backdrop + Framed Deceased B&W Portrait Photo Plaque + Glass Glint
+      // Deep Niche Dark Backdrop + Framed Deceased B&W Portrait Photo Plaque (scaled cleanly forward for Urn #4!)
       const nicheY = 0.62 * hScale + 0.44 * hScale;
-      this.addBox(this.scene, 0.58 * hScale, 0.74 * hScale, 0.06, '#0f172a', ux, nicheY, -1.4);
+      const frontBodyZ = -1.78 + 0.36 * hScale;
+      this.addBox(this.scene, 0.58 * hScale, 0.74 * hScale, 0.06, '#0f172a', ux, nicheY, frontBodyZ + 0.02);
       const portraitFrame = new THREE.Mesh(
         new THREE.PlaneGeometry(0.48 * hScale, 0.64 * hScale),
         new THREE.MeshStandardMaterial({
@@ -1967,10 +1968,10 @@ export class IsaanWorld {
           emissiveIntensity: isUrn4 ? 0.45 : 0.25,
         })
       );
-      portraitFrame.position.set(ux, nicheY, -1.365);
+      portraitFrame.position.set(ux, nicheY, frontBodyZ + 0.055);
       this.scene.add(portraitFrame);
       // Hanging yellow marigold garland above portrait frame (พวงมาลัยดอกดาวเรือง)
-      this.addBox(this.scene, 0.22 * hScale, 0.055, 0.04, '#facc15', ux, nicheY + 0.32 * hScale, -1.34);
+      this.addBox(this.scene, 0.22 * hScale, 0.055, 0.04, '#facc15', ux, nicheY + 0.32 * hScale, frontBodyZ + 0.08);
 
       // Protruding brass incense bowl, 3 incense sticks & 2 glowing memorial candles on altar ledge
       const incensePot = new THREE.Mesh(
@@ -1997,6 +1998,20 @@ export class IsaanWorld {
     const cemWarmLight = new THREE.PointLight('#ffd280', 3.2, 16, 1.2);
     cemWarmLight.position.set(112.0, 2.0, 0.65);
     this.scene.add(cemLight, cemWarmLight);
+
+    // Lush Cemetery Grove behind the Bone-Urn Shrines (ต้นไม้ใหญ่ กอไผ่ และกอกล้วยหนาแน่นหลังป่าช้า z = -3.8 .. -5.8!)
+    [107.6, 111.6, 115.2, 118.8, 122.4, 125.8, 129.0].forEach((tx, ti) => {
+      const tr = ti % 3 === 1 ? build25DBananaClump(1.15) : build25DStreetTree({ scale: 1.18 + (ti % 2) * 0.18 });
+      tr.position.set(tx, 0, -3.95 - (ti % 3) * 0.72);
+      tr.rotation.y = ti * 0.85;
+      this.scene.add(tr);
+      if (ti % 2 === 0) {
+        for (let k = -1; k <= 1; k++) {
+          const stalk = this.addBox(this.scene, 0.09, 5.4 + Math.abs(k) * 0.4, 0.09, '#3f6212', tx + 0.9 + k * 0.24, 2.7, -4.45);
+          stalk.rotation.z = k * 0.06;
+        }
+      }
+    });
   }
 
   private buildSaiSinCircle(): void {

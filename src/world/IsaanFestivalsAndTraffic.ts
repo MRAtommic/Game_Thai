@@ -292,6 +292,17 @@ export interface RuralActorsController {
   saleng: { group: THREE.Group; wheels: THREE.Group[]; x: number; dir: 1 | -1 };
   schoolSwing: THREE.Group;
   morningMonk: { group: THREE.Group; x: number; dir: 1 | -1 };
+  rocketFestival: {
+    rocketGroup: THREE.Group;
+    flameMesh: THREE.Mesh;
+    sparkLight: THREE.PointLight;
+    skyFlashLight: THREE.PointLight;
+    smokePuffs: THREE.Mesh[];
+    spectators: THREE.Group[];
+    baseX: number;
+    baseY: number;
+    angle: number;
+  };
 }
 
 /** Builds the slow-moving Isaan Rot Hae speaker pickup truck + crowd of dancing villagers. */
@@ -875,15 +886,18 @@ export function buildTrafficAndParkedVehicles(scene: THREE.Scene): MovingVehicle
           { x: stgX + 1.15, z: -0.25, shirt: '#c084fc', glow: '#fde047' },
           { x: stgX + 2.2, z: 0.05, shirt: '#fb7185', glow: '' },
           { x: stgX + 3.15, z: -0.22, shirt: '#2dd4bf', glow: '#f43f5e' },
-        ].forEach((aud) => {
+        ].forEach((aud, ai) => {
           const v = makeVillagerFigure(aud.shirt, '#1e293b');
+          v.rotation.y = Math.PI + (ai % 2 === 0 ? 0.14 : -0.14); // face TOWARD the Morlam stage (-Z)!
           if (aud.glow) {
             const stick = new THREE.Mesh(
-              new THREE.CylinderGeometry(0.03, 0.03, 0.34, 8),
+              new THREE.CylinderGeometry(0.025, 0.025, 0.34, 8),
               new THREE.MeshBasicMaterial({ color: aud.glow })
             );
-            stick.position.set(-0.24, 1.18, 0.1);
-            v.add(stick);
+            stick.position.set(0, -0.45, 0.06);
+            stick.rotation.x = 0.6;
+            const armR = v.getObjectByName('armR');
+            if (armR) armR.add(stick);
           }
           v.position.set(aud.x, 0, aud.z);
           scene.add(v);
@@ -1058,27 +1072,107 @@ export function buildTrafficAndParkedVehicles(scene: THREE.Scene): MovingVehicle
         welcomeSign.position.set(-104.5, 3.72, -0.62);
         scene.add(welcomeSign);
 
-        // 0B) Traditional Rocket Festival Launch Pad (ซุ้มบั้งไฟพญานาค x = -67.5)
-        addPart(scene, 2.6, 0.22, 1.6, '#78350f', -67.5, 0.11, -1.65);
-        [-68.3, -66.7].forEach((bx) => addPart(scene, 0.12, 3.8, 0.12, '#92400e', bx, 1.9, -1.85));
-        addPart(scene, 2.2, 0.12, 0.12, '#eab308', -67.5, 3.3, -1.85);
-        const rocket = new THREE.Mesh(
-          new THREE.CylinderGeometry(0.14, 0.16, 3.3, 10),
-          new THREE.MeshStandardMaterial({ color: '#dc2626', roughness: 0.45 })
-        );
-        rocket.position.set(-67.5, 2.25, -1.7);
-        rocket.rotation.z = -0.35;
-        scene.add(rocket);
-        const rocketCone = new THREE.Mesh(new THREE.ConeGeometry(0.16, 0.55, 10), new THREE.MeshStandardMaterial({ color: '#facc15' }));
-        rocketCone.position.set(-66.95, 3.82, -1.7);
-        rocketCone.rotation.z = -0.35;
-        scene.add(rocketCone);
+        // 0B) Grand Isaan Boon Bang Fai Rocket Launch Tower, Cheering Crowd & Timed Launch Cycle (x = -67.5)
+        const bfX = -67.5;
+        const bfZ = -2.1;
+        // Raised earthen & timber festival platform + colorful festival bunting flags
+        addPart(scene, 5.2, 0.24, 2.2, '#78350f', bfX, 0.12, bfZ);
+        addPart(scene, 5.4, 0.08, 2.3, '#eab308', bfX, 0.25, bfZ, 0.4, 0.3);
+        // 4-post tall bamboo launch gantry + climbing ladder rungs & slanted guide rail
+        [-68.3, -66.7].forEach((bx) => {
+          addPart(scene, 0.12, 4.8, 0.12, '#92400e', bx, 2.4, bfZ - 0.35);
+          addPart(scene, 0.12, 4.8, 0.12, '#78350f', bx, 2.4, bfZ + 0.35);
+        });
+        for (let ry = 0.8; ry <= 4.4; ry += 0.6) {
+          addPart(scene, 1.65, 0.07, 0.07, '#b45309', bfX, ry, bfZ - 0.35);
+        }
+        addPart(scene, 2.0, 0.1, 0.78, '#eab308', bfX, 4.65, bfZ);
+        // Clear lower front signboard (NEVER blocked by the rocket!)
+        addPart(scene, 2.48, 0.62, 0.06, '#450a0a', bfX, 0.68, bfZ + 1.08);
         const bfSign = new THREE.Mesh(
-          new THREE.PlaneGeometry(2.0, 0.52),
-          new THREE.MeshBasicMaterial({ map: makeBannerTex('#7f1d1d', '#facc15', '#fef08a', 'ลานบุญบั้งไฟบ้านทุ่ง') })
+          new THREE.PlaneGeometry(2.4, 0.56),
+          new THREE.MeshBasicMaterial({ map: makeBannerTex('#7f1d1d', '#facc15', '#fef08a', 'ลานบุญบั้งไฟแสน', 'บ้านทุ่งอีสาน • ขึ้นสู่ฟ้า') })
         );
-        bfSign.position.set(-67.5, 3.3, -1.74);
+        bfSign.position.set(bfX, 0.68, bfZ + 1.12);
         scene.add(bfSign);
+
+        // Ornate Bang Fai Saen Rocket Group (striped gold-red-blue Thai fuselage, Naga nose cone, bamboo tail & flame!)
+        const rocketAngle = -0.3;
+        const rocketGroup = new THREE.Group();
+        rocketGroup.position.set(bfX - 0.1, 2.55, bfZ + 0.05);
+        rocketGroup.rotation.z = rocketAngle;
+        const rBody = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.16, 0.18, 3.2, 12),
+          new THREE.MeshStandardMaterial({ color: '#dc2626', roughness: 0.4 })
+        );
+        rocketGroup.add(rBody);
+        [-1.0, -0.35, 0.35, 1.0].forEach((ry, ri) => {
+          const band = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.175, 0.178, 0.22, 12),
+            new THREE.MeshStandardMaterial({ color: ri % 2 === 0 ? '#facc15' : '#1d4ed8', metalness: 0.45, roughness: 0.3 })
+          );
+          band.position.y = ry;
+          rocketGroup.add(band);
+        });
+        const rocketCone = new THREE.Mesh(
+          new THREE.ConeGeometry(0.18, 0.65, 12),
+          new THREE.MeshStandardMaterial({ color: '#facc15', metalness: 0.65, roughness: 0.25 })
+        );
+        rocketCone.position.y = 1.92;
+        rocketGroup.add(rocketCone);
+        // Long bamboo guide tail + colorful fluttering festival ribbons
+        addPart(rocketGroup, 0.05, 2.6, 0.05, '#a16207', 0, -2.6, 0);
+        ['#f43f5e', '#facc15', '#22d3ee'].forEach((rc, ri) => {
+          addPart(rocketGroup, 0.04, 0.9, 0.02, rc, (ri - 1) * 0.06, -2.05, 0.04);
+        });
+        // Exhaust flame cone at rocket nozzle
+        const flameMesh = new THREE.Mesh(
+          new THREE.ConeGeometry(0.24, 1.15, 10),
+          new THREE.MeshBasicMaterial({ color: '#fb923c', transparent: true, opacity: 0.92 })
+        );
+        flameMesh.rotation.x = Math.PI;
+        flameMesh.position.y = -2.15;
+        flameMesh.visible = false;
+        rocketGroup.add(flameMesh);
+        scene.add(rocketGroup);
+
+        // Smoke puffs & dynamic ignition/sky flash lights
+        const smokePuffs: THREE.Mesh[] = [];
+        for (let sp = 0; sp < 7; sp++) {
+          const puff = new THREE.Mesh(
+            new THREE.SphereGeometry(0.28 + (sp % 3) * 0.1, 8, 8),
+            new THREE.MeshStandardMaterial({ color: '#e2e8f0', transparent: true, opacity: 0.65, roughness: 0.95 })
+          );
+          puff.visible = false;
+          scene.add(puff);
+          smokePuffs.push(puff);
+        }
+        const sparkLight = new THREE.PointLight('#fb923c', 0, 14, 1.1);
+        sparkLight.position.set(bfX - 0.5, 1.2, bfZ + 0.5);
+        const skyFlashLight = new THREE.PointLight('#fde047', 0, 32, 0.8);
+        skyFlashLight.position.set(bfX + 2.5, 11.5, bfZ);
+        scene.add(sparkLight, skyFlashLight);
+
+        // Cheering Rocket Festival Spectators & Long-Drum Players flanking the launch pad!
+        const spectatorDefs = [
+          { x: bfX - 3.3, z: -0.65, shirt: '#f43f5e', pants: '#1e293b', hat: '#ca8a04', dir: 1 as const },
+          { x: bfX - 2.4, z: -0.35, shirt: '#38bdf8', pants: '#0f172a', hat: undefined, dir: 1 as const },
+          { x: bfX + 2.3, z: -0.4, shirt: '#eab308', pants: '#1e293b', hat: '#a16207', dir: -1 as const },
+          { x: bfX + 3.2, z: -0.75, shirt: '#22c55e', pants: '#0f172a', hat: undefined, dir: -1 as const },
+          { x: bfX + 4.1, z: -0.45, shirt: '#c084fc', pants: '#1e293b', hat: undefined, dir: -1 as const },
+        ];
+        const spectators = spectatorDefs.map((sd, idx) => {
+          const sg = makeVillagerFigure(sd.shirt, sd.pants, sd.hat);
+          sg.position.set(sd.x, 0, sd.z);
+          sg.scale.x = sd.dir;
+          if (idx === 1) {
+            // Ignition torch stick held by villager near pad
+            addPart(sg, 0.05, 0.85, 0.05, '#78350f', 0.24, 1.0, 0.14);
+            addPart(sg, 0.12, 0.14, 0.12, '#fb923c', 0.24, 1.44, 0.14);
+          }
+          scene.add(sg);
+          return sg;
+        });
 
         // 0C) Village PA Loudspeaker Broadcast Tower (หอกระจายข่าวผู้ใหญ่บ้าน x = -8.6, clear of big stilt house)
         [-8.8, -8.4].forEach((tx) => addPart(scene, 0.1, 6.2, 0.1, '#64748b', tx, 3.1, -1.45, 0.5, 0.6));
@@ -1414,6 +1508,17 @@ export function buildTrafficAndParkedVehicles(scene: THREE.Scene): MovingVehicle
           saleng: { group: salengGrp, wheels: salengWheels, x: 12, dir: -1 },
           schoolSwing,
           morningMonk: { group: monkGrp, x: -18, dir: 1 },
+          rocketFestival: {
+            rocketGroup,
+            flameMesh,
+            sparkLight,
+            skyFlashLight,
+            smokePuffs,
+            spectators,
+            baseX: bfX - 0.1,
+            baseY: 2.55,
+            angle: rocketAngle,
+          },
         };
       }
 
@@ -1554,33 +1659,54 @@ export function buildTrafficAndParkedVehicles(scene: THREE.Scene): MovingVehicle
           d.visible = isFestive;
           if (isFestive) {
             if (idx === 0) {
-              // Lead Singer swaying expressively behind mic stand
-              d.rotation.z = Math.sin(clock * 3.4) * 0.08;
-              d.position.y = 0.72 + Math.abs(Math.sin(clock * 4.2)) * 0.05;
+              // Lead Singer gently swaying behind mic stand with natural arm gestures
+              d.rotation.z = Math.sin(clock * 2.8) * 0.03;
+              d.rotation.y = Math.sin(clock * 2.0) * 0.14;
+              d.position.y = 0.72 + Math.abs(Math.sin(clock * 4.2)) * 0.035;
               const armL = d.getObjectByName('armL');
               const armR = d.getObjectByName('armR');
-              if (armL) armL.rotation.z = 1.15 + Math.sin(clock * 5.0) * 0.35;
-              if (armR) armR.rotation.z = -0.65 - Math.cos(clock * 4.5) * 0.25;
+              if (armL) {
+                armL.rotation.z = -0.35 - Math.sin(clock * 4.2) * 0.22;
+                armL.rotation.x = -0.45 + Math.cos(clock * 3.5) * 0.25;
+              }
+              if (armR) {
+                armR.rotation.z = 0.35 + Math.cos(clock * 4.2) * 0.22;
+                armR.rotation.x = -0.55;
+              }
             } else {
-              // 4 Pretty Backup Dancers performing synchronized Mor Lam choreography!
-              d.rotation.z = Math.sin(clock * 5.5 + idx * 0.8) * 0.14;
-              d.position.y = 0.72 + Math.abs(Math.sin(clock * 6.8 + idx * 0.8)) * 0.1;
+              // 4 Backup Dancers performing graceful Ramwong choreography (natural shoulder swing!)
+              d.rotation.z = Math.sin(clock * 3.5 + idx * 0.8) * 0.04;
+              d.rotation.y = Math.sin(clock * 2.6 + idx * 0.6) * 0.22;
+              d.position.y = 0.72 + Math.abs(Math.sin(clock * 5.6 + idx * 0.8)) * 0.06;
               const armL = d.getObjectByName('armL');
               const armR = d.getObjectByName('armR');
-              if (armL) armL.rotation.z = 1.0 + Math.sin(clock * 6.5 + idx) * 0.6;
-              if (armR) armR.rotation.z = -1.0 - Math.cos(clock * 6.5 + idx) * 0.6;
+              if (armL) {
+                armL.rotation.z = -0.85 - Math.sin(clock * 5.5 + idx) * 0.35;
+                armL.rotation.x = -0.35 + Math.cos(clock * 4.5 + idx) * 0.3;
+              }
+              if (armR) {
+                armR.rotation.z = 0.85 + Math.cos(clock * 5.5 + idx) * 0.35;
+                armR.rotation.x = -0.35 + Math.sin(clock * 4.5 + idx) * 0.3;
+              }
             }
           }
         });
         fair.stageAudience.forEach((a, idx) => {
           a.visible = isFestive;
           if (isFestive) {
-            a.position.y = Math.abs(Math.sin(clock * 5.2 + idx * 1.1)) * 0.08;
-            a.rotation.z = Math.sin(clock * 3.2 + idx) * 0.07;
+            a.position.y = Math.abs(Math.sin(clock * 4.6 + idx * 1.1)) * 0.05;
+            a.rotation.z = Math.sin(clock * 2.8 + idx) * 0.025;
             const armL = a.getObjectByName('armL');
             const armR = a.getObjectByName('armR');
-            if (armL) armL.rotation.z = 1.35 + Math.sin(clock * 6.0 + idx) * 0.45;
-            if (armR) armR.rotation.z = -0.95 - Math.cos(clock * 6.0 + idx) * 0.45;
+            if (armL) {
+              armL.rotation.z = -0.25;
+              armL.rotation.x = -0.35 + Math.sin(clock * 4.8 + idx) * 0.25;
+            }
+            if (armR) {
+              // Right hand raises glowstick toward stage!
+              armR.rotation.z = 0.45;
+              armR.rotation.x = -1.65 + Math.sin(clock * 5.5 + idx) * 0.45;
+            }
           }
         });
         fair.boothVendors.forEach((v) => {
@@ -1651,5 +1777,91 @@ export function buildTrafficAndParkedVehicles(scene: THREE.Scene): MovingVehicle
           rural.morningMonk.group.position.x = rural.morningMonk.x;
           rural.morningMonk.group.scale.x = rural.morningMonk.dir;
           rural.morningMonk.group.position.y = Math.abs(Math.sin(clock * 4.2)) * 0.03;
+        }
+
+        // 11) Grand Boon Bang Fai Rocket Launch Cycle & Cheering Crowd!
+        const rf = rural.rocketFestival;
+        const rActive = !isLockdown;
+        rf.rocketGroup.visible = rActive;
+        rf.spectators.forEach((sp) => {
+          sp.visible = rActive;
+        });
+        if (rActive) {
+          const cycle = clock % 10.5;
+          const dxDir = -Math.sin(rf.angle);
+          const dyDir = Math.cos(rf.angle);
+          if (cycle < 3.2) {
+            // Phase 1: Ignition hiss & smoke puffing at launch pad
+            const vib = Math.sin(clock * 45) * 0.025;
+            rf.rocketGroup.position.set(rf.baseX + vib, rf.baseY, -2.05);
+            rf.flameMesh.visible = cycle > 2.0;
+            rf.flameMesh.scale.setScalar(0.55 + Math.sin(clock * 32) * 0.15);
+            rf.sparkLight.intensity = cycle > 1.5 ? 4.5 + Math.sin(clock * 28) * 1.5 : 1.2;
+            rf.skyFlashLight.intensity = 0;
+            rf.smokePuffs.forEach((puff, pi) => {
+              puff.visible = cycle > 1.2;
+              const age = ((clock * 1.8 + pi * 0.35) % 1.4);
+              puff.position.set(rf.baseX - 0.55 + Math.sin(clock * 3 + pi) * 0.28, 0.9 + age * 1.35, -1.9 + (pi % 2) * 0.2);
+              puff.scale.setScalar(0.5 + age * 0.95);
+            });
+          } else if (cycle < 6.4) {
+            // Phase 2: Liftoff! Rocket blasts into the sky with bright flame & billowing smoke trail!
+            const t = cycle - 3.2;
+            const dist = 0.5 * 5.8 * t * t;
+            const rx = rf.baseX + dxDir * dist;
+            const ry = rf.baseY + dyDir * dist;
+            rf.rocketGroup.visible = ry < 26;
+            rf.rocketGroup.position.set(rx, ry, -2.05);
+            rf.flameMesh.visible = true;
+            rf.flameMesh.scale.set(1.0, 1.35 + Math.sin(clock * 40) * 0.25, 1.0);
+            rf.sparkLight.position.set(rx, Math.max(1.2, ry - 1.5), -1.4);
+            rf.sparkLight.intensity = Math.max(0, 7.5 - t * 1.6);
+            rf.skyFlashLight.intensity = 0;
+            rf.smokePuffs.forEach((puff, pi) => {
+              puff.visible = true;
+              const trailDist = Math.max(0, dist - 1.4 - pi * 1.25);
+              puff.position.set(rf.baseX + dxDir * trailDist + Math.sin(pi * 2) * 0.25, Math.max(0.8, rf.baseY + dyDir * trailDist - 1.2), -2.0);
+              puff.scale.setScalar(0.75 + (pi % 3) * 0.45);
+            });
+          } else if (cycle < 8.2) {
+            // Phase 3: High sky burst glow & cheering spectators!
+            const t = cycle - 6.4;
+            rf.rocketGroup.visible = false;
+            rf.flameMesh.visible = false;
+            rf.sparkLight.intensity = 0;
+            rf.skyFlashLight.intensity = Math.max(0, (1 - t / 1.8) * 9.5);
+            rf.smokePuffs.forEach((p) => {
+              p.visible = false;
+            });
+          } else {
+            // Phase 4: Reloading fresh Bang Fai rocket onto gantry
+            rf.rocketGroup.visible = true;
+            rf.rocketGroup.position.set(rf.baseX, rf.baseY, -2.05);
+            rf.flameMesh.visible = false;
+            rf.sparkLight.intensity = 0;
+            rf.skyFlashLight.intensity = 0;
+            rf.smokePuffs.forEach((p) => {
+              p.visible = false;
+            });
+          }
+
+          // Animate spectators cheering & waving hands!
+          const cheering = cycle >= 3.2 && cycle < 8.0;
+          rf.spectators.forEach((sp, si) => {
+            const armL = sp.getObjectByName('armL');
+            const armR = sp.getObjectByName('armR');
+            if (cheering) {
+              sp.position.y = Math.abs(Math.sin(clock * 8.5 + si)) * 0.14;
+              if (armL) armL.rotation.z = -2.4 + Math.sin(clock * 12 + si) * 0.35;
+              if (armR) armR.rotation.z = 2.4 - Math.sin(clock * 12 + si) * 0.35;
+            } else {
+              sp.position.y = Math.abs(Math.sin(clock * 3.5 + si)) * 0.02;
+              if (armL) armL.rotation.z = -0.15 + Math.sin(clock * 3 + si) * 0.12;
+              if (armR) armR.rotation.z = 0.15 - Math.sin(clock * 3 + si) * 0.12;
+            }
+          });
+        } else {
+          rf.sparkLight.intensity = 0;
+          rf.skyFlashLight.intensity = 0;
         }
       }
