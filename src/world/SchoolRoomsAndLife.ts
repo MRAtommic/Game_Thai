@@ -381,17 +381,32 @@ export function buildCampusGroundProps(
   exteriorGroup.add(bamiGrp);
   makeNpc('vendor_coop', -61.0, 0.12, -2.55, 1);
 
-  // Clean Original Thai School Entrance Archway (-55.2 .. -48.8) with ONE crisp centered nameplate
-  [-55.2, -48.8].forEach((gx) => {
-    addBox(exteriorGroup, 1.1, 4.8, 1.1, '#7f1d1d', gx, 2.4, -1.95, 0.72);
+  // Iconic 3D Straddling Thai School Entrance Archway (x = -52, z = -2.35 .. +2.65) matching Image #2 cleanly with ONE single flush sign!
+  [-2.35, 2.65].forEach((gz) => {
+    addBox(exteriorGroup, 1.05, 0.42, 1.05, '#e2e8f0', -52, 0.21, gz, 0.75); // stone plinth base
+    addBox(exteriorGroup, 0.84, 4.35, 0.84, '#7f1d1d', -52, 2.38, gz, 0.7);  // crimson pillar
+    addBox(exteriorGroup, 1.04, 0.26, 1.04, '#eab308', -52, 4.66, gz, 0.35); // gold pillar capital
   });
-  addBox(exteriorGroup, 8.2, 1.25, 1.2, '#450a0a', -52, 4.9, -1.95, 0.65);
+  // Overhead Thai crimson arch beam & tiled roof ridge straddling road entrance
+  addBox(exteriorGroup, 1.15, 0.92, 6.2, '#450a0a', -52, 5.22, 0.15, 0.65);
+  addBox(exteriorGroup, 1.35, 0.24, 6.45, '#b91c1c', -52, 5.78, 0.15, 0.55);
+  addBox(exteriorGroup, 0.98, 0.44, 4.2, '#991b1b', -52, 6.08, 0.15, 0.55);
+  const gateSpire = new THREE.Mesh(
+    new THREE.ConeGeometry(0.3, 0.88, 4),
+    new THREE.MeshStandardMaterial({ color: '#facc15', metalness: 0.6, roughness: 0.25 })
+  );
+  gateSpire.rotation.y = Math.PI / 4;
+  gateSpire.position.set(-52, 6.72, 0.15);
+  exteriorGroup.add(gateSpire);
+
+  // ONE single flush School Sign on the West face of the straddling archway beam (NO duplicate overhanging sign!)
   const archTex = createSchoolSignTexture('โรงเรียนมัธยมจันทรารัตน์', 'วิชา จริยา นาฏศิลป์สยาม', '#7f1d1d', '#450a0a', '#facc15');
-  const archSign = new THREE.Mesh(new THREE.PlaneGeometry(7.6, 1.15), new THREE.MeshBasicMaterial({ map: archTex }));
-  archSign.position.set(-52, 4.9, -1.32);
-  exteriorGroup.add(archSign);
+  const archSignWest = new THREE.Mesh(new THREE.PlaneGeometry(4.8, 0.88), new THREE.MeshBasicMaterial({ map: archTex }));
+  archSignWest.rotation.y = -Math.PI / 2;
+  archSignWest.position.set(-52.6, 5.22, 0.15);
+  exteriorGroup.add(archSignWest);
   const archLight = new THREE.PointLight('#fde68a', 5.8, 15, 1.0);
-  archLight.position.set(-52, 4.3, -0.5);
+  archLight.position.set(-52.8, 4.4, 0.2);
   exteriorGroup.add(archLight);
 
   // Detailed School Guard Booth (ป้อมยามโรงเรียน -45.5) with sliding glass window, service ledge, door & barrier post

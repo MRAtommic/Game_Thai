@@ -415,7 +415,14 @@ export class SchoolWorld {
         }
       }
     }
-    this.addBox(this.gateLockMesh, 0.16, 2.6, 5.4, '#7f1d1d', -52, 1.3, 0.15);
+    // See-through Wrought-Iron Sliding Gate at x = -52 (replaces solid red blocking wall at night!)
+    this.addBox(this.gateLockMesh, 0.1, 0.1, 4.6, '#1e293b', -52, 1.9, 0.15, 0.45);
+    this.addBox(this.gateLockMesh, 0.1, 0.12, 4.6, '#1e293b', -52, 0.2, 0.15, 0.45);
+    this.addBox(this.gateLockMesh, 0.1, 0.08, 4.6, '#475569', -52, 1.05, 0.15, 0.45);
+    for (let gz = -1.95; gz <= 2.25; gz += 0.35) {
+      this.addBox(this.gateLockMesh, 0.05, 1.95, 0.05, '#0f172a', -52, 1.05, gz, 0.4);
+    }
+    this.addBox(this.gateLockMesh, 0.14, 0.24, 0.2, '#facc15', -52, 1.05, 0.15, 0.3); // brass padlock
     this.exteriorGroup.add(this.gateLockMesh);
 
     const lampConeTex = createLightConeTexture('255, 224, 150');
