@@ -70,22 +70,36 @@ if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
   };
 }
 
+const FEMALE_HINTS = ['premwadee', 'kanya', 'narisa', 'achara', 'female', 'woman'];
+const MALE_HINTS = ['niwat', 'pattara', 'sarawut', 'male', 'man'];
+
+function isMaleVoice(v: SpeechSynthesisVoice | null): boolean {
+  if (!v) return false;
+  const n = v.name.toLowerCase();
+  return MALE_HINTS.some((h) => n.includes(h));
+}
+
 function scoreThaiVoice(v: SpeechSynthesisVoice, preferFemale: boolean): number {
   const n = v.name.toLowerCase();
   let score = 0;
-  // Strongly prefer modern neural/natural voices over legacy robotic SAPI voices
+  // Strongly prefer modern neural/natural voices
   if (n.includes('natural')) score += 60;
   if (n.includes('online')) score += 20;
   if (n.includes('google')) score += 45;
   if (n.includes('premwadee') || n.includes('niwat')) score += 40;
   if (n.includes('kanya') || n.includes('narisa')) score += 35;
-  if (n.includes('pattara')) score -= 60; // Legacy Windows SAPI5 voice sounds very robotic
-  if (!v.localService) score += 15; // Cloud neural voices sound much more human
+  if (n.includes('pattara')) score -= 18; // Prefer Niwat over legacy Pattara when both exist
+  if (!v.localService) score += 15;
 
-  const femaleHints = ['premwadee', 'kanya', 'narisa', 'achara', 'female', 'woman'];
-  const maleHints = ['niwat', 'male', 'man', 'sarawut'];
-  if (preferFemale && femaleHints.some((h) => n.includes(h))) score += 12;
-  if (!preferFemale && maleHints.some((h) => n.includes(h))) score += 12;
+  const isFem = FEMALE_HINTS.some((h) => n.includes(h));
+  const isMal = MALE_HINTS.some((h) => n.includes(h));
+  if (preferFemale) {
+    if (isFem) score += 90;
+    if (isMal) score -= 90;
+  } else {
+    if (isMal) score += 90;
+    if (isFem) score -= 90;
+  }
   return score;
 }
 
@@ -240,12 +254,15 @@ export function speakDialogueLine(
     rate -= 0.05;
   }
 
-  // Google ภาษาไทย degrades when pitch deviates from 1.0; keep pitch 1.0 for Google TTS
+  // If browser has no male Thai voice (e.g. Android/Chrome female-only Google voice), lower pitch for male characters
   const isGoogleVoice = Boolean(voice && voice.name.toLowerCase().includes('google'));
-  if (isGoogleVoice) {
-    utt.pitch = 1.0;
+  const gotMaleVoice = isMaleVoice(voice);
+  if (!spec.preferFemale && !gotMaleVoice) {
+    utt.pitch = spec.kind === 'elder' || spec.kind === 'monk' ? 0.78 : 0.84;
+  } else if (isGoogleVoice) {
+    utt.pitch = spec.kind === 'girl' ? 1.1 : 1.0;
   } else {
-    utt.pitch = Math.max(0.88, Math.min(1.12, pitch));
+    utt.pitch = Math.max(0.84, Math.min(1.14, pitch));
   }
   utt.rate = Math.max(0.85, Math.min(1.1, rate));
   utt.volume = spec.volume;
