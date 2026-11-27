@@ -297,13 +297,13 @@ export class DormWorld {
     this.exteriorGroup.add(this.tomMesh, this.tomShadow);
 
     this.vendorMesh = this.makeLitCharacter(this.charFrames.vendor[0], 1.5, 2.25);
-    this.vendorMesh.position.set(-61.0, 0.94, 0.15);
+    this.vendorMesh.position.set(-61.0, 0.94, -1.42);
     this.vendorShadow = this.makeFloorShadow(shadowTex, 0.56);
-    this.vendorShadow.position.set(-61.0, 0.025, 0.15);
+    this.vendorShadow.position.set(-61.0, 0.025, -1.42);
     this.exteriorGroup.add(this.vendorMesh, this.vendorShadow);
 
     this.noodleVendorMesh = this.makeLitCharacter(this.charFrames.noodle_chef[0], 1.5, 2.25);
-    this.noodleVendorMesh.position.set(-42.0, 0.94, -0.85);
+    this.noodleVendorMesh.position.set(-42.0, 0.94, -1.38);
     this.exteriorGroup.add(this.noodleVendorMesh);
 
     // Seated customers eating at the noodle cart folding table (-39.8)

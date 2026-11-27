@@ -542,7 +542,6 @@ export function buildCampusGroundProps(
     addBox(exteriorGroup, 0.16, 0.34, 0.16, ['#38bdf8', '#22c55e', '#ef4444'][di], dx, 1.48, -1.78, 0.3);
     addBox(exteriorGroup, 0.16, 0.32, 0.16, '#f59e0b', dx, 0.92, -1.78, 0.3);
   });
-  makeNpc('vendor_coop', 48.2, 0.12, -2.65, 1);
   const coopSign = new THREE.Mesh(
     new THREE.PlaneGeometry(7.2, 1.1),
     new THREE.MeshBasicMaterial({ map: createSchoolSignTexture('โรงอาหาร & สหกรณ์โรงเรียน', 'ก๋วยเตี๋ยว • ข้าวแกง • น้ำปั่น • ถ่านไฟฉาย', '#b45309', '#78350f', '#fef08a') })
@@ -570,7 +569,8 @@ export function buildCampusGroundProps(
     cafeteriaEaters.push(makeNpc(idx % 2 === 0 ? 'student_girl' : 'student_boy', tx - 0.55, 0.14, -0.44, 1));
     cafeteriaEaters.push(makeNpc(idx % 2 === 0 ? 'student_boy' : 'student_girl', tx + 0.55, 0.14, -0.44, -1));
   });
-  const coopVendorMesh = makeNpc('vendor_coop', 48.0, 0.06, -1.35, 1);
+  const coopVendorMesh = makeNpc('vendor_coop', 48.2, 0.12, -2.75, 1);
+  makeNpc('vendor_coop', 51.8, 0.12, -2.75, -1);
 
   // ================= OUTDOOR TILED SCHOOL RESTROOM BUILDING (+62 .. +72, center +67) =================
   addBox(exteriorGroup, 10.2, 3.4, 2.8, '#e0f2fe', 67, 1.7, -1.65, 0.65);
