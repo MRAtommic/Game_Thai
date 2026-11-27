@@ -1172,17 +1172,17 @@ export class DormWorld {
     this.addTexturedPlane(25.8, 4.8, wallTex, -43.1, 2.4, -2.35, 0.95);
     this.addTexturedPlane(46, 4.8, wallTex, -79, 2.4, -2.35, 0.95);
 
-    // Side-alley left & right shophouse return walls going deep back into -Z (-30.2 and -24.0)
+    // Side-alley left & right shophouse return walls going deep back into -Z (-30.2 and -24.0) — OPEN ROAD ALL THE WAY THROUGH!
     [-30.2, -24.0].forEach((sideX, idx) => {
       const sideWall = new THREE.Mesh(
-        new THREE.PlaneGeometry(17.0, 4.8),
+        new THREE.PlaneGeometry(26.5, 4.8),
         new THREE.MeshStandardMaterial({ map: wallTex, roughness: 0.95 })
       );
-      sideWall.position.set(sideX, 2.4, -10.85);
+      sideWall.position.set(sideX, 2.4, -15.6);
       sideWall.rotation.y = idx === 0 ? Math.PI / 2 : -Math.PI / 2;
       this.scene.add(sideWall);
     });
-    // Deep Side-Alley Shophouse Depth: sloped striped awnings, wall-mounted AC condensers, bracketed signs, lamps & grounded night-stall!
+    // Deep Side-Alley Shophouse Depth: sloped striped awnings, wall-mounted AC condensers, bracketed signs & lamps along BOTH sides (road lane stays 100% open!)
     const alleyWinLit = createThaiWindowTexture(true);
     const alleyWinDark = createThaiWindowTexture(false);
     const alleyAwningMat = new THREE.MeshStandardMaterial({
@@ -1190,8 +1190,8 @@ export class DormWorld {
       roughness: 0.85,
       side: THREE.DoubleSide,
     });
-    [-5.4, -9.8, -14.2].forEach((az, idx) => {
-      // Left shophouse: glowing upper window, wall-mounted AC unit (flush on wall, NOT on awning!), sloped awning + steel brackets
+    [-5.4, -10.4, -15.4, -20.6].forEach((az, idx) => {
+      // Left shophouse: glowing upper window, wall-mounted AC unit (flush on wall), sloped awning + steel brackets
       const lWin = new THREE.Mesh(
         new THREE.PlaneGeometry(1.45, 1.15),
         new THREE.MeshBasicMaterial({ map: idx % 2 === 0 ? alleyWinLit : alleyWinDark })
@@ -1201,14 +1201,13 @@ export class DormWorld {
       this.scene.add(lWin);
       this.addBox(this.scene, 0.34, 0.48, 0.62, '#cbd5e1', -30.01, 3.05, az + 1.25); // flush wall AC unit
       this.addBox(this.scene, 0.04, 0.34, 0.34, '#334155', -29.83, 3.05, az + 1.25); // AC fan grille
-      const lAwning = new THREE.Mesh(new THREE.PlaneGeometry(1.35, 2.75), alleyAwningMat);
-      lAwning.position.set(-29.55, 2.28, az);
+      const lAwning = new THREE.Mesh(new THREE.PlaneGeometry(1.05, 2.65), alleyAwningMat);
+      lAwning.position.set(-29.7, 2.42, az);
       lAwning.rotation.x = -Math.PI / 2;
       lAwning.rotation.y = 0.28;
       this.scene.add(lAwning);
-      this.addBox(this.scene, 0.9, 0.06, 0.06, '#475569', -29.75, 2.18, az - 1.2);
-      this.addBox(this.scene, 0.9, 0.06, 0.06, '#475569', -29.75, 2.18, az + 1.2);
-      // Ground-level shophouse steel shutter door on left wall
+      this.addBox(this.scene, 0.72, 0.06, 0.06, '#475569', -29.84, 2.34, az - 1.15);
+      this.addBox(this.scene, 0.72, 0.06, 0.06, '#475569', -29.84, 2.34, az + 1.15);
       this.addBox(this.scene, 0.08, 2.05, 1.85, '#3b424c', -30.14, 1.02, az);
 
       // Right shophouse: glowing window, sloped awning, wall-bracketed shop signboard & ground shutter
@@ -1219,64 +1218,36 @@ export class DormWorld {
       rWin.rotation.y = -Math.PI / 2;
       rWin.position.set(-24.04, 3.45, az - 0.3);
       this.scene.add(rWin);
-      const rAwning = new THREE.Mesh(new THREE.PlaneGeometry(1.35, 2.75), alleyAwningMat);
-      rAwning.position.set(-24.65, 2.28, az - 0.3);
+      const rAwning = new THREE.Mesh(new THREE.PlaneGeometry(1.05, 2.65), alleyAwningMat);
+      rAwning.position.set(-24.5, 2.42, az - 0.3);
       rAwning.rotation.x = -Math.PI / 2;
       rAwning.rotation.y = -0.28;
       this.scene.add(rAwning);
-      this.addBox(this.scene, 0.9, 0.06, 0.06, '#475569', -24.45, 2.18, az - 1.5);
-      this.addBox(this.scene, 0.9, 0.06, 0.06, '#475569', -24.45, 2.18, az + 0.9);
+      this.addBox(this.scene, 0.72, 0.06, 0.06, '#475569', -24.36, 2.34, az - 1.45);
+      this.addBox(this.scene, 0.72, 0.06, 0.06, '#475569', -24.36, 2.34, az + 0.85);
       this.addBox(this.scene, 0.08, 2.05, 1.85, '#3b424c', -24.06, 1.02, az - 0.3);
-      // Wall-bracketed vertical signboard (mounted to right wall by steel arms, NEVER sitting on awning)
+      // Wall-bracketed vertical signboard (mounted to right wall by steel arms)
       this.addBox(this.scene, 0.65, 0.05, 0.05, '#334155', -24.34, 3.05, az + 1.15);
       this.addBox(this.scene, 0.65, 0.05, 0.05, '#334155', -24.34, 2.55, az + 1.15);
       this.addBox(this.scene, 0.14, 0.78, 0.48, idx % 2 === 0 ? '#1e3a8a' : '#7f1d1d', -24.62, 2.8, az + 1.15);
     });
-    // Grounded alley utility poles with curved steel lamp arms holding bulbs (zero floating bulbs!)
-    [-6.8, -13.0].forEach((lz, li) => {
-      const px = li === 0 ? -29.65 : -24.55;
-      const dir = li === 0 ? 1 : -1;
+    // Grounded alley utility poles tucked cleanly at curb edges (-29.85 / -24.35) with lamp arms (clear of vehicles!)
+    [-6.8, -14.2, -21.8].forEach((lz, li) => {
+      const px = li % 2 === 0 ? -29.85 : -24.35;
+      const dir = li % 2 === 0 ? 1 : -1;
       this.addBox(this.scene, 0.16, 4.6, 0.16, '#475569', px, 2.3, lz);
       this.addBox(this.scene, 0.75, 0.07, 0.07, '#64748b', px + dir * 0.38, 4.45, lz);
       this.addBox(this.scene, 0.24, 0.08, 0.22, '#334155', px + dir * 0.72, 4.4, lz);
       const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.1, 8, 8), new THREE.MeshBasicMaterial({ color: '#fde68a' }));
       bulb.position.set(px + dir * 0.72, 4.3, lz);
       this.scene.add(bulb);
-      const aLight = new THREE.PointLight('#ffbf69', 3.4, 11, 1.1);
+      const aLight = new THREE.PointLight('#ffbf69', 3.4, 12, 1.1);
       aLight.position.set(-27.1, 3.9, lz);
       this.scene.add(aLight);
     });
-    // Grounded Distant Alley Noodle/Khao-Tom Stall at end of alley (z = -16.8..-18.8) with 4 posts, sloped awning & tables
-    this.addTexturedPlane(6.8, 5.2, wallTex, -27.1, 2.6, -18.8, 0.92);
-    [-28.9, -25.5].forEach((sx) => {
-      this.addBox(this.scene, 0.08, 2.5, 0.08, '#475569', sx, 1.25, -16.1);
-      this.addBox(this.scene, 0.08, 2.65, 0.08, '#475569', sx, 1.32, -17.5);
-    });
-    const farStallAwning = new THREE.Mesh(new THREE.PlaneGeometry(3.8, 1.85), alleyAwningMat);
-    farStallAwning.position.set(-27.2, 2.52, -16.8);
-    farStallAwning.rotation.x = -1.1;
-    this.scene.add(farStallAwning);
-    this.addBox(this.scene, 2.8, 0.88, 0.75, '#7f1d1d', -27.2, 0.44, -16.85);
-    this.addBox(this.scene, 2.84, 0.07, 0.78, '#cbd5e1', -27.2, 0.9, -16.85); // stainless counter top
-    const farSign = new THREE.Mesh(
-      new THREE.PlaneGeometry(2.1, 0.62),
-      new THREE.MeshBasicMaterial({ map: createNoodleCartSignTexture() })
-    );
-    farSign.position.set(-27.2, 2.25, -15.95);
-    this.scene.add(farSign);
-    // Folding table + 2 red plastic stools & parked scooter along alley curb
-    this.addBox(this.scene, 1.1, 0.06, 0.75, '#cbd5e1', -27.4, 0.68, -15.2);
-    this.addBox(this.scene, 0.06, 0.68, 0.65, '#475569', -27.4, 0.34, -15.2);
-    [-28.05, -26.75].forEach((stx) => {
-      const st = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.18, 0.22, 0.4, 10),
-        new THREE.MeshStandardMaterial({ color: '#dc2626', roughness: 0.45 })
-      );
-      st.position.set(stx, 0.2, -15.15);
-      this.scene.add(st);
-    });
-    const farAlleyLight = new THREE.PointLight('#fb923c', 4.2, 12, 1.1);
-    farAlleyLight.position.set(-27.2, 2.3, -15.2);
+    // Distant warm cross-street ambient glow at deep end of open alley (z = -26.5, NO blocking wall!)
+    const farAlleyLight = new THREE.PointLight('#fb923c', 4.0, 14, 1.05);
+    farAlleyLight.position.set(-27.1, 3.2, -26.2);
     this.scene.add(farAlleyLight);
 
     // Graffiti murals placed strictly on solid wall segments (never across the side-alley road!)
