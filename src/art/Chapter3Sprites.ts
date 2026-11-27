@@ -298,6 +298,125 @@ export function createCh3CharacterTexture(kind: Ch3CharKind, frame = 0): THREE.C
   return tex;
 }
 
+export function createPeemBikeTexture(frame = 0): THREE.CanvasTexture {
+  const w = 128;
+  const h = 192;
+  const canvas = document.createElement('canvas');
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext('2d')!;
+  const phase = (frame / 4) * Math.PI * 2;
+  const bounce = Math.round(Math.sin(phase * 2) * 1.6);
+  const crankX = 63;
+  const crankY = 148;
+  const pedalRx = Math.cos(phase) * 14;
+  const pedalRy = Math.sin(phase) * 12;
+  const hipX = 48;
+  const hipY = 114 + bounce;
+
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+
+  // Far leg pedaling (behind bicycle diamond frame)
+  const fFootX = crankX - pedalRx;
+  const fFootY = crankY - pedalRy;
+  const fKneeX = (hipX + fFootX) * 0.5 + 16;
+  const fKneeY = (hipY + fFootY) * 0.5 - 6;
+  ctx.strokeStyle = '#c5926b';
+  ctx.lineWidth = 10;
+  ctx.beginPath();
+  ctx.moveTo(hipX, hipY);
+  ctx.lineTo(fKneeX, fKneeY);
+  ctx.lineTo(fFootX, fFootY);
+  ctx.stroke();
+  ctx.strokeStyle = '#172554'; // navy school shorts thigh
+  ctx.lineWidth = 13;
+  ctx.beginPath();
+  ctx.moveTo(hipX, hipY);
+  ctx.lineTo(fKneeX, fKneeY);
+  ctx.stroke();
+  ctx.fillStyle = '#0f172a';
+  ctx.fillRect(fFootX - 6, fFootY - 3, 15, 8);
+
+  // Far arm leaning onto handlebar
+  ctx.strokeStyle = '#c5926b';
+  ctx.lineWidth = 8;
+  ctx.beginPath();
+  ctx.moveTo(64, 78 + bounce);
+  ctx.lineTo(82, 87 + bounce);
+  ctx.lineTo(96, 94);
+  ctx.stroke();
+
+  // Torso leaning forward onto handlebars in crisp Thai student shirt + sling bag
+  ctx.save();
+  ctx.translate(hipX + 7, hipY - 2);
+  ctx.rotate(0.3);
+  ctx.fillStyle = '#e2e8f0';
+  ctx.beginPath();
+  ctx.roundRect(-16, -44, 32, 46, 8);
+  ctx.fill();
+  ctx.fillStyle = '#1e293b'; // crossbody school bag strap
+  ctx.fillRect(-10, -43, 6, 42);
+  ctx.fillStyle = '#0f172a';
+  ctx.fillRect(-20, -14, 15, 16);
+  ctx.restore();
+
+  // Neck + Head looking forward (+X)
+  ctx.fillStyle = '#d4a37a';
+  ctx.fillRect(62, 57 + bounce, 10, 12);
+  ctx.fillStyle = '#e0ad84';
+  ctx.beginPath();
+  ctx.ellipse(72, 42 + bounce, 17, 19, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#18181b';
+  ctx.beginPath();
+  ctx.ellipse(70, 27 + bounce, 19, 10, 0, Math.PI, Math.PI * 2);
+  ctx.fill();
+  ctx.fillRect(51, 26 + bounce, 8, 13);
+  ctx.fillStyle = '#111827';
+  ctx.fillRect(79, 40 + bounce, 4, 4);
+
+  // Near leg in full crank circle + black Thai student shoe (front side of bike!)
+  const nFootX = crankX + pedalRx;
+  const nFootY = crankY + pedalRy;
+  const nKneeX = (hipX + nFootX) * 0.5 + 18;
+  const nKneeY = (hipY + nFootY) * 0.5 - 8;
+  ctx.strokeStyle = '#d9a77e';
+  ctx.lineWidth = 11;
+  ctx.beginPath();
+  ctx.moveTo(hipX, hipY);
+  ctx.lineTo(nKneeX, nKneeY);
+  ctx.lineTo(nFootX, nFootY);
+  ctx.stroke();
+  ctx.strokeStyle = '#1e3a8a';
+  ctx.lineWidth = 14;
+  ctx.beginPath();
+  ctx.moveTo(hipX, hipY);
+  ctx.lineTo(nKneeX, nKneeY);
+  ctx.stroke();
+  ctx.fillStyle = '#f8fafc'; // white sock cuff
+  ctx.fillRect(nFootX - 5, nFootY - 7, 10, 5);
+  ctx.fillStyle = '#111827'; // student shoe
+  ctx.fillRect(nFootX - 6, nFootY - 3, 16, 8);
+
+  // Near arm bent gripping handlebar
+  ctx.strokeStyle = '#e0ad84';
+  ctx.lineWidth = 9;
+  ctx.beginPath();
+  ctx.moveTo(62, 76 + bounce);
+  ctx.lineTo(80, 88 + bounce);
+  ctx.lineTo(96, 95);
+  ctx.stroke();
+  ctx.fillStyle = '#e0ad84';
+  ctx.beginPath();
+  ctx.arc(97, 95, 5, 0, Math.PI * 2);
+  ctx.fill();
+
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  return tex;
+}
+
 export function createSchoolSignTexture(
   title: string,
   sub: string,

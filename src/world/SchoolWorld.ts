@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import {
   Ch3CharKind,
   createCh3CharacterTexture,
+  createPeemBikeTexture,
   createSchoolSignTexture,
 } from '../art/Chapter3Sprites';
 import { Ch3RoomId } from '../data/chapter3Data';
@@ -36,8 +37,11 @@ export class SchoolWorld {
 
   private hemiLight: THREE.HemisphereLight;
   private sunMoonLight: THREE.DirectionalLight;
+  private rimLight: THREE.DirectionalLight;
   private flashlight: THREE.SpotLight;
   private flashlightTarget: THREE.Object3D;
+  private bikeHeadlight: THREE.SpotLight;
+  private bikeHeadlightTarget: THREE.Object3D;
 
   private exteriorGroup: THREE.Group;
   private roomGroups: Partial<Record<Ch3RoomId, THREE.Group>> = {};
@@ -46,11 +50,24 @@ export class SchoolWorld {
   private playerMesh: THREE.Mesh;
   private playerShadow: THREE.Mesh;
   private ridingBikeGroup: THREE.Group;
-  private bikeWheels: THREE.Mesh[] = [];
+  private bikeWheels: THREE.Group[] = [];
+  private bikeCrank: THREE.Group = new THREE.Group();
   private ghostMesh: THREE.Mesh;
   private ghostLight: THREE.PointLight;
   private gateLockMesh: THREE.Group;
   private corridorLights: { floor: FloorIndex; light: THREE.PointLight; baseInt: number; seed: number }[] = [];
+  private skyBackdropMesh!: THREE.Mesh;
+  private skyCanvas!: HTMLCanvasElement;
+  private skyTex!: THREE.CanvasTexture;
+  private celestialGroup!: THREE.Group;
+  private sunDisc!: THREE.Mesh;
+  private sunHalo!: THREE.Mesh;
+  private cloudMeshes: { mesh: THREE.Mesh; speed: number; baseX: number }[] = [];
+  private dustPoints!: THREE.Points;
+  private dustPos!: Float32Array;
+  private dustCount = 140;
+  private lampCones: THREE.Mesh[] = [];
+  private peemBikeFrames: THREE.CanvasTexture[] = [];
 
   private rainLines: THREE.LineSegments;
   private rainPos: Float32Array;
@@ -94,20 +111,40 @@ export class SchoolWorld {
     this.hemiLight = new THREE.HemisphereLight('#bfd9ff', '#312b22', 0.92);
     this.scene.add(this.hemiLight);
 
-    this.sunMoonLight = new THREE.DirectionalLight('#fff2d6', 1.15);
-    this.sunMoonLight.position.set(16, 28, 16);
+    // High-res moving directional sun/moon light casting dynamic shadows across the entire 248m world
+    this.sunMoonLight = new THREE.DirectionalLight('#fff2d6', 1.25);
+    this.sunMoonLight.position.set(-90, 26, 18);
+    this.sunMoonLight.target.position.set(-106, 0, 0);
     this.sunMoonLight.castShadow = true;
-    this.sunMoonLight.shadow.mapSize.set(1024, 1024);
-    this.scene.add(this.sunMoonLight);
+    this.sunMoonLight.shadow.mapSize.set(2048, 2048);
+    this.sunMoonLight.shadow.camera.left = -28;
+    this.sunMoonLight.shadow.camera.right = 28;
+    this.sunMoonLight.shadow.camera.top = 22;
+    this.sunMoonLight.shadow.camera.bottom = -14;
+    this.sunMoonLight.shadow.camera.near = 1;
+    this.sunMoonLight.shadow.camera.far = 90;
+    this.sunMoonLight.shadow.bias = -0.0005;
+    this.scene.add(this.sunMoonLight, this.sunMoonLight.target);
 
-    this.flashlight = new THREE.SpotLight('#fff0c8', 0, 17, Math.PI / 4, 0.5, 1.15);
+    // Cool atmospheric rim/fill backlight separating buildings, columns & silhouettes
+    this.rimLight = new THREE.DirectionalLight('#93c5fd', 0.42);
+    this.rimLight.position.set(14, 16, -18);
+    this.scene.add(this.rimLight);
+
+    this.flashlight = new THREE.SpotLight('#fff0c8', 0, 18, Math.PI / 4, 0.5, 1.1);
     this.flashlightTarget = new THREE.Object3D();
     this.scene.add(this.flashlight, this.flashlightTarget);
     this.flashlight.target = this.flashlightTarget;
 
+    this.bikeHeadlight = new THREE.SpotLight('#fef08a', 0, 16, Math.PI / 5, 0.45, 1.0);
+    this.bikeHeadlightTarget = new THREE.Object3D();
+    this.scene.add(this.bikeHeadlight, this.bikeHeadlightTarget);
+    this.bikeHeadlight.target = this.bikeHeadlightTarget;
+
     (['peem', 'student_boy', 'student_girl'] as Ch3CharKind[]).forEach((k) => {
       for (let f = 0; f < 4; f++) this.charFrames[k].push(createCh3CharacterTexture(k, f));
     });
+    for (let f = 0; f < 4; f++) this.peemBikeFrames.push(createPeemBikeTexture(f));
     (['mom_ch3', 'teacher_somchai', 'teacher_wilai', 'janitor_man', 'kong_bully', 'vendor_coop', 'dancer_ghost', 'dancer_chase'] as Ch3CharKind[]).forEach(
       (k) => {
         for (let f = 0; f < 2; f++) this.charFrames[k].push(createCh3CharacterTexture(k, f));
@@ -119,6 +156,7 @@ export class SchoolWorld {
     this.scene.add(this.exteriorGroup);
 
     this.gateLockMesh = new THREE.Group();
+    this.buildAtmosphericSkyBackdrop();
     this.buildCampusGroundAndSky();
     this.buildThreeStorySchoolBuilding();
     const groundRefs = buildCampusGroundProps(this.exteriorGroup, this.charFrames, shadowTex, this.addBox.bind(this));
@@ -136,27 +174,9 @@ export class SchoolWorld {
     this.playerShadow.rotation.x = -Math.PI / 2;
     this.scene.add(this.playerMesh, this.playerShadow);
 
-    // Visible 3D Road Bicycle mesh underneath Peem when riding!
-    this.ridingBikeGroup = new THREE.Group();
+    // Chapter-2-grade Diamond Road Bicycle mesh with spinning 4-spoke wheels & pedal crank!
+    this.ridingBikeGroup = this.buildDetailedBicycleMesh();
     this.ridingBikeGroup.visible = false;
-    [-0.52, 0.52].forEach((wx) => {
-      const wheel = new THREE.Mesh(
-        new THREE.TorusGeometry(0.32, 0.055, 8, 16),
-        new THREE.MeshStandardMaterial({ color: '#0f172a', roughness: 0.85 })
-      );
-      wheel.position.set(wx, 0.34, 0);
-      this.ridingBikeGroup.add(wheel);
-      this.bikeWheels.push(wheel);
-      const hub = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.04, 0.04), new THREE.MeshBasicMaterial({ color: '#cbd5e1' }));
-      wheel.add(hub);
-    });
-    this.addBox(this.ridingBikeGroup, 0.96, 0.08, 0.08, '#0284c7', 0, 0.62, 0); // top tube
-    this.addBox(this.ridingBikeGroup, 0.07, 0.48, 0.07, '#0369a1', 0.36, 0.66, 0); // handlebar post
-    this.addBox(this.ridingBikeGroup, 0.08, 0.08, 0.42, '#1e293b', 0.42, 0.9, 0); // handlebar
-    this.addBox(this.ridingBikeGroup, 0.24, 0.08, 0.14, '#111827', -0.25, 0.72, 0); // saddle
-    const bikeHead = new THREE.Mesh(new THREE.SphereGeometry(0.065, 8, 8), new THREE.MeshBasicMaterial({ color: '#fef08a' }));
-    bikeHead.position.set(0.48, 0.76, 0);
-    this.ridingBikeGroup.add(bikeHead);
     this.scene.add(this.ridingBikeGroup);
 
     this.ghostMesh = new THREE.Mesh(
@@ -264,14 +284,41 @@ export class SchoolWorld {
       this.exteriorGroup.add(tr);
     });
 
-    // Soft atmospheric distant mountain ridge horizon (z = -28, never flat black boxes!)
-    for (let bx = -130; bx <= 130; bx += 36) {
-      const hill = new THREE.Mesh(
-        new THREE.ConeGeometry(28, 12 + ((Math.abs(bx) * 3) % 6), 5),
-        new THREE.MeshBasicMaterial({ color: '#334d6e' })
+    // Multi-layered Painted Parallax Mountain Silhouettes & Town Skyline (smooth rolling ridges, zero low-poly triangles!)
+    const ridgeTex = this.createMountainHorizonTexture();
+    for (let hx = -110; hx <= 110; hx += 72) {
+      const mtn = new THREE.Mesh(
+        new THREE.PlaneGeometry(76, 18),
+        new THREE.MeshBasicMaterial({ map: ridgeTex, transparent: true, fog: false })
       );
-      hill.position.set(bx, 4.5, -32.0);
-      this.exteriorGroup.add(hill);
+      mtn.position.set(hx, 6.2, -34.0);
+      this.exteriorGroup.add(mtn);
+    }
+
+    // Midground Thai roadside buildings along West Town Street (-122 .. -64) + Utility Power Poles & Catenary Cables
+    [-118, -96, -82, -68].forEach((bx, bi) => {
+      const col = bi % 2 === 0 ? '#334155' : '#475569';
+      this.addBox(this.exteriorGroup, 7.2, 4.2 + (bi % 2) * 1.4, 3.4, col, bx, 2.1, -6.2, 0.9);
+      this.addBox(this.exteriorGroup, 7.5, 0.55, 3.6, '#1e293b', bx, 4.4 + (bi % 2) * 1.4, -6.2, 0.8);
+    });
+    for (let px = -120; px <= 116; px += 18) {
+      this.addBox(this.exteriorGroup, 0.24, 8.2, 0.24, '#334155', px, 4.1, -4.4, 0.9);
+      this.addBox(this.exteriorGroup, 1.35, 0.12, 0.14, '#475569', px, 7.6, -4.4, 0.7);
+      if (px + 18 <= 118) {
+        const sagPts = [
+          new THREE.Vector3(px, 7.55, -4.4),
+          new THREE.Vector3(px + 9, 6.95, -4.4),
+          new THREE.Vector3(px + 18, 7.55, -4.4),
+        ];
+        const wireGeo = new THREE.BufferGeometry().setFromPoints(new THREE.QuadraticBezierCurve3(...sagPts).getPoints(10));
+        this.exteriorGroup.add(new THREE.Line(wireGeo, new THREE.LineBasicMaterial({ color: '#0f172a', transparent: true, opacity: 0.72 })));
+      }
+    }
+
+    // Road curbstone edge & dashed yellow road lane centerline along Town Street (-132 .. -52)
+    this.addBox(this.exteriorGroup, 80, 0.14, 0.28, '#cbd5e1', -92, 0.07, -3.3, 0.8);
+    for (let rx = -124; rx <= -56; rx += 6.0) {
+      this.addBox(this.exteriorGroup, 2.8, 0.03, 0.14, '#facc15', rx, 0.025, 1.15, 0.5);
     }
 
     // Fence pillars + black wrought-iron school fence bars strictly AFTER gate entrance (-47 .. -14, NO pole inside gate at -52!)
@@ -285,10 +332,11 @@ export class SchoolWorld {
         }
       }
     }
-    this.addBox(this.gateLockMesh, 6.2, 2.6, 0.14, '#7f1d1d', -52, 1.3, -1.9);
+    this.addBox(this.gateLockMesh, 0.16, 2.6, 5.4, '#7f1d1d', -52, 1.3, 0.15);
     this.exteriorGroup.add(this.gateLockMesh);
 
-    [-112, -88, -66, -42, -26, 46, 67, 88, 114].forEach((lx) => {
+    const lampConeTex = createLightConeTexture('255, 224, 150');
+    [-112, -88, -66, -42, -31, 46, 67, 88, 114].forEach((lx) => {
       this.addBox(this.exteriorGroup, 0.22, 5.8, 0.22, '#475569', lx, 2.9, -2.0);
       const b = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.12, 0.45), new THREE.MeshBasicMaterial({ color: '#fde68a' }));
       b.position.set(lx, 5.75, -1.25);
@@ -296,6 +344,13 @@ export class SchoolWorld {
       const pl = new THREE.PointLight('#ffd89a', 6.5, 20, 0.95);
       pl.position.set(lx, 5.4, 0.8);
       this.exteriorGroup.add(pl);
+      const cone = new THREE.Mesh(
+        new THREE.PlaneGeometry(4.4, 5.6),
+        new THREE.MeshBasicMaterial({ map: lampConeTex, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, opacity: 0.2 })
+      );
+      cone.position.set(lx, 3.1, -0.8);
+      this.exteriorGroup.add(cone);
+      this.lampCones.push(cone);
     });
   }
 
@@ -310,9 +365,19 @@ export class SchoolWorld {
     const totalW = CH3_BLDG_MAX_X - CH3_BLDG_MIN_X;
     const centerX = (CH3_BLDG_MIN_X + CH3_BLDG_MAX_X) / 2;
 
-    // Exterior columns, Solid End Side-Walls (preventing sky gaps at building edges/stairwell) & decorative school cornice
-    this.addBox(this.exteriorGroup, 0.42, CH3_FLOOR_H * 4, 4.15, '#cbd5e1', CH3_BLDG_MIN_X - 0.16, CH3_FLOOR_H * 2, 0.25, 0.88);
-    this.addBox(this.exteriorGroup, 0.42, CH3_FLOOR_H * 4, 4.15, '#cbd5e1', CH3_BLDG_MAX_X + 0.16, CH3_FLOOR_H * 2, 0.25, 0.88);
+    // Upper-floor solid end walls (Floors 1-3, y = 4.2 .. 16.8) keep classrooms & stairwell enclosed while Ground Floor remains an open breezeway entrance!
+    this.addBox(this.exteriorGroup, 0.42, CH3_FLOOR_H * 3, 4.15, '#cbd5e1', CH3_BLDG_MIN_X - 0.16, CH3_FLOOR_H * 2.5, 0.25, 0.88);
+    this.addBox(this.exteriorGroup, 0.42, CH3_FLOOR_H * 3, 4.15, '#cbd5e1', CH3_BLDG_MAX_X + 0.16, CH3_FLOOR_H * 2.5, 0.25, 0.88);
+    // Ground-floor left & right rear bay trim + West Main Building Entrance Portal facing courtyard (-12.0)!
+    this.addBox(this.exteriorGroup, 0.42, CH3_FLOOR_H, 1.5, '#e2e8f0', CH3_BLDG_MIN_X - 0.16, CH3_FLOOR_H / 2, -1.05, 0.85);
+    this.addBox(this.exteriorGroup, 0.42, CH3_FLOOR_H, 1.5, '#e2e8f0', CH3_BLDG_MAX_X + 0.16, CH3_FLOOR_H / 2, -1.05, 0.85);
+    const mainEntrancePortal = new THREE.Mesh(
+      new THREE.PlaneGeometry(1.7, 2.55),
+      new THREE.MeshStandardMaterial({ map: createThaiDoorTexture('ทางเข้าอาคาร', false), roughness: 0.65 })
+    );
+    mainEntrancePortal.rotation.y = -Math.PI / 2;
+    mainEntrancePortal.position.set(CH3_BLDG_MIN_X - 0.39, 1.32, -0.95);
+    this.exteriorGroup.add(mainEntrancePortal);
     for (let px = CH3_BLDG_MIN_X; px <= CH3_BLDG_MAX_X; px += 8.0) {
       this.addBox(this.exteriorGroup, 0.52, CH3_FLOOR_H * 4, 0.52, '#e2e8f0', px, CH3_FLOOR_H * 2, 2.15);
     }
@@ -328,7 +393,7 @@ export class SchoolWorld {
     bldgTitle.position.set(centerX, roofY + 0.9, 2.95);
     this.exteriorGroup.add(bldgTitle);
 
-    // Ground Floor (ใต้ถุนอาคารเรียน -12 .. +36): Raised terrazzo floor, back wall, office doors, notice boards, trophy case & marble benches
+    // Ground Floor (ใต้ถุนอาคารเรียน -12 .. +36): Terrazzo floor, clean dark baseboard, full-height doors & lobby props
     const lobbySlab = new THREE.Mesh(
       new THREE.BoxGeometry(totalW + 0.8, 0.14, 4.9),
       new THREE.MeshStandardMaterial({ map: tileTex, color: '#e2e8f0', roughness: 0.55 })
@@ -344,38 +409,49 @@ export class SchoolWorld {
     );
     groundWall.position.set(centerX, CH3_FLOOR_H / 2, -1.65);
     this.exteriorGroup.add(groundWall);
-    this.addBox(this.exteriorGroup, totalW + 0.6, 0.85, 0.08, '#cbd5e1', centerX, 0.42, -1.5, 0.78);
+    this.addBox(this.exteriorGroup, totalW + 0.6, 0.14, 0.04, '#1e293b', centerX, 0.1, -1.52, 0.78);
 
-    // Potted tropical shrubs beside ground-floor pillars
+    // Sculpted terracotta potted ferns beside ground-floor pillars
     for (let px = CH3_BLDG_MIN_X; px <= 28; px += 8.0) {
-      this.addBox(this.exteriorGroup, 0.56, 0.42, 0.56, '#b45309', px + 0.65, 0.25, 1.85, 0.8);
-      this.addBox(this.exteriorGroup, 0.68, 0.52, 0.68, '#15803d', px + 0.65, 0.66, 1.85, 0.9);
+      const pot = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.28, 0.22, 0.44, 10),
+        new THREE.MeshStandardMaterial({ color: '#b45309', roughness: 0.75 })
+      );
+      pot.position.set(px + 0.68, 0.3, 1.82);
+      const bush = new THREE.Mesh(
+        new THREE.SphereGeometry(0.42, 10, 8),
+        new THREE.MeshStandardMaterial({ color: '#15803d', roughness: 0.88 })
+      );
+      bush.position.set(px + 0.68, 0.72, 1.82);
+      this.exteriorGroup.add(pot, bush);
     }
 
-    // Lobby Lights & Windows (including stairwell window at +33.4)
-    [-6, 10, 24, 33].forEach((lx, idx) => {
-      const pt = new THREE.PointLight('#fffbeb', 1.85, 16, 1.15);
-      pt.position.set(lx, 3.25, 0.55);
+    // Bright Lobby Ceiling Lights & Full Windows
+    [-6, 4, 14, 24, 33].forEach((lx, idx) => {
+      const pt = new THREE.PointLight('#fffbeb', 2.8, 17, 1.1);
+      pt.position.set(lx, 3.35, 0.55);
       this.exteriorGroup.add(pt);
-      this.corridorLights.push({ floor: 0, light: pt, baseInt: 1.85, seed: idx + 1 });
+      this.corridorLights.push({ floor: 0, light: pt, baseInt: 2.8, seed: idx + 1 });
     });
-    [-9.5, -4.0, 1.5, 11.0, 18.5, 29.0, 33.4].forEach((wx) => {
+    [-10.0, -4.0, 1.5, 11.0, 18.5, 29.0, 33.4].forEach((wx) => {
       const win = new THREE.Mesh(new THREE.PlaneGeometry(2.15, 1.32), new THREE.MeshBasicMaterial({ map: winLit }));
-      win.position.set(wx, 2.55, -1.52);
+      win.position.set(wx, 2.55, -1.48);
       this.exteriorGroup.add(win);
-      this.addBox(this.exteriorGroup, 2.3, 0.12, 0.14, '#1e3a8a', wx, 1.84, -1.49, 0.6);
+      this.addBox(this.exteriorGroup, 2.3, 0.12, 0.14, '#1e3a8a', wx, 1.84, -1.45, 0.6);
     });
 
+    // Full-height Ground Floor Building Doors (flush with tiled terrace, NO white stripe overlapping!)
     [
+      { x: -10.8, label: 'โถงอาคาร' },
       { x: -7.5, label: 'ห้องธุรการ' },
       { x: -0.5, label: 'ห้องพยาบาล' },
       { x: 21.5, label: 'สภาฯ นร.' },
     ].forEach((d) => {
       const door = new THREE.Mesh(
-        new THREE.PlaneGeometry(1.35, 2.35),
-        new THREE.MeshStandardMaterial({ map: createThaiDoorTexture(d.label, false), roughness: 0.78 })
+        new THREE.PlaneGeometry(1.42, 2.42),
+        new THREE.MeshStandardMaterial({ map: createThaiDoorTexture(d.label, false), roughness: 0.75 })
       );
-      door.position.set(d.x, 1.25, -1.49);
+      door.position.set(d.x, 1.28, -1.42);
       this.exteriorGroup.add(door);
     });
 
@@ -598,20 +674,31 @@ export class SchoolWorld {
     mMat.map = this.charFrames.dancer_ghost[Math.floor(this.animClock * 3) % 2];
 
     const yBase = isInside ? 0 : pFloor * CH3_FLOOR_H;
+    const riding = ridingBike && !isHiding && !isInside && pFloor === 0;
     this.playerMesh.visible = !isHiding;
     this.playerShadow.visible = !isHiding;
-    this.playerMesh.position.set(px, yBase + (ridingBike ? 1.25 : 0.96), pz);
+    this.playerMesh.position.set(px, yBase + (riding ? 1.13 : 0.96), pz);
     this.playerShadow.position.set(px, yBase + 0.026, pz);
-    const pf = isMoving ? Math.floor(this.animClock * (ridingBike ? 11 : 8)) % 4 : 0;
-    (this.playerMesh.material as THREE.MeshStandardMaterial).map = this.charFrames.peem[pf];
+    const pf = isMoving ? Math.floor(this.animClock * (riding ? 10 : 8)) % 4 : 0;
+    (this.playerMesh.material as THREE.MeshStandardMaterial).map = riding
+      ? this.peemBikeFrames[pf]
+      : this.charFrames.peem[pf];
     this.playerMesh.scale.x = facing;
 
-    // Visible 3D Bicycle tracking under Peem when riding!
-    this.ridingBikeGroup.visible = ridingBike && !isHiding && !isInside && pFloor === 0;
-    if (this.ridingBikeGroup.visible) {
-      this.ridingBikeGroup.position.set(px, yBase + 0.02, pz + 0.05);
+    // Detailed Chapter-2-grade Diamond Bicycle + crank + headlight tracking under Peem!
+    this.ridingBikeGroup.visible = riding;
+    if (riding) {
+      this.ridingBikeGroup.position.set(px, yBase + 0.02, pz - 0.04);
       this.ridingBikeGroup.scale.x = facing;
-      if (isMoving) this.bikeWheels.forEach((w) => (w.rotation.z -= dt * 11));
+      if (isMoving) {
+        this.bikeWheels.forEach((w) => (w.rotation.z -= dt * 11.5));
+        this.bikeCrank.rotation.z -= dt * 10.0;
+      }
+      this.bikeHeadlight.position.set(px + facing * 0.5, yBase + 0.85, pz);
+      this.bikeHeadlightTarget.position.set(px + facing * 7.5, yBase + 0.05, pz);
+      this.bikeHeadlight.intensity = hour >= 16.5 || hour < 6.8 ? 14.0 : 4.0;
+    } else {
+      this.bikeHeadlight.intensity = 0;
     }
 
     this.flashlight.position.set(px + facing * 0.3, yBase + 1.18, pz + 0.25);
@@ -656,39 +743,258 @@ export class SchoolWorld {
     this.camera.position.y = THREE.MathUtils.lerp(this.camera.position.y, targetY, Math.min(1, dt * 6));
     this.camera.position.z = THREE.MathUtils.lerp(this.camera.position.z, this.targetCamZ, Math.min(1, dt * 6));
     this.camera.lookAt(this.camera.position.x, this.camera.position.y - 0.15, 0);
+
+    // Track Sky Backdrop, Celestial Disc, Clouds & Dynamic High-Res Sun/Moon Shadow Camera with Camera!
+    this.skyBackdropMesh.visible = !isInside;
+    this.celestialGroup.visible = !isInside;
+    this.dustPoints.visible = !isInside;
+    this.skyBackdropMesh.position.x = this.camera.position.x;
+    this.skyBackdropMesh.position.y = this.camera.position.y + 8.0;
+    this.sunMoonLight.target.position.set(this.camera.position.x, yBase, 0);
+    this.sunMoonLight.position.set(this.camera.position.x + 16, yBase + 26, 18);
+    this.rimLight.position.set(this.camera.position.x - 14, yBase + 16, -18);
+
     this.renderer.render(this.scene, this.camera);
+  }
+
+  private createMountainHorizonTexture(): THREE.CanvasTexture {
+    const c = document.createElement('canvas');
+    c.width = 512;
+    c.height = 160;
+    const ctx = c.getContext('2d')!;
+    // Far misty ridge
+    ctx.fillStyle = 'rgba(51, 77, 110, 0.72)';
+    ctx.beginPath();
+    ctx.moveTo(0, 160);
+    ctx.bezierCurveTo(90, 48, 180, 96, 260, 38);
+    ctx.bezierCurveTo(350, 10, 440, 88, 512, 54);
+    ctx.lineTo(512, 160);
+    ctx.fill();
+    // Closer lush ridge silhouette
+    ctx.fillStyle = 'rgba(30, 58, 72, 0.85)';
+    ctx.beginPath();
+    ctx.moveTo(0, 160);
+    ctx.bezierCurveTo(120, 95, 220, 128, 330, 84);
+    ctx.bezierCurveTo(410, 62, 470, 110, 512, 92);
+    ctx.lineTo(512, 160);
+    ctx.fill();
+    const tex = new THREE.CanvasTexture(c);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    return tex;
+  }
+
+  private buildAtmosphericSkyBackdrop(): void {
+    this.skyCanvas = document.createElement('canvas');
+    this.skyCanvas.width = 256;
+    this.skyCanvas.height = 128;
+    this.skyTex = new THREE.CanvasTexture(this.skyCanvas);
+    this.skyTex.colorSpace = THREE.SRGBColorSpace;
+
+    this.skyBackdropMesh = new THREE.Mesh(
+      new THREE.PlaneGeometry(240, 74),
+      new THREE.MeshBasicMaterial({ map: this.skyTex, fog: false, depthWrite: false })
+    );
+    this.skyBackdropMesh.position.set(-106, 10, -56);
+    this.scene.add(this.skyBackdropMesh);
+
+    this.celestialGroup = new THREE.Group();
+    this.sunDisc = new THREE.Mesh(new THREE.CircleGeometry(2.8, 24), new THREE.MeshBasicMaterial({ color: '#fef08a', fog: false }));
+    const haloCanvas = document.createElement('canvas');
+    haloCanvas.width = 128;
+    haloCanvas.height = 128;
+    const hctx = haloCanvas.getContext('2d')!;
+    const hg = hctx.createRadialGradient(64, 64, 8, 64, 64, 60);
+    hg.addColorStop(0, 'rgba(254, 240, 138, 0.85)');
+    hg.addColorStop(0.5, 'rgba(251, 191, 36, 0.25)');
+    hg.addColorStop(1, 'rgba(251, 191, 36, 0)');
+    hctx.fillStyle = hg;
+    hctx.fillRect(0, 0, 128, 128);
+    const haloTex = new THREE.CanvasTexture(haloCanvas);
+    haloTex.colorSpace = THREE.SRGBColorSpace;
+    this.sunHalo = new THREE.Mesh(
+      new THREE.PlaneGeometry(14, 14),
+      new THREE.MeshBasicMaterial({ map: haloTex, transparent: true, blending: THREE.AdditiveBlending, fog: false, depthWrite: false })
+    );
+    this.sunHalo.position.z = -0.1;
+    this.celestialGroup.add(this.sunDisc, this.sunHalo);
+    this.scene.add(this.celestialGroup);
+
+    // Drifting soft cloud layers
+    const cc = document.createElement('canvas');
+    cc.width = 192;
+    cc.height = 64;
+    const cctx = cc.getContext('2d')!;
+    cctx.fillStyle = 'rgba(255,255,255,0.68)';
+    [
+      [56, 38, 28],
+      [96, 28, 34],
+      [136, 38, 26],
+      [76, 42, 22],
+      [116, 42, 22],
+    ].forEach(([cx, cy, cr]) => {
+      cctx.beginPath();
+      cctx.arc(cx, cy, cr, 0, Math.PI * 2);
+      cctx.fill();
+    });
+    const cTex = new THREE.CanvasTexture(cc);
+    cTex.colorSpace = THREE.SRGBColorSpace;
+    for (let i = 0; i < 8; i++) {
+      const cm = new THREE.Mesh(
+        new THREE.PlaneGeometry(18 + (i % 3) * 5, 6.2),
+        new THREE.MeshBasicMaterial({ map: cTex, transparent: true, opacity: 0.45, fog: false, depthWrite: false })
+      );
+      const bx = -120 + i * 34;
+      cm.position.set(bx, 13.5 + (i % 3) * 2.4, -44 - (i % 2) * 3);
+      this.exteriorGroup.add(cm);
+      this.cloudMeshes.push({ mesh: cm, speed: 0.4 + (i % 3) * 0.22, baseX: bx });
+    }
+
+    // Floating sunlight dust motes / night fireflies
+    this.dustPos = new Float32Array(this.dustCount * 3);
+    for (let i = 0; i < this.dustCount; i++) {
+      this.dustPos[i * 3] = CH3_MIN_X + Math.random() * (CH3_MAX_X - CH3_MIN_X);
+      this.dustPos[i * 3 + 1] = 0.4 + Math.random() * 6.5;
+      this.dustPos[i * 3 + 2] = -1.5 + Math.random() * 4.5;
+    }
+    const dGeo = new THREE.BufferGeometry();
+    dGeo.setAttribute('position', new THREE.BufferAttribute(this.dustPos, 3));
+    this.dustPoints = new THREE.Points(
+      dGeo,
+      new THREE.PointsMaterial({ color: '#fde68a', size: 0.09, transparent: true, opacity: 0.55, blending: THREE.AdditiveBlending })
+    );
+    this.scene.add(this.dustPoints);
+  }
+
+  private buildDetailedBicycleMesh(): THREE.Group {
+    const g = new THREE.Group();
+    const tireMat = new THREE.MeshStandardMaterial({ color: '#18181b', roughness: 0.68 });
+    const metalMat = new THREE.MeshStandardMaterial({ color: '#e2e8f0', metalness: 0.75, roughness: 0.22 });
+
+    [-0.54, 0.54].forEach((wx) => {
+      const wheelGrp = new THREE.Group();
+      wheelGrp.position.set(wx, 0.3, 0);
+      wheelGrp.add(new THREE.Mesh(new THREE.TorusGeometry(0.3, 0.045, 8, 18), tireMat));
+      [0, Math.PI / 4, Math.PI / 2, (3 * Math.PI) / 4].forEach((ang) => {
+        const spoke = new THREE.Mesh(new THREE.BoxGeometry(0.56, 0.022, 0.02), metalMat);
+        spoke.rotation.z = ang;
+        wheelGrp.add(spoke);
+      });
+      g.add(wheelGrp);
+      this.bikeWheels.push(wheelGrp);
+    });
+
+    this.addBox(g, 0.64, 0.055, 0.05, '#0284c7', -0.06, 0.72, 0);
+    this.addBox(g, 0.62, 0.055, 0.05, '#0284c7', -0.24, 0.5, 0).rotation.z = 0.72;
+    this.addBox(g, 0.58, 0.055, 0.05, '#0369a1', 0.14, 0.52, 0).rotation.z = 0.68;
+    this.addBox(g, 0.52, 0.055, 0.05, '#0284c7', -0.14, 0.56, 0).rotation.z = 1.32;
+    this.addBox(g, 0.55, 0.055, 0.05, '#cbd5e1', 0.38, 0.62, 0).rotation.z = -0.35;
+    this.addBox(g, 0.12, 0.05, 0.44, '#cbd5e1', 0.36, 0.94, 0);
+    this.addBox(g, 0.24, 0.07, 0.14, '#111827', -0.22, 0.84, 0);
+    this.addBox(g, 0.24, 0.2, 0.22, '#78350f', 0.52, 0.76, 0);
+    const headBulb = new THREE.Mesh(new THREE.SphereGeometry(0.065, 8, 8), new THREE.MeshBasicMaterial({ color: '#fef08a' }));
+    headBulb.position.set(0.5, 0.84, 0);
+    g.add(headBulb);
+
+    const crank = new THREE.Group();
+    crank.position.set(-0.04, 0.32, 0);
+    this.addBox(crank, 0.04, 0.24, 0.03, '#e2e8f0', 0, 0, 0.06);
+    this.addBox(crank, 0.1, 0.04, 0.08, '#111827', 0, 0.12, 0.08);
+    g.add(crank);
+    this.bikeCrank = crank;
+    return g;
   }
 
   private updateSkyAndRain(dt: number, mins: number, weather: WeatherType): void {
     const h = (mins % 1440) / 60;
     const sky = new THREE.Color('#090d1a');
+    let zenithCol = '#0b1024';
+    let horizCol = '#1e293b';
     let hInt = 0.45;
     let sInt = 0.35;
+    let sunCol = '#fff2d6';
 
     if (h >= 5.5 && h < 7.5) {
       sky.lerpColors(new THREE.Color('#0c1224'), new THREE.Color('#6b8cae'), (h - 5.5) / 2);
-      hInt = 0.72;
-      sInt = 0.75;
+      zenithCol = '#1e3a5f';
+      horizCol = '#f59e0b';
+      sunCol = '#fed7aa';
+      hInt = 0.78;
+      sInt = 0.95;
     } else if (h >= 7.5 && h < 16.0) {
-      sky.set('#5583b5');
-      hInt = 0.98;
-      sInt = 1.2;
+      sky.set('#4c7fb8');
+      zenithCol = '#1d4ed8';
+      horizCol = '#93c5fd';
+      sunCol = '#fff7ed';
+      hInt = 1.05;
+      sInt = 1.35;
     } else if (h >= 16.0 && h < 19.0) {
       sky.lerpColors(new THREE.Color('#d97706'), new THREE.Color('#0f172a'), (h - 16.0) / 3);
-      hInt = 0.78;
-      sInt = 0.82;
+      zenithCol = '#312e81';
+      horizCol = h < 17.6 ? '#ea580c' : '#1e1b4b';
+      sunCol = '#fb923c';
+      hInt = 0.82;
+      sInt = 0.92;
     } else {
-      sky.set('#070b17');
-      hInt = 0.38;
-      sInt = 0.25;
+      sky.set('#060a14');
+      zenithCol = '#020617';
+      horizCol = '#0f172a';
+      sunCol = '#cbd5e1';
+      hInt = 0.4;
+      sInt = 0.32;
     }
 
-    if (weather === 'rain' || weather === 'storm') sky.multiplyScalar(0.7);
+    if (weather === 'rain' || weather === 'storm') {
+      sky.multiplyScalar(0.68);
+      zenithCol = '#1e293b';
+      horizCol = '#475569';
+    }
+
+    // Paint dynamic multi-stop gradient Sky Canvas + Stars at night
+    const sctx = this.skyCanvas.getContext('2d')!;
+    const grad = sctx.createLinearGradient(0, 0, 0, 128);
+    grad.addColorStop(0, zenithCol);
+    grad.addColorStop(0.68, `#${sky.getHexString()}`);
+    grad.addColorStop(1, horizCol);
+    sctx.fillStyle = grad;
+    sctx.fillRect(0, 0, 256, 128);
+    if (h >= 18.8 || h < 5.8) {
+      sctx.fillStyle = 'rgba(255,255,255,0.65)';
+      for (let st = 0; st < 28; st++) sctx.fillRect((st * 47) % 256, (st * 23) % 72, 1.5, 1.5);
+    }
+    this.skyTex.needsUpdate = true;
+
+    // Celestial Sun/Moon Arc across sky
+    const isNight = h >= 19.0 || h < 5.5;
+    const arcT = isNight ? ((h >= 19 ? h - 19 : h + 5) / 10.5) : ((h - 5.5) / 13.5);
+    this.celestialGroup.position.set(
+      this.camera.position.x + (arcT - 0.5) * 44,
+      8.5 + Math.sin(arcT * Math.PI) * 14.0,
+      -48
+    );
+    (this.sunDisc.material as THREE.MeshBasicMaterial).color.set(isNight ? '#e2e8f0' : '#fef08a');
+    (this.sunHalo.material as THREE.MeshBasicMaterial).opacity = isNight ? 0.35 : 0.8;
+
     this.scene.background = sky;
     (this.scene.fog as THREE.FogExp2).color.copy(sky);
-    (this.scene.fog as THREE.FogExp2).density = h >= 19 || h < 5.5 ? 0.015 : 0.008;
+    (this.scene.fog as THREE.FogExp2).density = isNight ? 0.0135 : 0.0068;
     this.hemiLight.intensity = hInt;
     this.sunMoonLight.intensity = sInt;
+    this.sunMoonLight.color.set(sunCol);
+
+    this.lampCones.forEach((cone) => {
+      (cone.material as THREE.MeshBasicMaterial).opacity = isNight ? 0.42 : h >= 16.5 || h < 7.0 ? 0.26 : 0.04;
+    });
+    this.cloudMeshes.forEach((c) => {
+      c.mesh.position.x += c.speed * dt;
+      if (c.mesh.position.x > 130) c.mesh.position.x = -130;
+      (c.mesh.material as THREE.MeshBasicMaterial).opacity = isNight ? 0.14 : 0.48;
+    });
+    for (let i = 0; i < this.dustCount; i++) {
+      this.dustPos[i * 3] += Math.sin(this.animClock * 0.7 + i) * 0.18 * dt;
+      this.dustPos[i * 3 + 1] += Math.cos(this.animClock * 1.1 + i) * 0.12 * dt;
+    }
+    this.dustPoints.geometry.attributes.position.needsUpdate = true;
+    (this.dustPoints.material as THREE.PointsMaterial).color.set(isNight ? '#f87171' : '#fde68a');
 
     const rMat = this.rainLines.material as THREE.LineBasicMaterial;
     const raining = weather === 'rain' || weather === 'storm';

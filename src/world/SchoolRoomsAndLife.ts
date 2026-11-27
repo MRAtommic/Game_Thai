@@ -327,60 +327,122 @@ export function buildCampusGroundProps(
   exteriorGroup.add(homeLight);
   const momHomeMesh = makeNpc('mom_ch3', -107.6, 0, -0.05, -1);
 
+  // Sleek Diamond Road Bicycle parked outside Peem's house (-104.5)
   const parkedBikeGroup = new THREE.Group();
   parkedBikeGroup.position.set(-104.5, 0, -0.35);
-  [-0.45, 0.45].forEach((wx) => {
-    const wh = new THREE.Mesh(new THREE.TorusGeometry(0.32, 0.06, 8, 16), new THREE.MeshStandardMaterial({ color: '#111827' }));
-    wh.position.set(wx, 0.36, 0);
+  [-0.5, 0.5].forEach((wx) => {
+    const wh = new THREE.Mesh(new THREE.TorusGeometry(0.3, 0.045, 8, 16), new THREE.MeshStandardMaterial({ color: '#111827', roughness: 0.7 }));
+    wh.position.set(wx, 0.3, 0);
     parkedBikeGroup.add(wh);
   });
-  addBox(parkedBikeGroup, 0.92, 0.08, 0.08, '#0284c7', 0, 0.62, 0);
+  addBox(parkedBikeGroup, 0.62, 0.055, 0.05, '#0284c7', -0.05, 0.7, 0);
+  addBox(parkedBikeGroup, 0.56, 0.055, 0.05, '#0284c7', 0.14, 0.52, 0).rotation.z = 0.68;
+  addBox(parkedBikeGroup, 0.5, 0.055, 0.05, '#cbd5e1', 0.36, 0.62, 0).rotation.z = -0.35;
+  addBox(parkedBikeGroup, 0.12, 0.05, 0.4, '#cbd5e1', 0.34, 0.9, 0);
+  addBox(parkedBikeGroup, 0.22, 0.07, 0.13, '#111827', -0.22, 0.8, 0);
   exteriorGroup.add(parkedBikeGroup);
 
-  // Ornate Thai School Entrance Archway set cleanly at campus threshold z = -1.95 (never blocking walking road!)
-  [-55.4, -48.6].forEach((gx) => {
-    addBox(exteriorGroup, 1.15, 4.8, 1.15, '#7f1d1d', gx, 2.4, -1.95);
-    addBox(exteriorGroup, 1.4, 0.28, 1.4, '#facc15', gx, 4.75, -1.95);
+  // Ornate Thai School Entrance Archway straddling road threshold (x = -52, z = -2.35 .. +2.65)
+  [-2.35, 2.65].forEach((gz) => {
+    addBox(exteriorGroup, 0.96, 0.45, 0.96, '#e2e8f0', -52, 0.22, gz, 0.75); // stone lotus plinth
+    addBox(exteriorGroup, 0.78, 4.45, 0.78, '#7f1d1d', -52, 2.42, gz, 0.7);
+    addBox(exteriorGroup, 0.94, 0.24, 0.94, '#eab308', -52, 4.66, gz, 0.4);
+    const lantern = new THREE.Mesh(new THREE.SphereGeometry(0.16, 10, 10), new THREE.MeshBasicMaterial({ color: '#fde68a' }));
+    lantern.position.set(-51.45, 3.1, gz);
+    exteriorGroup.add(lantern);
   });
-  addBox(exteriorGroup, 8.4, 1.25, 1.3, '#450a0a', -52, 5.1, -1.95);
-  const archSign = new THREE.Mesh(
-    new THREE.PlaneGeometry(7.6, 1.25),
-    new THREE.MeshBasicMaterial({ map: createSchoolSignTexture('โรงเรียนมัธยมจันทรารัตน์', 'วิชา จริยา นาฏศิลป์สยาม', '#7f1d1d', '#450a0a', '#facc15') })
+  // Overhead Thai crimson & gold arch lintel spanning z = -2.8 .. +3.1 + tiered gable roof
+  addBox(exteriorGroup, 1.15, 0.85, 6.2, '#450a0a', -52, 5.15, 0.15, 0.65);
+  addBox(exteriorGroup, 1.35, 0.24, 6.45, '#b91c1c', -52, 5.66, 0.15, 0.55);
+  addBox(exteriorGroup, 1.0, 0.48, 4.2, '#991b1b', -52, 5.98, 0.15, 0.55);
+  const gateSpire = new THREE.Mesh(
+    new THREE.ConeGeometry(0.32, 0.95, 4),
+    new THREE.MeshStandardMaterial({ color: '#facc15', metalness: 0.6, roughness: 0.25 })
   );
-  archSign.position.set(-52, 5.1, -1.26);
-  exteriorGroup.add(archSign);
+  gateSpire.rotation.y = Math.PI / 4;
+  gateSpire.position.set(-52, 6.62, 0.15);
+  exteriorGroup.add(gateSpire);
 
-  addBox(exteriorGroup, 2.6, 2.6, 1.8, '#e2e8f0', -45.5, 1.3, -1.2);
-  addBox(exteriorGroup, 2.9, 0.35, 2.0, '#1e3a8a', -45.5, 2.75, -1.2);
-  const janitorMesh = makeNpc('janitor_man', -44.0, 0, -0.25, -1);
+  // Crisp unobstructed School Archway Signs facing West (incoming street -X) AND Front (+Z camera)
+  const archTex = createSchoolSignTexture('โรงเรียนมัธยมจันทรารัตน์', 'วิชา จริยา นาฏศิลป์สยาม', '#7f1d1d', '#450a0a', '#facc15');
+  const archSignWest = new THREE.Mesh(new THREE.PlaneGeometry(4.6, 0.95), new THREE.MeshBasicMaterial({ map: archTex }));
+  archSignWest.rotation.y = -Math.PI / 2;
+  archSignWest.position.set(-52.62, 5.15, 0.15);
+  const archSignFront = new THREE.Mesh(new THREE.PlaneGeometry(3.8, 0.82), new THREE.MeshBasicMaterial({ map: archTex }));
+  archSignFront.position.set(-52, 5.15, 3.28);
+  exteriorGroup.add(archSignWest, archSignFront);
+  const archLight = new THREE.PointLight('#fde68a', 6.0, 16, 1.0);
+  archLight.position.set(-52.6, 4.4, 0.2);
+  exteriorGroup.add(archLight);
+
+  // Detailed School Guard Booth (ป้อมยามโรงเรียน -45.5) with sliding glass window, service ledge, door & barrier post
+  addBox(exteriorGroup, 2.9, 2.75, 2.0, '#f1f5f9', -45.5, 1.38, -1.35, 0.8);
+  addBox(exteriorGroup, 2.94, 0.72, 2.04, '#1e3a8a', -45.5, 0.36, -1.35, 0.65); // navy base skirt
+  addBox(exteriorGroup, 3.35, 0.26, 2.45, '#1e3a8a', -45.5, 2.86, -1.32, 0.55); // sloped eaves roof
+  addBox(exteriorGroup, 3.4, 0.1, 2.5, '#facc15', -45.5, 2.72, -1.32, 0.45);
+  // Sliding glass guard window (z = -0.34), dark frame, inner glowing guard room & counter ledge
+  addBox(exteriorGroup, 1.72, 1.08, 0.08, '#0f172a', -45.25, 1.68, -0.35, 0.35);
+  addBox(exteriorGroup, 1.54, 0.9, 0.06, '#7dd3fc', -45.25, 1.68, -0.32, 0.15);
+  addBox(exteriorGroup, 0.06, 0.9, 0.08, '#334155', -45.25, 1.68, -0.29, 0.35); // middle sliding mullion
+  addBox(exteriorGroup, 1.88, 0.1, 0.34, '#cbd5e1', -45.25, 1.12, -0.22, 0.5); // outer ledge shelf
+  const boothDoor = new THREE.Mesh(
+    new THREE.PlaneGeometry(0.9, 2.05),
+    new THREE.MeshStandardMaterial({ map: createThaiDoorTexture('ประตูยาม', false), roughness: 0.75 })
+  );
+  boothDoor.position.set(-46.45, 1.05, -0.33);
+  const boothSign = new THREE.Mesh(
+    new THREE.PlaneGeometry(1.75, 0.42),
+    new THREE.MeshBasicMaterial({ map: createSchoolSignTexture('ป้อมยามรักษาการณ์', 'ลุงมั่น เวร 24 ชม.', '#1e3a8a', '#0f172a', '#fde047') })
+  );
+  boothSign.position.set(-45.25, 2.44, -0.31);
+  exteriorGroup.add(boothDoor, boothSign);
+  const guardLight = new THREE.PointLight('#fef08a', 4.2, 11, 1.1);
+  guardLight.position.set(-45.25, 2.1, 0.35);
+  exteriorGroup.add(guardLight);
+  const janitorMesh = makeNpc('janitor_man', -44.0, 0, -0.15, -1);
 
   const kongGangMeshes = [
     makeNpc('kong_bully', -38.5, 0, -0.15, -1),
     makeNpc('student_boy', -36.9, 0, -0.35, -1),
   ];
 
-  // Central Flagpole & Fluttering Flag (-26)
-  addBox(exteriorGroup, 3.2, 0.45, 3.2, '#cbd5e1', -26, 0.22, -1.1);
-  addBox(exteriorGroup, 0.14, 11.5, 0.14, '#e2e8f0', -26, 5.75, -1.1);
+  // Central Flagpole & Fluttering Multi-Segment Thai Flag visible in camera view (-26)
+  addBox(exteriorGroup, 3.3, 0.32, 3.3, '#e2e8f0', -26, 0.16, -1.1, 0.75);
+  addBox(exteriorGroup, 2.2, 0.32, 2.2, '#cbd5e1', -26, 0.48, -1.1, 0.7);
+  addBox(exteriorGroup, 1.5, 0.26, 2.26, '#1e3a8a', -26, 0.44, -1.08, 0.45);
+  const poleCyl = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.055, 0.09, 6.2, 10),
+    new THREE.MeshStandardMaterial({ color: '#f8fafc', metalness: 0.35, roughness: 0.35 })
+  );
+  poleCyl.position.set(-26, 3.65, -1.1);
+  poleCyl.castShadow = true;
+  const poleFinial = new THREE.Mesh(
+    new THREE.SphereGeometry(0.14, 10, 10),
+    new THREE.MeshStandardMaterial({ color: '#facc15', metalness: 0.75, roughness: 0.25 })
+  );
+  poleFinial.position.set(-26, 6.82, -1.1);
+  exteriorGroup.add(poleCyl, poleFinial);
+
   const fc = document.createElement('canvas');
-  fc.width = 128;
-  fc.height = 80;
+  fc.width = 256;
+  fc.height = 160;
   const fCtx = fc.getContext('2d')!;
-  fCtx.fillStyle = '#ef4444';
-  fCtx.fillRect(0, 0, 128, 13);
-  fCtx.fillRect(0, 67, 128, 13);
+  fCtx.fillStyle = '#dc2626';
+  fCtx.fillRect(0, 0, 256, 27);
+  fCtx.fillRect(0, 133, 256, 27);
   fCtx.fillStyle = '#ffffff';
-  fCtx.fillRect(0, 13, 128, 14);
-  fCtx.fillRect(0, 53, 128, 14);
+  fCtx.fillRect(0, 27, 256, 27);
+  fCtx.fillRect(0, 106, 256, 27);
   fCtx.fillStyle = '#1e3a8a';
-  fCtx.fillRect(0, 27, 128, 26);
+  fCtx.fillRect(0, 54, 256, 52);
   const fTex = new THREE.CanvasTexture(fc);
   fTex.colorSpace = THREE.SRGBColorSpace;
   const flagMesh = new THREE.Mesh(
-    new THREE.PlaneGeometry(2.1, 1.3),
-    new THREE.MeshBasicMaterial({ map: fTex, side: THREE.DoubleSide })
+    new THREE.PlaneGeometry(2.35, 1.45, 16, 4),
+    new THREE.MeshStandardMaterial({ map: fTex, side: THREE.DoubleSide, roughness: 0.65 })
   );
-  flagMesh.position.set(-24.9, 10.6, -1.1);
+  flagMesh.castShadow = true;
+  flagMesh.position.set(-24.8, 5.55, -1.1);
   exteriorGroup.add(flagMesh);
   const flagCeremonyMeshes = [-31, -28.8, -23.5, -21.2].map((sx, idx) =>
     makeNpc(idx % 2 === 0 ? 'student_girl' : 'student_boy', sx, 0, -0.3, 1)
@@ -712,8 +774,18 @@ export function animateSchoolLife(
   const assemblyHours = hour >= 7.2 && hour <= 8.6;
   const inNight = hour >= 19.0 || hour < 5.5;
 
-  refs.flagMesh.rotation.y = Math.sin(clock * 4.5) * 0.25;
-  refs.flagMesh.position.y = 10.6 + Math.sin(clock * 3.1) * 0.06;
+  // Smooth vertex-wave cloth animation for the Thai National Flag in breeze!
+  const posAttr = refs.flagMesh.geometry.attributes.position;
+  for (let i = 0; i < posAttr.count; i++) {
+    const lx = posAttr.getX(i);
+    const pin = Math.max(0, (lx + 1.175) / 2.35);
+    const waveZ = Math.sin(pin * 4.8 - clock * 6.8) * pin * 0.24;
+    const waveY = Math.cos(pin * 3.2 - clock * 5.2) * pin * 0.08;
+    posAttr.setZ(i, waveZ);
+    posAttr.setY(i, ((i / 17) | 0) * (-1.45 / 4) + 0.725 + waveY);
+  }
+  posAttr.needsUpdate = true;
+  refs.flagMesh.geometry.computeVertexNormals();
 
   refs.shrineIncenseParticles.forEach((p, idx) => {
     const c = (clock * 0.5 + idx * 0.16) % 1;
