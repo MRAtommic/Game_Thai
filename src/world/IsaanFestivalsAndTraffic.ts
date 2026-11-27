@@ -184,31 +184,70 @@ export function buildRotHaeSystem(scene: THREE.Scene): RotHaeController {
     });
   });
 
-  // Giant stacked concert speakers on truck bed! (ตู้ลำโพงรถแห่)
-  [-1.55, -0.75, 0.05].forEach((sx, si) => {
-    addPart(group, 0.68, 1.35, 1.3, '#0f172a', sx, 1.62, 0, 0.8);
-    // Speaker cones on front/side facing camera (+Z)
-    [1.3, 1.92].forEach((cy) => {
-      const cone = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.22, 0.22, 0.08, 12),
-        new THREE.MeshStandardMaterial({ color: si === 1 ? '#facc15' : '#334155', roughness: 0.4 })
-      );
-      cone.rotation.x = Math.PI / 2;
-      cone.position.set(sx, cy, 0.66);
-      group.add(cone);
-    });
+  // Detailed 3D Concert Rig: Stacked Dual-Tier Bass Subwoofers, Horn Tweeters, Steel Truss & Live DJ/Singer Deck!
+  [-1.62, -0.78, 0.04].forEach((sx, si) => {
+    // Lower heavy subwoofer cabinet + recessed acoustic grill + brass woofer rim & phase dustcap
+    addPart(group, 0.72, 0.78, 1.38, '#090d16', sx, 1.24, 0, 0.75);
+    addPart(group, 0.64, 0.68, 1.4, '#1e293b', sx, 1.24, 0.01, 0.85);
+    const subCone = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.24, 0.16, 0.1, 14),
+      new THREE.MeshStandardMaterial({ color: si === 1 ? '#facc15' : '#475569', roughness: 0.35, metalness: 0.4 })
+    );
+    subCone.rotation.x = Math.PI / 2;
+    subCone.position.set(sx, 1.24, 0.71);
+    const subCap = new THREE.Mesh(
+      new THREE.SphereGeometry(0.08, 8, 8),
+      new THREE.MeshStandardMaterial({ color: '#eab308', metalness: 0.7, roughness: 0.2 })
+    );
+    subCap.position.set(sx, 1.24, 0.76);
+    // Upper angled Line-Array Mid-High Speaker + Silver Horn Tweeter!
+    addPart(group, 0.66, 0.54, 1.3, '#0f172a', sx, 1.94, 0, 0.7);
+    const midCone = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.16, 0.1, 0.09, 12),
+      new THREE.MeshStandardMaterial({ color: si % 2 === 0 ? '#38bdf8' : '#f43f5e', roughness: 0.3 })
+    );
+    midCone.rotation.x = Math.PI / 2;
+    midCone.position.set(sx, 1.88, 0.66);
+    const horn = new THREE.Mesh(
+      new THREE.ConeGeometry(0.09, 0.12, 8),
+      new THREE.MeshStandardMaterial({ color: '#cbd5e1', metalness: 0.75, roughness: 0.25 })
+    );
+    horn.rotation.x = Math.PI / 2;
+    horn.position.set(sx + 0.16, 2.08, 0.67);
+    group.add(subCone, subCap, midCone, horn);
   });
 
-  // Steel truss frame & glowing party banner
-  addPart(group, 2.6, 0.12, 1.35, '#cbd5e1', -0.75, 2.42, 0, 0.35, 0.75);
+  // 4 Vertical Steel Concert Truss Towers + Diagonal Braces + Live MC/Keyboardist + Lighting Gantry!
+  [-2.04, -0.78, 0.42].forEach((tx) => {
+    [-0.7, 0.7].forEach((tz) => addPart(group, 0.07, 1.65, 0.07, '#cbd5e1', tx, 1.66, tz, 0.28, 0.78));
+  });
+  addPart(group, 2.7, 0.12, 1.42, '#cbd5e1', -0.8, 2.5, 0, 0.3, 0.78); // overhead lighting truss bar
+  // Rear stage platform on tailgate with DJ turntable + glowing neon mixer screen & live Mor Lam MC!
+  addPart(group, 0.6, 0.52, 1.15, '#1e293b', -2.0, 1.14, 0, 0.5);
+  addPart(group, 0.26, 0.08, 0.65, '#38bdf8', -2.0, 1.42, 0, 0.15);
+  const mc = makeVillagerFigure('#facc15', '#1e293b');
+  mc.scale.setScalar(0.75);
+  mc.position.set(-2.05, 1.42, 0.25);
+  group.add(mc);
+  // Twin rotating Par-can concert spotlights flanking canopy
+  [-1.95, 0.35].forEach((px, pi) => {
+    const can = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.08, 0.1, 0.18, 8),
+      new THREE.MeshStandardMaterial({ color: '#0f172a', metalness: 0.6 })
+    );
+    can.rotation.z = pi === 0 ? 0.45 : -0.45;
+    can.position.set(px, 2.38, 0.72);
+    group.add(can);
+  });
+
   const banner = new THREE.Mesh(
-    new THREE.PlaneGeometry(2.5, 0.62),
+    new THREE.PlaneGeometry(2.55, 0.64),
     new THREE.MeshBasicMaterial({
       map: makeBannerTex('#7e22ce', '#facc15', '#fef08a', 'รถแห่บ้านทุ่ง ออนทัวร์', 'ลำซิ่งชวนม่วน • จังหวะสามช่า'),
       side: THREE.DoubleSide,
     })
   );
-  banner.position.set(-0.75, 2.75, 0.68);
+  banner.position.set(-0.8, 2.86, 0.72);
   group.add(banner);
 
   // Flashing disco LEDs along truss
@@ -219,7 +258,7 @@ export function buildRotHaeSystem(scene: THREE.Scene): RotHaeController {
       new THREE.SphereGeometry(0.09, 8, 8),
       new THREE.MeshBasicMaterial({ color: col })
     );
-    bulb.position.set(-1.75 + i * 0.5, 2.42, 0.72);
+    bulb.position.set(-1.8 + i * 0.5, 2.5, 0.75);
     group.add(bulb);
     ledMeshes.push(bulb);
   });
@@ -736,17 +775,60 @@ export function buildTempleFairZone(scene: THREE.Scene): TempleFairController {
 
 /** Builds School & Haunted Swing (-112), Welcome Arch (-104.5), Takian (-96.5), Show-huay Store (-89.5), Bang Fai (-67.5), PA Tower (-8.6), Granary (-11.4), Clinic (+96), Lotus Bridge, Morning Monk, Tani, and Saleng. */
 export function buildExpandedVillageLife(scene: THREE.Scene, awningMat: THREE.Material): RuralActorsController {
-  // 00) Ban Thung Primary School & Eerie Playground Swing (โรงเรียนประถมบ้านทุ่ง x = -112.5)
-  addPart(scene, 5.8, 2.8, 2.2, '#e2e8f0', -113.5, 1.4, -2.4, 0.88);
-  addPart(scene, 6.2, 0.16, 2.6, '#1e3a8a', -113.5, 2.95, -2.4, 0.7);
-  addPart(scene, 2.0, 1.05, 0.08, '#14532d', -112.2, 1.55, -1.26, 0.8); // green chalkboard!
+  // 00) Deep 2.5D Open-Front Ban Thung Primary Schoolhouse, Classroom Desks, Students & Playground! (x = -113.5)
+  addPart(scene, 6.4, 0.16, 2.5, '#cbd5e1', -113.5, 0.08, -2.35, 0.6); // concrete terrace apron
+  addPart(scene, 6.2, 2.95, 0.18, '#fef3c7', -113.5, 1.55, -3.45, 0.7); // bright classroom interior back wall
+  [-116.45, -110.55].forEach((wx) => addPart(scene, 0.24, 2.95, 2.2, '#e2e8f0', wx, 1.55, -2.35, 0.75));
+  [-116.45, -113.5, -110.55].forEach((px) => addPart(scene, 0.16, 2.95, 0.16, '#f8fafc', px, 1.55, -1.25, 0.5)); // front colonnade
+  addPart(scene, 6.2, 0.55, 0.12, '#1e3a8a', -113.5, 0.36, -1.25, 0.65); // low blue-white veranda waist parapet
+  addPart(scene, 6.6, 0.16, 2.75, '#f8fafc', -113.5, 3.04, -2.25, 0.5); // eave soffit
+  // Pitched Two-Slope Thai Schoolhouse Red-Tile Roof!
+  const schRoofF = addPart(scene, 6.8, 0.18, 1.75, '#991b1b', -113.5, 3.45, -1.62, 0.55);
+  schRoofF.rotation.x = 0.44;
+  const schRoofB = addPart(scene, 6.8, 0.18, 1.75, '#7f1d1d', -113.5, 3.45, -2.95, 0.6);
+  schRoofB.rotation.x = -0.44;
+  addPart(scene, 6.85, 0.16, 0.24, '#b91c1c', -113.5, 3.84, -2.28, 0.45);
+  // Real Green Chalkboard + White Chalk Rail inside classroom back wall + Overhead Classroom LED!
+  addPart(scene, 2.6, 1.15, 0.06, '#14532d', -113.8, 1.85, -3.33, 0.65);
+  addPart(scene, 2.7, 0.06, 0.1, '#78350f', -113.8, 1.26, -3.28, 0.6);
+  addPart(scene, 0.9, 0.65, 0.04, '#bae6fd', -111.7, 1.95, -3.34, 0.3); // alphabet learning poster
+  const inSchLight = new THREE.PointLight('#fffbeb', 4.6, 10, 0.95);
+  inSchLight.position.set(-113.5, 2.75, -1.85);
+  const schFrontLight = new THREE.PointLight('#fef3c7', 4.2, 12, 1.05);
+  schFrontLight.position.set(-113.5, 2.6, 1.55);
+  scene.add(inSchLight, schFrontLight);
+
   const schSign = new THREE.Mesh(
-    new THREE.PlaneGeometry(2.5, 0.65),
+    new THREE.PlaneGeometry(2.9, 0.68),
     new THREE.MeshBasicMaterial({ map: makeBannerTex('#1e3a8a', '#facc15', '#ffffff', 'โรงเรียนบ้านทุ่งวิทยา', 'กระดานดำ & สนามเด็กเล่น') })
   );
-  schSign.position.set(-113.5, 2.55, -1.24);
+  schSign.position.set(-113.5, 2.78, -1.08);
   scene.add(schSign);
-  // Thai Flagpole + Swinging Playground Frame (-109.2)
+
+  // Wooden classroom desks & primary students in white school uniforms studying inside + teacher!
+  const teacher = makeVillagerFigure('#f8fafc', '#1e293b');
+  teacher.position.set(-115.1, 0.16, -2.75);
+  scene.add(teacher);
+  [
+    { x: -113.9, z: -2.2, shorts: '#1e3a8a' },
+    { x: -112.7, z: -2.2, shorts: '#0f172a' },
+    { x: -113.9, z: -1.65, shorts: '#1e3a8a' },
+    { x: -112.7, z: -1.65, shorts: '#0f172a' },
+  ].forEach((st) => {
+    addPart(scene, 0.72, 0.56, 0.42, '#92400e', st.x, 0.44, st.z, 0.7); // wooden school desk
+    const kid = makeVillagerFigure('#ffffff', st.shorts);
+    kid.scale.setScalar(0.76);
+    kid.position.set(st.x, 0.16, st.z - 0.34);
+    scene.add(kid);
+  });
+
+  // Two kids standing happily by the Thai Flagpole & Swinging Playground Frame (-109.2)
+  [-110.2, -107.3].forEach((kx, ki) => {
+    const playKid = makeVillagerFigure('#ffffff', ki === 0 ? '#1e3a8a' : '#7f1d1d');
+    playKid.scale.setScalar(0.78);
+    playKid.position.set(kx, 0, -1.05);
+    scene.add(playKid);
+  });
   addPart(scene, 0.08, 4.6, 0.08, '#f8fafc', -109.8, 2.3, -1.4);
   addPart(scene, 0.55, 0.34, 0.03, '#dc2626', -109.5, 4.35, -1.4);
   addPart(scene, 0.55, 0.12, 0.04, '#1d4ed8', -109.5, 4.35, -1.39);
