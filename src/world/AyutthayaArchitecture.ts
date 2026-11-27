@@ -687,53 +687,141 @@ export function makeRoyalSwanBarge(): { group: THREE.Group; oars: THREE.Group[] 
   return { group: g, oars };
 }
 
-/** Builds a detailed Royal Ayutthaya War Elephant (ช้างศึกทรงเครื่อง) with silk howdah & mahout. */
+/** Builds a sculptural Royal Ayutthaya War Elephant (ช้างศึกทรงเครื่อง) with contoured head/ears, S-curved trunk, ringed tusks, gilded howdah canopy & mahout. */
 export function makeAyutthayaWarElephant(): THREE.Group {
   const g = new THREE.Group();
-  const skinMat = new THREE.MeshStandardMaterial({ color: '#475569', roughness: 0.9 });
-  const redCloth = new THREE.MeshStandardMaterial({ color: '#991b1b', roughness: 0.72 });
-  const goldMat = new THREE.MeshStandardMaterial({ color: '#eab308', metalness: 0.65, roughness: 0.25 });
-  const ivoryMat = new THREE.MeshStandardMaterial({ color: '#fef9c3', roughness: 0.35 });
+  const skinMat = new THREE.MeshStandardMaterial({ color: '#4b5563', roughness: 0.86 });
+  const skinShadowMat = new THREE.MeshStandardMaterial({ color: '#374151', roughness: 0.9 });
+  const redCloth = new THREE.MeshStandardMaterial({ color: '#991b1b', roughness: 0.68 });
+  const goldMat = new THREE.MeshStandardMaterial({ color: '#eab308', metalness: 0.72, roughness: 0.22 });
+  const ivoryMat = new THREE.MeshStandardMaterial({ color: '#fef9c3', roughness: 0.3 });
+  const eyeMat = new THREE.MeshBasicMaterial({ color: '#111827' });
 
-  // 4 sturdy elephant legs
-  [-0.78, 0.78].forEach((lx) => {
-    [-0.42, 0.42].forEach((lz) => {
-      const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.27, 1.25, 8), skinMat);
-      leg.position.set(lx, 0.62, lz);
-      g.add(leg);
+  // 4 sculpted pillar legs with muscular upper haunches, knee pads & ivory toenails
+  [-0.76, 0.76].forEach((lx) => {
+    [-0.44, 0.44].forEach((lz) => {
+      const upperLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.25, 0.72, 12), skinMat);
+      upperLeg.position.set(lx, 1.0, lz);
+      const lowerLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.27, 0.62, 12), skinShadowMat);
+      lowerLeg.position.set(lx, 0.34, lz);
+      const foot = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.3, 0.16, 12), skinMat);
+      foot.position.set(lx, 0.08, lz);
+      [-0.1, 0, 0.1].forEach((nz) => {
+        const nail = new THREE.Mesh(new THREE.SphereGeometry(0.055, 6, 6), ivoryMat);
+        nail.position.set(lx - 0.26, 0.06, lz + nz);
+        g.add(nail);
+      });
+      g.add(upperLeg, lowerLeg, foot);
     });
   });
 
-  // Massive barrel torso + crimson-gold battle caparison
-  const body = new THREE.Mesh(new THREE.SphereGeometry(0.95, 12, 10), skinMat);
-  body.scale.set(1.35, 0.92, 0.85);
-  body.position.set(0, 1.68, 0);
-  const blanket = addPartBox(g, 1.55, 0.75, 1.62, redCloth, 0, 1.82, 0);
-  blanket.scale.set(1, 1, 1.02);
-  addPartBox(g, 1.6, 0.14, 1.66, goldMat, 0, 1.44, 0);
-  g.add(body);
+  // Contoured barrel chest, muscular shoulders, rear rump & tail with tuft
+  const chest = new THREE.Mesh(new THREE.SphereGeometry(0.88, 16, 12), skinMat);
+  chest.scale.set(1.05, 1.02, 0.92);
+  chest.position.set(-0.52, 1.72, 0);
+  const belly = new THREE.Mesh(new THREE.SphereGeometry(0.95, 16, 12), skinShadowMat);
+  belly.scale.set(1.15, 0.92, 0.94);
+  belly.position.set(0.12, 1.66, 0);
+  const rump = new THREE.Mesh(new THREE.SphereGeometry(0.8, 14, 12), skinMat);
+  rump.scale.set(0.95, 0.96, 0.88);
+  rump.position.set(0.74, 1.7, 0);
+  const tail = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.03, 0.85, 7), skinShadowMat);
+  tail.position.set(1.42, 1.38, 0);
+  tail.rotation.z = 0.28;
+  const tailBrush = new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.22, 7), new THREE.MeshStandardMaterial({ color: '#18181b' }));
+  tailBrush.position.set(1.56, 0.96, 0);
+  tailBrush.rotation.x = Math.PI;
+  g.add(chest, belly, rump, tail, tailBrush);
 
-  // Elephant Head, Ears, Curved Ivory Tusks & Trunk (facing -X toward city gate / river!)
-  const head = new THREE.Mesh(new THREE.SphereGeometry(0.62, 10, 8), skinMat);
-  head.position.set(-1.32, 2.02, 0);
-  [-0.55, 0.55].forEach((ez) => {
-    const ear = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.72, 0.48), skinMat);
-    ear.position.set(-1.12, 2.05, ez);
-    ear.rotation.y = ez > 0 ? -0.35 : 0.35;
-    const tusk = new THREE.Mesh(new THREE.ConeGeometry(0.075, 0.85, 8), ivoryMat);
-    tusk.rotation.z = Math.PI / 1.55;
-    tusk.position.set(-1.72, 1.56, ez * 0.52);
-    g.add(ear, tusk);
+  // Ornate Crimson Silk Battle Caparison, Gilded Fringe Trim & Belly Straps (ผ้าคลุมช้างศึก + สายพานทอง)
+  const caparison = new THREE.Mesh(new THREE.CylinderGeometry(0.94, 0.96, 1.58, 16, 1, true, -0.35, Math.PI + 0.7), redCloth);
+  caparison.rotation.z = Math.PI / 2;
+  caparison.rotation.x = Math.PI;
+  caparison.position.set(0.08, 1.66, 0);
+  addPartBox(g, 1.62, 0.1, 1.78, goldMat, 0.08, 1.44, 0);
+  [-0.38, 0.48].forEach((sx) => {
+    const belt = new THREE.Mesh(new THREE.TorusGeometry(0.9, 0.035, 6, 18), goldMat);
+    belt.rotation.y = Math.PI / 2;
+    belt.scale.set(1, 0.95, 1);
+    belt.position.set(sx, 1.66, 0);
+    g.add(belt);
   });
-  const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.08, 1.15, 8), skinMat);
-  trunk.position.set(-1.82, 1.42, 0);
-  trunk.rotation.z = -0.3;
-  g.add(head, trunk);
+  g.add(caparison);
 
-  // Gilded War Howdah seat & Mahout Rider
-  addPartBox(g, 0.92, 0.52, 0.96, goldMat, 0.08, 2.52, 0);
+  // Sculpted Skull, Twin Cranial Domes (โหนกกระพองช้าง), Brow Cap, Rounded Ears, Ringed Curved Ivory Tusks & 3-Segment S-Trunk (-X forward)
+  const neckMuscle = new THREE.Mesh(new THREE.SphereGeometry(0.68, 12, 10), skinMat);
+  neckMuscle.position.set(-1.05, 1.98, 0);
+  const skull = new THREE.Mesh(new THREE.SphereGeometry(0.6, 14, 12), skinMat);
+  skull.scale.set(1.06, 1.12, 0.95);
+  skull.position.set(-1.38, 2.08, 0);
+  // Twin iconic Asian elephant forehead domes + royal gilded forehead cloth (ผ้าปกกระพอง)
+  [-0.18, 0.18].forEach((dz) => {
+    const dome = new THREE.Mesh(new THREE.SphereGeometry(0.28, 10, 8), skinMat);
+    dome.position.set(-1.42, 2.58, dz);
+    g.add(dome);
+  });
+  const headCloth = new THREE.Mesh(new THREE.SphereGeometry(0.54, 12, 10, 0, Math.PI * 2, 0, Math.PI * 0.48), redCloth);
+  headCloth.position.set(-1.36, 2.25, 0);
+  headCloth.rotation.z = 0.35;
+  const browCrest = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.14, 0.45, 8), goldMat);
+  browCrest.position.set(-1.72, 2.52, 0);
+  browCrest.rotation.z = 0.6;
+  g.add(neckMuscle, skull, headCloth, browCrest);
+
+  // Contoured Rounded Fan Ears + Two-Piece Curved Ivory Tusks with Golden Rings (สนับงาทอง)
+  [-1, 1].forEach((side) => {
+    const ear = new THREE.Mesh(new THREE.CylinderGeometry(0.46, 0.34, 0.08, 12), skinMat);
+    ear.scale.set(0.85, 1, 1.25);
+    ear.rotation.z = Math.PI / 2;
+    ear.rotation.y = side * -0.45;
+    ear.position.set(-1.18, 2.05, side * 0.56);
+
+    const earTrim = new THREE.Mesh(new THREE.TorusGeometry(0.36, 0.03, 5, 12, Math.PI * 1.2), goldMat);
+    earTrim.rotation.y = Math.PI / 2 + side * -0.45;
+    earTrim.position.set(-1.19, 2.05, side * 0.59);
+
+    const eye = new THREE.Mesh(new THREE.SphereGeometry(0.055, 8, 8), eyeMat);
+    eye.position.set(-1.76, 2.18, side * 0.38);
+
+    // 2-segment curving ivory tusk with gold ring collar
+    const tuskBase = new THREE.Mesh(new THREE.CylinderGeometry(0.072, 0.095, 0.46, 10), ivoryMat);
+    tuskBase.rotation.z = Math.PI / 2 + 0.45;
+    tuskBase.position.set(-1.82, 1.66, side * 0.28);
+    const tuskRing = new THREE.Mesh(new THREE.TorusGeometry(0.082, 0.02, 6, 10), goldMat);
+    tuskRing.rotation.z = 0.45;
+    tuskRing.rotation.y = Math.PI / 2;
+    tuskRing.position.set(-1.92, 1.6, side * 0.28);
+    const tuskTip = new THREE.Mesh(new THREE.ConeGeometry(0.072, 0.58, 10), ivoryMat);
+    tuskTip.rotation.z = Math.PI / 2 - 0.32;
+    tuskTip.position.set(-2.24, 1.66, side * 0.28);
+    g.add(ear, earTrim, eye, tuskBase, tuskRing, tuskTip);
+  });
+
+  // 3-Segment Sculpted S-Curved Trunk
+  const trunk1 = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.125, 0.55, 10), skinMat);
+  trunk1.position.set(-1.84, 1.72, 0);
+  trunk1.rotation.z = -0.42;
+  const trunk2 = new THREE.Mesh(new THREE.CylinderGeometry(0.125, 0.1, 0.55, 10), skinMat);
+  trunk2.position.set(-2.02, 1.25, 0);
+  trunk2.rotation.z = -0.15;
+  const trunkTip = new THREE.Mesh(new THREE.CylinderGeometry(0.095, 0.065, 0.42, 10), skinMat);
+  trunkTip.position.set(-2.14, 0.88, 0);
+  trunkTip.rotation.z = 0.55;
+  g.add(trunk1, trunk2, trunkTip);
+
+  // Ornate Canopied Royal War Howdah (สัปคับทองทรงมณฑป) + Mahout Rider
+  addPartBox(g, 1.05, 0.28, 1.04, redCloth, 0.14, 2.48, 0);
+  addPartBox(g, 1.12, 0.1, 1.1, goldMat, 0.14, 2.34, 0);
+  [-0.36, 0.56].forEach((hx) => {
+    [-0.44, 0.44].forEach((hz) => addPartBox(g, 0.065, 0.92, 0.065, goldMat, hx, 3.04, hz));
+  });
+  const hRoof = new THREE.Mesh(new THREE.ConeGeometry(0.75, 0.55, 4), goldMat);
+  hRoof.rotation.y = Math.PI / 4;
+  hRoof.position.set(0.1, 3.74, 0);
+  g.add(hRoof);
+
   const mahout = makeAyutthayaFigure('#991b1b', '#eab308', { helmetGold: true, hasSpear: true });
-  mahout.position.set(-0.75, 1.88, 0);
+  mahout.position.set(-0.72, 1.98, 0);
   mahout.rotation.y = -Math.PI / 2;
   mahout.scale.setScalar(0.86);
   g.add(mahout);
@@ -747,67 +835,124 @@ export interface AyutthayaHorseHandle {
   rider?: THREE.Group;
 }
 
-/** Builds a detailed 3D Ayutthaya Horse (+X facing) with 4 pivoted galloping legs, flowing mane/tail, crimson-gold saddle, and optional rider. */
+/** Builds an expressive sculpted 3D Ayutthaya War/Travel Horse (+X facing) with anatomical chest/rump, flowing mane, bridle, ornate saddle & articulated legs. */
 export function makeAyutthayaHorse(
   coatColor = '#6e3819',
   options?: { withRider?: boolean; riderShirt?: string; riderHelmetGold?: boolean }
 ): AyutthayaHorseHandle {
   const g = new THREE.Group();
-  const coatMat = new THREE.MeshStandardMaterial({ color: coatColor, roughness: 0.78 });
-  const maneMat = new THREE.MeshStandardMaterial({ color: coatColor === '#e2e8f0' ? '#cbd5e1' : '#18181b', roughness: 0.9 });
-  const hoofMat = new THREE.MeshStandardMaterial({ color: '#18181b', roughness: 0.85 });
-  const saddleMat = new THREE.MeshStandardMaterial({ color: '#991b1b', roughness: 0.68 });
-  const goldMat = new THREE.MeshStandardMaterial({ color: '#eab308', metalness: 0.65, roughness: 0.28 });
+  const coatMat = new THREE.MeshStandardMaterial({ color: coatColor, roughness: 0.7 });
+  const coatDarkMat = new THREE.MeshStandardMaterial({ color: coatColor, roughness: 0.82 });
+  const maneMat = new THREE.MeshStandardMaterial({ color: coatColor === '#e2e8f0' ? '#94a3b8' : '#18181b', roughness: 0.9 });
+  const hoofMat = new THREE.MeshStandardMaterial({ color: '#111827', roughness: 0.65 });
+  const saddleMat = new THREE.MeshStandardMaterial({ color: '#991b1b', roughness: 0.65 });
+  const goldMat = new THREE.MeshStandardMaterial({ color: '#eab308', metalness: 0.72, roughness: 0.24 });
+  const eyeMat = new THREE.MeshBasicMaterial({ color: '#09090b' });
 
-  // Muscular barrel horse torso
-  const body = new THREE.Mesh(new THREE.CylinderGeometry(0.36, 0.34, 1.48, 10), coatMat);
-  body.rotation.z = Math.PI / 2;
-  body.position.set(0, 1.04, 0);
-  const chest = new THREE.Mesh(new THREE.SphereGeometry(0.37, 9, 8), coatMat);
-  chest.position.set(0.68, 1.04, 0);
-  const rump = new THREE.Mesh(new THREE.SphereGeometry(0.37, 9, 8), coatMat);
-  rump.position.set(-0.68, 1.04, 0);
-  g.add(body, chest, rump);
+  // Anatomical contoured torso: muscular chest slope, dipped saddle back, rounded croup & flanks
+  const chest = new THREE.Mesh(new THREE.SphereGeometry(0.42, 14, 10), coatMat);
+  chest.scale.set(1.12, 1.04, 0.92);
+  chest.position.set(0.58, 1.06, 0);
+  const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.36, 0.37, 1.15, 14), coatMat);
+  barrel.rotation.z = Math.PI / 2;
+  barrel.scale.set(0.96, 1, 0.94);
+  barrel.position.set(0, 1.02, 0);
+  const croup = new THREE.Mesh(new THREE.SphereGeometry(0.41, 14, 10), coatMat);
+  croup.scale.set(1.12, 1.0, 0.92);
+  croup.position.set(-0.56, 1.06, 0);
+  const withers = new THREE.Mesh(new THREE.SphereGeometry(0.26, 10, 8), coatMat);
+  withers.position.set(0.55, 1.32, 0);
+  g.add(chest, barrel, croup, withers);
 
-  // Arched Neck, Sculpted Equine Head, Ears, Flowing Mane & Swishing Tail (+X forward!)
-  const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.26, 0.78, 8), coatMat);
-  neck.position.set(0.9, 1.44, 0);
-  neck.rotation.z = -0.58;
-  const mane = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.72, 0.08), maneMat);
-  mane.position.set(0.8, 1.5, 0);
-  mane.rotation.z = -0.58;
-  const head = new THREE.Mesh(new THREE.BoxGeometry(0.56, 0.24, 0.22), coatMat);
-  head.position.set(1.22, 1.68, 0);
-  head.rotation.z = -0.35;
-  [-0.07, 0.07].forEach((ez) => {
-    const ear = new THREE.Mesh(new THREE.ConeGeometry(0.045, 0.14, 5), coatMat);
-    ear.position.set(1.06, 1.86, ez);
-    g.add(ear);
+  // Proud Arching Neck, Layered Mane Tufts, Tapered Equine Head (Cheeks + Sloped Muzzle + Bridle) & Flowing Two-Tier Tail
+  const neckLower = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.32, 0.56, 12), coatMat);
+  neckLower.position.set(0.8, 1.36, 0);
+  neckLower.rotation.z = -0.62;
+  const neckUpper = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.21, 0.48, 12), coatMat);
+  neckUpper.position.set(0.98, 1.66, 0);
+  neckUpper.rotation.z = -0.34;
+  g.add(neckLower, neckUpper);
+
+  // Flowing multi-tuft horse mane arching along the crest
+  for (let mi = 0; mi < 5; mi++) {
+    const tuft = new THREE.Mesh(new THREE.ConeGeometry(0.085, 0.26, 6), maneMat);
+    tuft.position.set(0.62 + mi * 0.085, 1.46 + mi * 0.1, 0);
+    tuft.rotation.z = 0.65;
+    g.add(tuft);
+  }
+
+  // Sculpted Horse Head: rounded cheeks/jaw + tapered angled nasal muzzle + nostril ridge + golden bridle!
+  const jaw = new THREE.Mesh(new THREE.SphereGeometry(0.175, 12, 10), coatMat);
+  jaw.scale.set(1.25, 0.95, 0.78);
+  jaw.position.set(1.1, 1.84, 0);
+  const muzzle = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.135, 0.44, 10), coatMat);
+  muzzle.rotation.z = Math.PI / 2 + 0.56;
+  muzzle.scale.set(0.9, 1, 0.85);
+  muzzle.position.set(1.3, 1.72, 0);
+  const noseTip = new THREE.Mesh(new THREE.SphereGeometry(0.076, 8, 8), coatDarkMat);
+  noseTip.position.set(1.48, 1.6, 0);
+  const bridleRing = new THREE.Mesh(new THREE.TorusGeometry(0.11, 0.016, 6, 12), goldMat);
+  bridleRing.rotation.y = Math.PI / 2;
+  bridleRing.rotation.x = 0.56;
+  bridleRing.position.set(1.36, 1.68, 0);
+  const forelock = new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.22, 6), maneMat);
+  forelock.position.set(1.18, 1.96, 0);
+  forelock.rotation.z = -0.8;
+  g.add(jaw, muzzle, noseTip, bridleRing, forelock);
+
+  [-1, 1].forEach((side) => {
+    const ear = new THREE.Mesh(new THREE.ConeGeometry(0.045, 0.17, 7), coatMat);
+    ear.position.set(1.04, 2.02, side * 0.085);
+    ear.rotation.z = -0.15;
+    const eye = new THREE.Mesh(new THREE.SphereGeometry(0.032, 8, 8), eyeMat);
+    eye.position.set(1.18, 1.87, side * 0.11);
+    const rein = addPartBox(g, 0.78, 0.018, 0.018, goldMat, 0.78, 1.56, side * 0.14);
+    rein.rotation.z = 0.28;
+    g.add(ear, eye);
   });
-  const tail = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.09, 0.78, 6), maneMat);
-  tail.position.set(-1.02, 0.94, 0);
-  tail.rotation.z = -0.45;
-  g.add(neck, mane, head, tail);
 
-  // Crimson & Gold Siamese War/Travel Saddle
-  addPartBox(g, 0.56, 0.14, 0.78, saddleMat, 0.05, 1.38, 0);
-  addPartBox(g, 0.6, 0.06, 0.82, goldMat, 0.05, 1.31, 0);
+  // Sweeping Dual-Section Horse Tail
+  const tailBase = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.085, 0.35, 8), maneMat);
+  tailBase.position.set(-0.96, 1.18, 0);
+  tailBase.rotation.z = -0.65;
+  const tailSwish = new THREE.Mesh(new THREE.ConeGeometry(0.11, 0.68, 8), maneMat);
+  tailSwish.position.set(-1.12, 0.82, 0);
+  tailSwish.rotation.z = -0.18;
+  g.add(tailBase, tailSwish);
 
-  // 4 Pivoted Galloping Legs (Front Left, Front Right, Back Left, Back Right)
+  // Embroidered Crimson-Gold Saddle Cloth, Contoured Leather Saddle & Brass Stirrups (อานม้าทรง + ผ้าคลุม + โกลน)
+  const cloth = new THREE.Mesh(new THREE.CylinderGeometry(0.39, 0.4, 0.74, 14, 1, true, -0.45, Math.PI + 0.9), saddleMat);
+  cloth.rotation.z = Math.PI / 2;
+  cloth.rotation.x = Math.PI;
+  cloth.position.set(0.04, 1.04, 0);
+  addPartBox(g, 0.56, 0.1, 0.66, goldMat, 0.04, 1.38, 0);
+  addPartBox(g, 0.14, 0.14, 0.56, saddleMat, 0.28, 1.46, 0); // front pommel
+  addPartBox(g, 0.14, 0.16, 0.58, saddleMat, -0.2, 1.47, 0); // rear cantle
+  g.add(cloth);
+  [-0.36, 0.36].forEach((sz) => {
+    addPartBox(g, 0.03, 0.34, 0.03, goldMat, 0.04, 1.18, sz);
+    addPartBox(g, 0.1, 0.04, 0.06, goldMat, 0.04, 1.01, sz); // stirrup iron
+  });
+
+  // 4 Articulated Muscular Pivoted Legs (upper haunch/forearm + knee joint + slender cannon + hoof)
   const legs: THREE.Group[] = [];
   [
     [0.58, 0.2],
     [0.58, -0.2],
-    [-0.58, 0.2],
-    [-0.58, -0.2],
+    [-0.56, 0.2],
+    [-0.56, -0.2],
   ].forEach(([lx, lz]) => {
     const leg = new THREE.Group();
-    leg.position.set(lx, 0.84, lz);
-    const upper = new THREE.Mesh(new THREE.CylinderGeometry(0.085, 0.06, 0.76, 7), coatMat);
-    upper.position.y = -0.38;
-    const hoof = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.075, 0.1, 7), hoofMat);
-    hoof.position.y = -0.78;
-    leg.add(upper, hoof);
+    leg.position.set(lx, 0.88, lz);
+    const upper = new THREE.Mesh(new THREE.CylinderGeometry(0.105, 0.072, 0.42, 10), coatMat);
+    upper.position.y = -0.2;
+    const knee = new THREE.Mesh(new THREE.SphereGeometry(0.074, 8, 8), coatDarkMat);
+    knee.position.y = -0.42;
+    const lower = new THREE.Mesh(new THREE.CylinderGeometry(0.062, 0.052, 0.38, 9), coatMat);
+    lower.position.y = -0.62;
+    const hoof = new THREE.Mesh(new THREE.CylinderGeometry(0.064, 0.078, 0.11, 9), hoofMat);
+    hoof.position.y = -0.84;
+    leg.add(upper, knee, lower, hoof);
     g.add(leg);
     legs.push(leg);
   });
@@ -819,7 +964,7 @@ export function makeAyutthayaHorse(
       hasSpear: options.riderHelmetGold,
       headbandCol: options.riderHelmetGold ? undefined : '#a16207',
     });
-    rider.position.set(0.05, 0.95, 0);
+    rider.position.set(0.04, 0.96, 0);
     rider.rotation.y = Math.PI / 2; // faces +X along horse travel direction!
     g.add(rider);
   }
