@@ -400,62 +400,142 @@ export function buildSongthaewSystem(scene: THREE.Scene): SongthaewController {
   const group = new THREE.Group();
   const wheels: THREE.Group[] = [];
 
-    // Realistic Sculpted Two-Tone Thai Pickup Songthaew (hood, chrome grille, sloped windshield, side glass, mirrors & canopy!)
-    addPart(group, 4.75, 0.18, 1.56, '#1e293b', -0.05, 0.28, 0, 0.55, 0.4); // steel chassis + front/rear bumpers
-    addPart(group, 1.72, 0.58, 1.5, '#1d4ed8', 1.45, 0.64, 0, 0.35, 0.25); // lower blue pickup hood & doors
+    // Realistic Sculpted Two-Tone Thai Pickup Songthaew (hollow two-row passenger bay, dual benches, grab rails & driver!)
+    addPart(group, 4.75, 0.16, 1.54, '#1e293b', -0.05, 0.28, 0, 0.55, 0.4); // steel chassis + front/rear bumpers
+    addPart(group, 1.72, 0.56, 1.5, '#1d4ed8', 1.45, 0.63, 0, 0.35, 0.25); // lower blue pickup hood & doors
     addPart(group, 0.14, 0.28, 1.12, '#cbd5e1', 2.28, 0.64, 0, 0.25, 0.72); // chrome front grille
     [-0.5, 0.5].forEach((lz) => {
       const fLamp = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.14, 0.22), new THREE.MeshBasicMaterial({ color: '#fef9c3' }));
       fLamp.position.set(2.3, 0.68, lz);
       const tLamp = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.14, 0.22), new THREE.MeshBasicMaterial({ color: '#ef4444' }));
-      tLamp.position.set(-2.36, 0.68, lz);
+      tLamp.position.set(-2.3, 0.66, lz);
       group.add(fLamp, tLamp);
     });
-    // Sloped front pickup cabin with smoked side window & visible driver head + side mirrors!
+    // Sloped front pickup cabin with smoked windshield, side window & visible driver!
     addPart(group, 1.05, 0.56, 1.4, '#1e40af', 1.05, 1.2, 0, 0.32, 0.25);
     addPart(group, 0.85, 0.38, 1.43, '#0f172a', 1.05, 1.18, 0, 0.12, 0.5);
     const stWind = addPart(group, 0.36, 0.48, 1.36, '#1e293b', 1.62, 1.14, 0, 0.12, 0.5);
     stWind.rotation.z = -0.64;
     [-0.76, 0.76].forEach((mz) => addPart(group, 0.12, 0.14, 0.1, '#1e293b', 1.45, 1.04, mz, 0.4)); // side wing mirrors
-    // Royal navy Songthaew passenger truck bed with gold route pin-stripe, wooden floor, bench slats & rear steel bumper step
-    addPart(group, 2.9, 0.5, 1.52, '#1e3a8a', -0.82, 0.64, 0, 0.42, 0.2);
-    addPart(group, 2.94, 0.07, 1.55, '#eab308', -0.82, 0.84, 0, 0.3);
-    addPart(group, 2.75, 0.08, 0.38, '#92400e', -0.82, 0.72, -0.5, 0.75); // inner wooden passenger bench
-    addPart(group, 0.38, 0.08, 1.38, '#cbd5e1', -2.42, 0.38, 0, 0.35, 0.65); // rear boarding step
-    // Slanted stainless steel canopy poles, roof grab bar & arched cream-navy Songthaew roof!
+
+    // Hollow Royal Navy Songthaew passenger bay (open interior so both rows of seats & passengers are clearly visible!)
+    addPart(group, 2.9, 0.08, 1.52, '#334155', -0.82, 0.46, 0, 0.72, 0.2); // slatted truck bed floor
+    addPart(group, 0.08, 0.52, 1.5, '#1e3a8a', 0.59, 0.72, 0, 0.42, 0.2); // front bulkhead behind cab
+    [-0.72, 0.72].forEach((sz) => {
+      addPart(group, 2.9, 0.48, 0.07, '#1e3a8a', -0.82, 0.7, sz, 0.42, 0.2); // left & right side walls
+      addPart(group, 2.92, 0.07, 0.09, '#eab308', -0.82, 0.86, sz, 0.3); // gold route pin-stripe
+    });
+    // Two facing wooden passenger benches ("สองแถว") along left & right walls!
+    [-0.5, 0.5].forEach((bz) => {
+      addPart(group, 2.72, 0.06, 0.32, '#92400e', -0.82, 0.72, bz, 0.75);
+      addPart(group, 2.72, 0.08, 0.05, '#78350f', -0.82, 0.58, bz + (bz < 0 ? 0.12 : -0.12), 0.75); // bench support leg
+    });
+    // Rear stainless boarding step & vertical rear entry grab handles!
+    addPart(group, 0.36, 0.07, 1.38, '#cbd5e1', -2.42, 0.36, 0, 0.35, 0.65);
+    [-0.66, 0.66].forEach((rz) => {
+      addPart(group, 0.05, 1.15, 0.05, '#e2e8f0', -2.24, 1.44, rz, 0.22, 0.8); // rear vertical grab bars
+    });
+    // Slanted stainless steel canopy poles, dual overhead grab rails & arched cream-navy Songthaew roof!
     [-2.2, -0.82, 0.52].forEach((px, pi) => {
       [-0.71, 0.71].forEach((pz) => {
-        const post = addPart(group, 0.06, 1.14, 0.06, '#cbd5e1', px, 1.44, pz, 0.25, 0.75);
+        const post = addPart(group, 0.055, 1.14, 0.055, '#cbd5e1', px, 1.44, pz, 0.25, 0.75);
         if (pi === 0) post.rotation.z = -0.06;
       });
     });
-    addPart(group, 2.78, 0.04, 0.04, '#cbd5e1', -0.84, 1.88, 0.25, 0.25, 0.75); // hanging hand-rail
-    addPart(group, 2.98, 0.14, 1.56, '#fef3c7', -0.82, 2.02, 0, 0.45); // curved cream canopy roof
-    addPart(group, 3.0, 0.08, 1.58, '#1e3a8a', -0.82, 1.92, 0, 0.45);
-    addPart(group, 3.0, 0.06, 1.58, '#eab308', -0.82, 1.86, 0, 0.45);
-    const cabLight = new THREE.PointLight('#fde68a', 2.2, 4.8, 1.1);
-    cabLight.position.set(-0.82, 1.82, 0.1);
+    [-0.26, 0.26].forEach((rz) => {
+      addPart(group, 2.74, 0.038, 0.038, '#e2e8f0', -0.84, 1.84, rz, 0.25, 0.8); // dual overhead hand-rails
+    });
+    addPart(group, 2.98, 0.14, 1.56, '#fef3c7', -0.82, 2.04, 0, 0.45); // curved cream canopy roof
+    addPart(group, 3.0, 0.08, 1.58, '#1e3a8a', -0.82, 1.94, 0, 0.45);
+    addPart(group, 3.0, 0.05, 1.58, '#eab308', -0.82, 1.88, 0, 0.45);
+    const cabLight = new THREE.PointLight('#fde68a', 2.6, 5.2, 1.1);
+    cabLight.position.set(-0.82, 1.82, 0);
     group.add(cabLight);
 
-    // Two realistic articulated passengers seated on wooden bench inside Songthaew!
-    [-1.35, -0.35].forEach((px, pi) => {
-      const pCol = pi === 0 ? '#f472b6' : '#f59e0b';
-      addPart(group, 0.24, 0.42, 0.22, pCol, px, 1.06, -0.35);
-      addPart(group, 0.16, 0.22, 0.16, '#1e293b', px, 0.84, -0.15); // seated legs
+    // Articulated passengers seated face-to-face on BOTH rows ("นั่งสองแถวจริงๆ")!
+    const addSeatedPassenger = (
+      px: number,
+      zBench: number,
+      faceAisleDir: 1 | -1,
+      shirtCol: string,
+      pantsCol: string,
+      hairCol: string,
+      hatCol?: string,
+      holdRail = true
+    ) => {
+      const pGrp = new THREE.Group();
+      pGrp.position.set(px, 0.75, zBench);
+      pGrp.rotation.y = faceAisleDir === 1 ? 0 : Math.PI;
+
+      // Pelvis & slightly reclined torso
+      addPart(pGrp, 0.22, 0.1, 0.18, pantsCol, 0, 0.04, 0, 0.8);
+      const torso = addPart(pGrp, 0.23, 0.36, 0.17, shirtCol, 0, 0.24, -0.02, 0.78);
+      torso.rotation.x = -0.06;
+
+      // Thighs extending into the aisle + lower legs down to truck floor + shoes
+      [-0.065, 0.065].forEach((lx) => {
+        addPart(pGrp, 0.085, 0.09, 0.26, pantsCol, lx, 0.04, 0.13, 0.8);
+        addPart(pGrp, 0.08, 0.25, 0.085, pantsCol, lx, -0.11, 0.24, 0.8);
+        addPart(pGrp, 0.085, 0.05, 0.12, '#0f172a', lx, -0.23, 0.26, 0.7);
+      });
+
+      // Head, eyes, hair & optional farmer hat
       const head = new THREE.Mesh(
-        new THREE.SphereGeometry(0.11, 10, 8),
+        new THREE.SphereGeometry(0.105, 10, 8),
         new THREE.MeshStandardMaterial({ color: '#d9a47c', roughness: 0.75 })
       );
-      head.position.set(px, 1.39, -0.35);
+      head.position.set(0, 0.51, -0.02);
       const hair = new THREE.Mesh(
-        new THREE.SphereGeometry(0.115, 8, 8, 0, Math.PI * 2, 0, Math.PI * 0.55),
-        new THREE.MeshStandardMaterial({ color: '#111827', roughness: 0.85 })
+        new THREE.SphereGeometry(0.11, 8, 8, 0, Math.PI * 2, 0, Math.PI * 0.56),
+        new THREE.MeshStandardMaterial({ color: hairCol, roughness: 0.85 })
       );
-      hair.position.set(px, 1.41, -0.35);
-      const arm = addPart(group, 0.08, 0.34, 0.08, pCol, px + 0.1, 1.32, -0.16);
-      arm.rotation.x = 0.65; // hand holding overhead rail!
-      group.add(head, hair);
-    });
+      hair.position.set(0, 0.53, -0.02);
+      pGrp.add(head, hair);
+
+      [-0.036, 0.036].forEach((ex) => {
+        const eye = new THREE.Mesh(
+          new THREE.SphereGeometry(0.015, 6, 6),
+          new THREE.MeshBasicMaterial({ color: '#111827' })
+        );
+        eye.position.set(ex, 0.51, 0.075);
+        pGrp.add(eye);
+      });
+
+      if (hatCol) {
+        const hat = new THREE.Mesh(
+          new THREE.ConeGeometry(0.18, 0.09, 10),
+          new THREE.MeshStandardMaterial({ color: hatCol, roughness: 0.85 })
+        );
+        hat.position.set(0, 0.62, -0.02);
+        pGrp.add(hat);
+      }
+
+      // Natural arms: one resting on lap, one reaching up to hold the overhead rail (or both on lap)
+      const armLap = addPart(pGrp, 0.065, 0.28, 0.065, shirtCol, -0.145, 0.21, 0.06, 0.75);
+      armLap.rotation.x = -0.55;
+      const armReach = addPart(
+        pGrp,
+        0.065,
+        holdRail ? 0.38 : 0.28,
+        0.065,
+        shirtCol,
+        0.145,
+        holdRail ? 0.52 : 0.21,
+        holdRail ? 0.12 : 0.06,
+        0.75
+      );
+      armReach.rotation.x = holdRail ? 0.42 : -0.55;
+
+      group.add(pGrp);
+    };
+
+    // Row 1 (far bench z = -0.49, facing +Z aisle): 3 passengers
+    addSeatedPassenger(-1.68, -0.49, 1, '#f472b6', '#1e293b', '#111827', undefined, true);
+    addSeatedPassenger(-0.82, -0.49, 1, '#eab308', '#334155', '#1c1917', '#ca8a04', false);
+    addSeatedPassenger(0.06, -0.49, 1, '#38bdf8', '#1e3a8a', '#374151', undefined, true);
+    // Row 2 (near bench z = +0.49, facing -Z aisle): 2 staggered passengers
+    addSeatedPassenger(-1.26, 0.49, -1, '#fb923c', '#1f2937', '#111827', undefined, true);
+    addSeatedPassenger(-0.36, 0.49, -1, '#a78bfa', '#312e81', '#292524', '#d97706', false);
 
     const signPlane = new THREE.Mesh(
       new THREE.PlaneGeometry(2.15, 0.44),
