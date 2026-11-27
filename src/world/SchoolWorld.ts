@@ -276,6 +276,15 @@ export class SchoolWorld {
     this.addBox(this.exteriorGroup, 30, 1.25, 0.35, '#e2e8f0', -28.5, 0.62, -2.55, 0.85);
     this.addBox(this.exteriorGroup, 30, 0.22, 0.42, '#7f1d1d', -28.5, 1.32, -2.55, 0.75);
 
+    // Solid Brick Campus Perimeter End Walls (-127.0 West & +127.0 East) returning cleanly across Z so neither end cuts into void!
+    [-127.0, 127.0].forEach((endX) => {
+      this.addBox(this.exteriorGroup, 0.55, 4.4, 10.6, '#475569', endX, 2.2, 1.2, 0.88);
+      this.addBox(this.exteriorGroup, 0.72, 0.26, 10.8, '#7f1d1d', endX, 4.45, 1.2, 0.75);
+      const endTree = build25DStreetTree({ scale: 1.15 });
+      endTree.position.set(endX + (endX < 0 ? -1.5 : 1.5), 0, -2.5);
+      this.exteriorGroup.add(endTree);
+    });
+
     // 2.5D Volumetric Campus Street Trees in open clear gaps (ZERO flat planes!)
     [-102.2, -89.0, -75.5, -64.2, -41.0, -17.5, 39.5, 60.0, 74.5, 102.5, 120.0].forEach((tx, idx) => {
       const tr = build25DStreetTree({ scale: 1.12 });

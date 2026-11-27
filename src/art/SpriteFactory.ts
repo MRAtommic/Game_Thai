@@ -497,16 +497,21 @@ export function drawCharacterCanvas(
     ctx.fillRect(58, 40 + bob, 3.5, 4);
     ctx.fillRect(71, 40 + bob, 3.5, 4);
   } else if (kind === 'police') {
-    // Thai Police Sergeant in khaki uniform + police cap
-    drawLeg(ctx, 51, 122, 13, 52, '#786246', '#111318');
-    drawLeg(ctx, 68, 122, 13, 52, '#786246', '#111318');
-    drawRoundedRect(ctx, 42, 68 + bob, 44, 56, 9, '#8c7454');
+    // Thai Police Sergeant in khaki uniform + police cap (solid neck, hands, belt & waist seam!)
+    drawLeg(ctx, 50, 118, 14, 56, '#6e583d', '#111318');
+    drawLeg(ctx, 66, 118, 14, 56, '#6e583d', '#111318');
+    ctx.fillStyle = '#6e583d';
+    ctx.fillRect(46, 115 + bob, 36, 12); // solid trouser hip bridge under belt
+    drawRoundedRect(ctx, 42, 68 + bob, 44, 54, 8, '#8c7454');
     ctx.fillStyle = '#271e16';
     ctx.fillRect(42, 113 + bob, 44, 7);
     ctx.fillStyle = '#eab308';
     ctx.fillRect(60, 113 + bob, 8, 7);
-    drawRoundedRect(ctx, 34, 72 + bob, 11, 40, 5, '#836b4c');
-    drawRoundedRect(ctx, 83, 72 + bob, 11, 40, 5, '#836b4c');
+    drawRoundedRect(ctx, 34, 72 + bob, 11, 38, 5, '#836b4c');
+    drawCircle(ctx, 39.5, 112 + bob, 4.5, '#d6a179');
+    drawRoundedRect(ctx, 83, 72 + bob, 11, 38, 5, '#836b4c');
+    drawCircle(ctx, 88.5, 112 + bob, 4.5, '#d6a179');
+    drawRoundedRect(ctx, 58, 56 + bob, 12, 15, 4, '#b68158'); // solid neck bridge!
     drawHead(ctx, 64, 41 + bob, 18, 20, '#d6a179', '#b68158');
     ctx.fillStyle = '#624f38';
     ctx.beginPath();
@@ -523,12 +528,13 @@ export function drawCharacterCanvas(
     ctx.fillRect(71, 40 + bob, 3.5, 4);
   } else if (kind === 'laundry_lady') {
     // Auntie Samorn at 24h Laundry in light blue blouse + pastel apron
-    drawLeg(ctx, 52, 122, 12, 52, '#334155', '#1e293b');
-    drawLeg(ctx, 67, 122, 12, 52, '#334155', '#1e293b');
+    drawLeg(ctx, 52, 118, 12, 56, '#334155', '#1e293b');
+    drawLeg(ctx, 67, 118, 12, 56, '#334155', '#1e293b');
     drawRoundedRect(ctx, 42, 68 + bob, 44, 58, 9, '#7dd3fc');
     drawRoundedRect(ctx, 46, 78 + bob, 36, 46, 6, '#f9a8d4'); // pink apron
     drawRoundedRect(ctx, 35, 72 + bob, 10, 38, 4, '#67e8f9');
     drawRoundedRect(ctx, 83, 72 + bob, 10, 38, 4, '#67e8f9');
+    drawRoundedRect(ctx, 58, 56 + bob, 12, 14, 4, '#c3936c');
     drawHead(ctx, 64, 41 + bob, 18, 20, '#dfb08a', '#c3936c');
     // Hair bun
     ctx.fillStyle = '#2c2523';
@@ -543,8 +549,8 @@ export function drawCharacterCanvas(
     ctx.fillRect(71, 40 + bob, 3.5, 4);
   } else if (kind === 'electrician') {
     // Chang Tong in navy work coveralls + yellow hard hat + tool belt
-    drawLeg(ctx, 51, 122, 13, 52, '#1e3a5f', '#111827');
-    drawLeg(ctx, 68, 122, 13, 52, '#1e3a5f', '#111827');
+    drawLeg(ctx, 51, 118, 13, 56, '#1e3a5f', '#111827');
+    drawLeg(ctx, 68, 118, 13, 56, '#1e3a5f', '#111827');
     drawRoundedRect(ctx, 42, 68 + bob, 44, 58, 9, '#1d4ed8');
     ctx.fillStyle = '#facc15';
     ctx.fillRect(42, 92 + bob, 44, 5); // safety reflective stripe
@@ -552,6 +558,7 @@ export function drawCharacterCanvas(
     ctx.fillRect(42, 114 + bob, 44, 7); // tool belt
     drawRoundedRect(ctx, 34, 72 + bob, 10, 40, 4, '#2563eb');
     drawRoundedRect(ctx, 84, 72 + bob, 10, 40, 4, '#2563eb');
+    drawRoundedRect(ctx, 58, 56 + bob, 12, 14, 4, '#b47f57');
     drawHead(ctx, 64, 41 + bob, 18, 20, '#d59e74', '#b47f57');
     // Yellow safety helmet
     ctx.fillStyle = '#eab308';

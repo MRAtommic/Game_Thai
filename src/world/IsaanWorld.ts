@@ -896,6 +896,13 @@ export class IsaanWorld {
     this.addBox(this.scene, 1.1, 0.1, 0.85, '#784e2e', 17.5, 1.5, -1.35);
     this.addBox(this.scene, 0.8, 0.55, 0.7, '#4a2e1a', 17.5, 1.82, -1.35);
     this.addThaiGableRoof(this.scene, 17.5, 2.1, -1.35, 0.9, 0.8, 0.45, '#7f1d1d');
+    [-120.5, 138.5].forEach((endX) => {
+      this.addBox(this.scene, 0.45, 2.6, 9.6, '#57534e', endX, 1.3, 1.2, 0.9);
+      this.addBox(this.scene, 0.62, 0.24, 9.8, '#78350f', endX, 2.65, 1.2, 0.85);
+      const endTree = build25DStreetTree({ scale: 1.18 });
+      endTree.position.set(endX + (endX < 0 ? -1.4 : 1.4), 0, -2.2);
+      this.scene.add(endTree);
+    });
     const shrineCandle = new THREE.PointLight('#ff9a3c', 3.4, 9, 1.2);
     shrineCandle.position.set(17.5, 1.8, -0.55);
     this.scene.add(shrineCandle);

@@ -67,8 +67,9 @@ export function buildDormDistrictExtension(
       side: THREE.DoubleSide,
       roughness: 0.85,
     });
-    const m = new THREE.Mesh(new THREE.PlaneGeometry(1.38, 1.95), mat);
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 2.25), mat);
     m.position.set(x, y + 0.94, z);
+    m.receiveShadow = false;
     m.scale.x = facing;
     exteriorGroup.add(m);
     const sh = new THREE.Mesh(
@@ -206,7 +207,7 @@ export function buildDormDistrictExtension(
   policeRedLight.position.set(-104.0, 3.4, 0.6);
   exteriorGroup.add(policeBlueLight, policeRedLight);
 
-  const policeMesh = makeNpc('police', -102.2, 0, 0.05, 1);
+  const policeMesh = makeNpc('police', -101.6, 0, 0.2, 1);
 
   // Thai Police Patrol Car ("รถสายตรวจตำรวจ 191") parked cleanly beside standing officer & booth
   const policeCarRes = buildRealisticCar({ bodyColor: '#7f1d1d', variant: 'police', facing: -1 });
@@ -255,25 +256,52 @@ export function buildDormDistrictExtension(
   bridgeTree.position.set(-124.2, 0, -1.8);
   exteriorGroup.add(bridgeTree);
 
+  // Far-west perimeter back wall past Canal Bridge (-121 .. -142) + Dead-End Soi Concrete Wall & Barrier (-130.5)
+  const policeBackWall2 = new THREE.Mesh(
+    new THREE.PlaneGeometry(24.0, 4.8),
+    new THREE.MeshStandardMaterial({ map: wallTex, roughness: 0.95 })
+  );
+  policeBackWall2.position.set(-130.0, 2.4, -2.35);
+  exteriorGroup.add(policeBackWall2);
+  addBox(exteriorGroup, 0.55, 4.9, 9.6, '#334155', -130.2, 2.45, 2.3, 0.9); // solid West end return wall across road
+  addBox(exteriorGroup, 0.72, 0.28, 9.8, '#475569', -130.2, 4.95, 2.3, 0.75); // concrete wall coping cap
+  for (let bz = -1.2; bz <= 5.2; bz += 1.6) {
+    addBox(exteriorGroup, 0.22, 0.24, 0.78, bz % 3.2 === 0 ? '#dc2626' : '#f8fafc', -129.85, 1.05, bz);
+  }
+  const westDeadTree = build25DStreetTree({ scale: 1.08 });
+  westDeadTree.position.set(-128.4, 0, -1.7);
+  exteriorGroup.add(westDeadTree);
+
   const canalLight = new THREE.PointLight('#67e8f9', 4.5, 15, 1.1);
   canalLight.position.set(-118.5, 4.2, 1.4);
   exteriorGroup.add(canalLight);
 
   // ================= 5. EAST EXPANSION: BASKETBALL COURT (+19.5), 24H LAUNDRY (+27.5), GENERATOR (+35.8) =================
   const eastGround = new THREE.Mesh(
-    new THREE.BoxGeometry(31.5, 0.42, 11.2),
+    new THREE.BoxGeometry(40.0, 0.42, 11.4),
     new THREE.MeshStandardMaterial({ color: '#2b313a', roughness: 0.86, metalness: 0.06 })
   );
-  eastGround.position.set(31.5, -0.19, 1.2);
+  eastGround.position.set(35.0, -0.19, 1.2);
   eastGround.receiveShadow = true;
   exteriorGroup.add(eastGround);
 
   const eastWall = new THREE.Mesh(
-    new THREE.PlaneGeometry(31.5, 4.8),
+    new THREE.PlaneGeometry(40.0, 4.8),
     new THREE.MeshStandardMaterial({ map: wallTex, roughness: 0.94 })
   );
-  eastWall.position.set(31.5, 2.4, -2.35);
+  eastWall.position.set(35.0, 2.4, -2.35);
   exteriorGroup.add(eastWall);
+
+  // Solid East Soi Concrete Dead-End Perimeter Wall + Red-White Steel Barrier (+45.2) returning cleanly across Z!
+  addBox(exteriorGroup, 0.55, 4.9, 9.6, '#334155', 45.2, 2.45, 2.3, 0.9);
+  addBox(exteriorGroup, 0.72, 0.28, 9.8, '#475569', 45.2, 4.95, 2.3, 0.75);
+  addBox(exteriorGroup, 0.24, 0.22, 6.2, '#dc2626', 44.85, 1.05, 1.6); // steel dead-end barrier rail
+  for (let bz = -1.2; bz <= 4.4; bz += 1.4) {
+    addBox(exteriorGroup, 0.26, 0.26, 0.65, '#f8fafc', 44.84, 1.05, bz);
+  }
+  const eastEndTree = build25DStreetTree({ scale: 1.02 });
+  eastEndTree.position.set(42.2, 0, -1.75);
+  exteriorGroup.add(eastEndTree);
 
   // A) 3D Outdoor Street Basketball Half-Court (x = +19.5) with Backboard Truss, Net, 3-Pt Arc & Natural Shooting Match!
   addBox(exteriorGroup, 7.6, 0.03, 5.4, '#14532d', 19.5, 0.025, 0.7, 0.85);
@@ -438,7 +466,7 @@ export function buildDormDistrictExtension(
   const electricianMesh = makeNpc('electrician', 34.1, 0, 0.1, 1);
 
   // Streetlamps cleanly outside Basketball Court & East Wing
-  [-104.5, -118.5, 23.6, 34.5].forEach((lx) => {
+  [-104.5, -118.5, 23.6, 34.5, 43.2].forEach((lx) => {
     addBox(exteriorGroup, 0.22, 5.5, 0.22, '#525862', lx, 2.75, -1.15);
     const bulb = new THREE.Mesh(
       new THREE.BoxGeometry(0.32, 0.08, 0.35),
@@ -447,6 +475,9 @@ export function buildDormDistrictExtension(
     bulb.position.set(lx, 5.35, -0.25);
     exteriorGroup.add(bulb);
   });
+  const eastEndLight = new THREE.PointLight('#ffd580', 4.6, 15, 1.05);
+  eastEndLight.position.set(42.6, 4.8, 1.45);
+  exteriorGroup.add(eastEndLight);
 
   return {
     skytrainGroup,
