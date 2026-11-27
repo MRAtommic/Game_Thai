@@ -828,7 +828,7 @@ export function makeAyutthayaHorse(
 }
 
 /** Places lush Ayutthaya Bodhi trees, arched coconut palms, bamboo groves, skyline spires & lotus across the 380m map. */
-export function buildAyutthayaFoliage(scene: THREE.Scene): void {
+export function buildAyutthayaFoliage(scene: THREE.Object3D): void {
   const leafDark = new THREE.MeshStandardMaterial({ color: '#14532d', roughness: 0.9 });
   const leafMid = new THREE.MeshStandardMaterial({ color: '#166534', roughness: 0.88 });
   const leafBright = new THREE.MeshStandardMaterial({ color: '#15803d', roughness: 0.86 });

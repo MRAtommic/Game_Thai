@@ -6,6 +6,7 @@ import { DialogueLine, EndingType, FloorIndex, TimePeriod, WeatherType } from '.
 import { CutscenePlayer, IsaanCutsceneId } from '../ui/CutscenePlayer';
 import { renderSharedInventoryBar } from '../ui/InventoryBar';
 import { bindCameraZoomControls } from '../ui/mobileZoom';
+import { CH4_ROOM_META, Ch4RoomId } from '../world/AyutthayaInteriorRooms';
 import { AyutthayaMood, AyutthayaWorld, CH4_MAX_X, CH4_MIN_X } from '../world/AyutthayaWorld';
 
 const CH4_SAVE_KEY = 'reuan_chan_ch4_save_v1';
@@ -82,6 +83,9 @@ export class Chapter4Engine {
   private enemyAtkClock = 0;
   private arrowRegenTimer = 0;
   private pretaSoundTimer = 10;
+  private currentRoom: Ch4RoomId = 'outside';
+  private outsideReturnX = -84;
+  private roomBonusClaimed = new Set<string>();
 
   private activeDialogue: DialogueLine[] = [];
   private currentLineIdx = 0;
@@ -158,6 +162,8 @@ export class Chapter4Engine {
     this.sound.init();
     this.sound.playUIClick();
     this.state = this.createNewState();
+    this.currentRoom = 'outside';
+    this.roomBonusClaimed.clear();
     this.world.clearDynamicActors();
     this.saveGame();
     this.beginPlay();
@@ -189,6 +195,8 @@ export class Chapter4Engine {
     } catch {
       this.state = this.createNewState();
     }
+    this.currentRoom = 'outside';
+    this.roomBonusClaimed.clear();
     this.rebuildPhaseActorsFromSave();
     this.beginPlay();
     this.showToast('โหลดบทที่ ๔: ผีห่าอโยธยา เรียบร้อย');
@@ -724,9 +732,96 @@ export class Chapter4Engine {
     }
   }
 
+  private enterRoom(room: Exclude<Ch4RoomId, 'outside'>, returnX: number): void {
+    if (this.state.isRidingHorse) this.state.isRidingHorse = false;
+    if (this.state.isRowing) this.state.isRowing = false;
+    this.outsideReturnX = returnX;
+    this.currentRoom = room;
+    const rMeta = CH4_ROOM_META[room];
+    this.state.x = -(rMeta.halfW - 2.6);
+    this.playerFacing = 1;
+    this.sound.playDoorCreak();
+    this.showToast(`เข้าสู่${rMeta.name}`);
+    this.updateHUD();
+  }
+
+  private exitRoom(): void {
+    this.sound.playDoorCreak();
+    this.currentRoom = 'outside';
+    this.state.x = this.outsideReturnX;
+    this.playerFacing = -1;
+    this.updateHUD();
+  }
+
+  private interactInsideRoom(room: Exclude<Ch4RoomId, 'outside'>): void {
+    const claimed = this.roomBonusClaimed.has(room);
+    if (room === 'royal_palace') {
+      if (!claimed) {
+        this.roomBonusClaimed.add(room);
+        this.addItem('herb_medicine');
+        this.addItem('holy_water');
+        this.showToast('รับพระราชทานโอสถหลวงและน้ำพระพุทธมนต์หน้าพระมหาเศวตฉัตร!');
+      } else {
+        this.state.sanity = Math.min(100, this.state.sanity + 25);
+        this.showToast('ชมความวิจิตรแห่งพระที่นั่งสรรเพชญมหาปราสาทและพระมหาเศวตฉัตร 9 ชั้น');
+      }
+    } else if (room === 'temple_ubosot') {
+      this.state.hp = 100;
+      this.state.sanity = 100;
+      if (!claimed) {
+        this.roomBonusClaimed.add(room);
+        this.addItem('holy_water');
+        this.showToast('กราบพระพุทธปฏิมากรทองคำ ฟื้นพลังเต็มร้อย & ได้รับน้ำพระพุทธมนต์ศักดิ์สิทธิ์!');
+      } else {
+        this.sound.playTempleBell();
+        this.showToast('กราบสักการะพระประธานในพระอุโบสถ จิตใจสงบและพลังกายเต็มเปี่ยม!');
+      }
+    } else if (room === 'noble_mansion') {
+      if (!claimed) {
+        this.roomBonusClaimed.add(room);
+        this.addItem('herb_medicine');
+        this.showToast('เปิดตู้โอสถหลวงของพระยาวิชัย ได้รับยาสมุนไพรหลวง!');
+      } else {
+        this.showToast('ภายในจวนขุนนางประดับฉากลายรดน้ำทองและเครื่องถ้วยเบญจรงค์งดงาม');
+      }
+    } else if (room === 'garrison_fort') {
+      this.state.sanity = Math.min(100, this.state.sanity + 25);
+      this.showToast('ตรวจแผนที่ยุทธศาสตร์ป้องพระนคร — กำลังใจฮึกเหิม (+25 สติ)');
+    } else if (room === 'blacksmith_interior') {
+      this.state.arrows = Math.max(this.state.arrows, 14);
+      this.sound.playSwordHit();
+      this.showToast('เติมลูกดอกหน้าไม้อโยธยาจากคลังเหล็กน้ำพี้ครบ ๑๔ ดอก!');
+    } else if (room === 'market_hall') {
+      if (!claimed) {
+        this.roomBonusClaimed.add(room);
+        this.addItem('herb_medicine');
+        this.showToast('ได้รับสมุนไพรแห้งจากชั้นเครื่องเทศตลาดน้ำอโยธยา!');
+      } else {
+        this.showToast('ผ้าแพรอยุธยาและเครื่องสังคโลกเรียงรายอย่างวิจิตรในเรือนแพ');
+      }
+    } else if (room === 'peasant_house') {
+      this.state.hp = Math.min(100, this.state.hp + 30);
+      this.state.stamina = 100;
+      this.showToast('พักกายบนแคร่เรือนไทย & ไหว้หิ้งพระประจำบ้าน (+30 เลือด)');
+    }
+    this.saveGame();
+  }
+
   private getNearestAction(): { label: string; run: () => void } | null {
     const px = this.state.x;
     const f = this.state.flags;
+
+    if (this.currentRoom !== 'outside') {
+      const rMeta = CH4_ROOM_META[this.currentRoom];
+      if (px <= -(rMeta.halfW - 3.9)) {
+        return { label: 'เดินออกประตูสู่กรุงศรีอยุธยา', run: () => this.exitRoom() };
+      }
+      if (Math.abs(px - rMeta.actionX) < 3.4) {
+        const activeRoom = this.currentRoom;
+        return { label: rMeta.actionLabel, run: () => this.interactInsideRoom(activeRoom) };
+      }
+      return null;
+    }
 
     if (this.state.isRowing) {
       const pier = PIER_XS.find((p) => Math.abs(p - px) < 4.5);
@@ -780,28 +875,28 @@ export class Chapter4Engine {
       }
     }
 
-    // Pier boating prompt
-    const pier = PIER_XS.find((p) => Math.abs(p - px) < 3.6);
-    if (pier !== undefined) {
-      if (f.act === 4 && f.sueaKhamDefeated && pier === 178) {
-        return { label: 'ขึ้นเรือสำเภาอพยพชาวบ้าน', run: () => this.finishChapter('normal') };
-      }
-      return { label: 'ลงเรือพายล่องคลองกรุงศรีฯ [B]', run: () => this.toggleBoat() };
-    }
-
-    // Story NPC & Monument interactions across the 380m Ayutthaya Kingdom
-    if (Math.abs(px - -81.5) < 3.4) {
+    // Story NPCs, Enterable City Buildings / Palaces / Temples & Waterfront Piers!
+    if (Math.abs(px - -81.5) < 2.4) {
       return { label: 'คุยกับลุงสิน (โรงตีดาบ)', run: () => this.interactSmith() };
     }
-    if (Math.abs(px - -157) < 3.4 && f.act === 1) {
+    if (Math.abs(px - -79.0) < 2.2) {
+      return { label: 'เข้าภายในโรงตีดาบหลวงลุงสิน', run: () => this.enterRoom('blacksmith_interior', -79.0) };
+    }
+    if (Math.abs(px - -156.5) < 2.6 && f.act === 1) {
       return { label: 'คุยกับแม่พุดซ้อน (ตลาดน้ำอโยธยา)', run: () => this.interactPhudsorn() };
+    }
+    if (Math.abs(px - -160.2) < 2.6) {
+      return { label: 'เข้าภายในเรือนแพตลาดน้ำอโยธยา', run: () => this.enterRoom('market_hall', -160.2) };
+    }
+    if (Math.abs(px - -97) < 2.8) {
+      return { label: 'เข้าภายในเรือนไทยฝาปะกนชาวบ้าน', run: () => this.enterRoom('peasant_house', -97) };
     }
     if (Math.abs(px - -174) < 5.0 && f.act === 1 && !f.inspectedSampan) {
       return { label: 'ตรวจเรือสำเภาสินค้าน่านน้ำ', run: () => this.interactSampan() };
     }
-    if (Math.abs(px - -38) < 3.6 && f.act === 1) {
+    if (Math.abs(px - -37.2) < 2.2 && f.act === 1) {
       return {
-        label: 'เข้าพบพระยาวิชัย (บ้านขุนนาง)',
+        label: 'คุยกับพระยาวิชัย (หน้าจวนขุนนาง)',
         run: () => {
           this.addItem('herb_medicine');
           this.startDialogue([
@@ -809,20 +904,38 @@ export class Chapter4Engine {
               speaker: 'พระยาวิชัย',
               role: 'ขุนนางกรุงศรีฯ',
               portrait: 'uncle',
-              text: 'อ้อ เจ้ามั่นศิษย์ช่างตีดาบนี่เอง พวกโจรโพกหัวแดงลอบมองจวนข้ามาหลายเพลาแล้ว หากเกิดจลาจลเมื่อใด ข้าฝากเจ้าช่วยคุ้มครองชาวเรือนด้วยนะ รับยาสมุนไพรหลวงติดย่ามไว้เถิด',
+              text: 'อ้อ เจ้ามั่นศิษย์ช่างตีดาบนี่เอง พวกโจรโพกหัวแดงลอบมองจวนข้ามาหลายเพลาแล้ว หากเกิดจลาจลเมื่อใด ข้าฝากเจ้าช่วยคุ้มครองชาวเรือนด้วยนะ รับยาสมุนไพรหลวงติดย่ามไว้เถิด เชิญเข้าไปชมภายในเรือนใหญ่ด้านซ้ายได้เลย',
             },
           ]);
         },
       };
     }
-    if (Math.abs(px - 11.5) < 3.4 && f.act === 1) {
+    if (Math.abs(px - -40.8) < 2.5) {
+      return { label: 'เข้าภายในจวนพระยาวิชัย (เรือนขุนนาง)', run: () => this.enterRoom('noble_mansion', -40.8) };
+    }
+    if (Math.abs(px - 11.5) < 2.8 && f.act === 1) {
       return { label: 'คุยกับขุนราม (ค่ายทหารประตูชัย)', run: () => this.interactKhunRam() };
     }
-    if (Math.abs(px - 66) < 4.5 && f.act === 1) {
-      return { label: 'ชื่นชมพระบรมมหาราชวัง & อุทยานสระบัว', run: () => this.showToast('พระที่นั่งสรรเพชญมหาปราสาทแลดูสง่างามเหนือลำน้ำเจ้าพระยา') };
+    if (Math.abs(px - 22.5) < 3.4) {
+      return { label: 'เข้าภายในหอบัญชาการกองทัพประตูชัย', run: () => this.enterRoom('garrison_fort', 22.5) };
     }
-    if (Math.abs(px - 136) < 3.6) {
+    if (Math.abs(px - 66) < 4.5) {
+      return { label: 'เข้าชมภายในพระบรมมหาราชวัง (พระที่นั่งสรรเพชญฯ)', run: () => this.enterRoom('royal_palace', 66) };
+    }
+    if (Math.abs(px - 125) < 3.8) {
+      return { label: 'เข้าภายในพระอุโบสถหลวง วัดพระศรีสรรเพชญ์', run: () => this.enterRoom('temple_ubosot', 125) };
+    }
+    if (Math.abs(px - 136) < 3.0) {
       return { label: 'กราบหลวงตาคง (วัดไชยวัฒนาราม)', run: () => this.interactMonk() };
+    }
+
+    // Pier boating prompt (narrow range so boat piers never mask building doorways; press [B] within 4.5m anytime)
+    const pier = PIER_XS.find((p) => Math.abs(p - px) < 1.85);
+    if (pier !== undefined) {
+      if (f.act === 4 && f.sueaKhamDefeated && pier === 178) {
+        return { label: 'ขึ้นเรือสำเภาอพยพชาวบ้าน', run: () => this.finishChapter('normal') };
+      }
+      return { label: 'ลงเรือพายล่องคลองกรุงศรีฯ [B]', run: () => this.toggleBoat() };
     }
     if (Math.abs(px - 160) < 4.6) {
       if (f.act === 1) {
@@ -1008,7 +1121,10 @@ export class Chapter4Engine {
         moving = true;
         this.playerFacing = dir > 0 ? 1 : -1;
         const baseSpeed = this.state.isRowing ? 8.6 : this.state.isRidingHorse ? 9.4 : sprinting ? 7.2 : 4.8;
-        this.state.x = Math.max(CH4_MIN_X + 1.5, Math.min(CH4_MAX_X - 1.5, this.state.x + dir * baseSpeed * dt));
+        const rLimit = this.currentRoom !== 'outside' ? CH4_ROOM_META[this.currentRoom].halfW - 1.2 : 0;
+        const minBound = this.currentRoom !== 'outside' ? -rLimit : CH4_MIN_X + 1.5;
+        const maxBound = this.currentRoom !== 'outside' ? rLimit : CH4_MAX_X - 1.5;
+        this.state.x = Math.max(minBound, Math.min(maxBound, this.state.x + dir * baseSpeed * dt));
         if (sprinting && !this.state.isRowing) this.state.stamina = Math.max(0, this.state.stamina - 16 * dt);
       } else {
         this.state.stamina = Math.min(100, this.state.stamina + 18 * dt);
@@ -1077,7 +1193,8 @@ export class Chapter4Engine {
       this.state.inventory.includes('namphi_sword'),
       this.state.gameMinutes,
       this.state.weather,
-      mood
+      mood,
+      this.currentRoom
     );
 
     const period = this.getPeriod();
@@ -1095,6 +1212,7 @@ export class Chapter4Engine {
   }
 
   private updateCombat(dt: number): void {
+    if (this.currentRoom !== 'outside') return;
     // Update arrow bolts hitting enemies cleanly
     const enemies = this.world.getEnemyViews();
     this.world.getProjectiles().forEach((proj) => {
@@ -1231,7 +1349,10 @@ export class Chapter4Engine {
     const nearPier = PIER_XS.some((px) => Math.abs(px - this.state.x) < 4.2);
     this.touchBike.textContent = this.state.isRowing ? '🚣✓' : nearPier ? '🚣 เรือ' : this.state.isRidingHorse ? '🐎✓' : '🐎 ขี่ม้า';
 
-    const zone = CH4_ZONE_NAMES.find((z) => this.state.x >= z.minX && this.state.x <= z.maxX)?.name ?? 'กรุงศรีอยุธยา';
+    const zone =
+      this.currentRoom !== 'outside'
+        ? CH4_ROOM_META[this.currentRoom].name
+        : CH4_ZONE_NAMES.find((z) => this.state.x >= z.minX && this.state.x <= z.maxX)?.name ?? 'กรุงศรีอยุธยา';
     this.hudLocation.textContent = zone;
     if (this.hudExtra) {
       this.hudExtra.textContent = `❤️ ${Math.round(this.state.hp)}% • 🏹 ${this.state.arrows} • 🛡️ รอด ${this.state.rescuedIds.length} • 💧 ดับไฟ ${this.state.extinguishedFireIds.length}/4`;
@@ -1241,9 +1362,13 @@ export class Chapter4Engine {
 
     const obj = this.getObjectiveTarget();
     this.hudQuest.textContent = `ภารกิจ: ${obj.text}`;
-    const dx = obj.targetX - this.state.x;
-    this.hudNav.textContent =
-      Math.abs(dx) < 3.5 ? 'อยู่ใกล้เป้าหมายแล้ว' : `${dx > 0 ? 'ไปทางขวา ▶' : '◀ ไปทางซ้าย'} (${Math.round(Math.abs(dx))} ม.)`;
+    if (this.currentRoom !== 'outside') {
+      this.hudNav.textContent = 'เดินชมด้านใน (◀ ประตูซ้ายเพื่อออกนอกอาคาร)';
+    } else {
+      const dx = obj.targetX - this.state.x;
+      this.hudNav.textContent =
+        Math.abs(dx) < 3.5 ? 'อยู่ใกล้เป้าหมายแล้ว' : `${dx > 0 ? 'ไปทางขวา ▶' : '◀ ไปทางซ้าย'} (${Math.round(Math.abs(dx))} ม.)`;
+    }
   }
 
   private renderInventory(): void {

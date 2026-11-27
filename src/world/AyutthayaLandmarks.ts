@@ -83,7 +83,7 @@ function buildJunkShip(x: number, z: number, labelTitle: string, isEvac = false)
  * Floating Market & Raft Houses, Peasant Village & Rice Paddies, Blacksmith Forge, Nobleman's Compound,
  * Walled City, Garrison, Royal Palace, Triple Golden Chedis, Five-Prang Wat Chai, Ghost Gate & Mass Grave Pit.
  */
-export function buildAyutthayaLandmarks(scene: THREE.Scene): AyutthayaLandmarkHandles {
+export function buildAyutthayaLandmarks(scene: THREE.Object3D): AyutthayaLandmarkHandles {
   const brickMat = new THREE.MeshStandardMaterial({ map: makeAyutthayaBrickTex(4, 2), roughness: 0.85 });
   const woodDark = new THREE.MeshStandardMaterial({ color: '#3b2112', roughness: 0.9 });
   const woodMid = new THREE.MeshStandardMaterial({ color: '#5c361d', roughness: 0.85 });

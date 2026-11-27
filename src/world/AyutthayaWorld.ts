@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { Ch4CharacterKind, drawCh4CharacterCanvas } from '../art/Chapter4Sprites';
 import { WeatherType } from '../types';
 import { AyutthayaHorseHandle, buildAyutthayaFoliage, makeAyutthayaBoat, makeAyutthayaFigure, makeAyutthayaHorse, makeAyutthayaSignTex } from './AyutthayaArchitecture';
+import { buildAyutthayaInteriors, CH4_ROOM_META, Ch4RoomId } from './AyutthayaInteriorRooms';
 import { AyutthayaLandmarkHandles, buildAyutthayaLandmarks } from './AyutthayaLandmarks';
 
 export const CH4_MIN_X = -188;
@@ -55,6 +56,8 @@ export interface AyutthayaProjectileView {
 
 export class AyutthayaWorld {
   private scene: THREE.Scene;
+  private exteriorGroup: THREE.Group;
+  private roomGroups: Partial<Record<Ch4RoomId, THREE.Group>> = {};
   private camera: THREE.PerspectiveCamera;
   private renderer: THREE.WebGLRenderer;
 
@@ -166,13 +169,16 @@ export class AyutthayaWorld {
     this.skyCanvas.width = 16;
     this.skyCanvas.height = 128;
     this.skyTex = new THREE.CanvasTexture(this.skyCanvas);
+    this.exteriorGroup = new THREE.Group();
+    this.scene.add(this.exteriorGroup);
+
     this.skyTex.colorSpace = THREE.SRGBColorSpace;
     this.skyPlane = new THREE.Mesh(
       new THREE.PlaneGeometry(460, 120),
       new THREE.MeshBasicMaterial({ map: this.skyTex, depthWrite: false, fog: false })
     );
     this.skyPlane.position.set(0, 32, -38);
-    this.scene.add(this.skyPlane);
+    this.exteriorGroup.add(this.skyPlane);
 
     this.celestialOrb = new THREE.Mesh(
       new THREE.CircleGeometry(3.6, 20),
@@ -184,7 +190,7 @@ export class AyutthayaWorld {
     );
     this.celestialOrb.position.set(-40, 22, -35);
     this.celestialGlow.position.set(-40, 22, -35.5);
-    this.scene.add(this.celestialOrb, this.celestialGlow);
+    this.exteriorGroup.add(this.celestialOrb, this.celestialGlow);
 
     this.cloudMat = new THREE.MeshStandardMaterial({ color: '#fffbf0', roughness: 0.96, metalness: 0.0, fog: false });
     for (let ci = 0; ci < 18; ci++) {
@@ -206,15 +212,16 @@ export class AyutthayaWorld {
       const cy = 8.4 + (ci % 4) * 1.65;
       const cz = -19 - (ci % 3) * 4.5;
       cg.position.set(cx, cy, cz);
-      this.scene.add(cg);
+      this.exteriorGroup.add(cg);
       this.cloudClusters.push({ group: cg, x: cx, speed: 0.45 + (ci % 3) * 0.22, baseY: cy });
     }
 
     this.initSprites();
-    this.landmarks = buildAyutthayaLandmarks(this.scene);
-    buildAyutthayaFoliage(this.scene);
+    this.landmarks = buildAyutthayaLandmarks(this.exteriorGroup);
+    buildAyutthayaFoliage(this.exteriorGroup);
+    this.roomGroups = buildAyutthayaInteriors(this.scene);
 
-    // Enable authentic cast & receive shadows across Ayutthaya architecture, walls, ships & trees
+    // Enable authentic cast & receive shadows across Ayutthaya exterior & interior architecture
     this.scene.traverse((obj) => {
       if (obj instanceof THREE.Mesh && obj.material instanceof THREE.MeshStandardMaterial) {
         const isGroundOrWater = obj.geometry instanceof THREE.PlaneGeometry;
@@ -232,7 +239,7 @@ export class AyutthayaWorld {
       post.position.set(tx, 1.18, 2.25);
       const cup = new THREE.Mesh(new THREE.ConeGeometry(0.14, 0.2, 6), new THREE.MeshBasicMaterial({ color: '#fb923c' }));
       cup.position.set(tx, 2.42, 2.25);
-      this.scene.add(post, cup);
+      this.exteriorGroup.add(post, cup);
     });
 
     // Ambient Ayutthaya river merchant boats rowing along Chao Phraya canal
@@ -244,7 +251,7 @@ export class AyutthayaWorld {
       const boat = makeAyutthayaBoat(4.2, true, rb.shirt);
       boat.group.position.set(rb.x, -0.14, rb.z);
       boat.group.scale.x = rb.dir;
-      this.scene.add(boat.group);
+      this.exteriorGroup.add(boat.group);
       this.riverTraders.push({ group: boat.group, oarL: boat.oarL, oarR: boat.oarR, ...rb });
     });
 
@@ -263,27 +270,27 @@ export class AyutthayaWorld {
     );
     dSign.position.set(0, 2.02, 0.1);
     this.trainingDummy.add(dPost, dBody, dArm, dSign);
-    this.scene.add(this.trainingDummy);
+    this.exteriorGroup.add(this.trainingDummy);
 
     // Docked spare boat neatly moored beside Blacksmith River Pier & Player's navigable Boat
     this.dockedPierBoat = makeAyutthayaBoat(3.9, false).group;
     this.dockedPierBoat.position.set(-83.6, -0.14, 5.65);
-    this.scene.add(this.dockedPierBoat);
+    this.exteriorGroup.add(this.dockedPierBoat);
 
     this.playerBoat = makeAyutthayaBoat(4.1, false);
     this.playerBoat.group.position.set(-83.6, -0.14, 5.65);
     this.playerBoat.group.visible = false;
-    this.scene.add(this.playerBoat.group);
+    this.exteriorGroup.add(this.playerBoat.group);
 
     // Protagonist's own loyal Chestnut War Horse (parked by Blacksmith & mounted cleanly when riding!)
     this.parkedHorse = makeAyutthayaHorse('#7c2d12');
     this.parkedHorse.group.position.set(-86.5, 0, -0.4);
-    this.scene.add(this.parkedHorse.group);
+    this.exteriorGroup.add(this.parkedHorse.group);
 
     this.playerHorse = makeAyutthayaHorse('#7c2d12');
     this.playerHorse.group.position.set(-84, 0, 0.85);
     this.playerHorse.group.visible = false;
-    this.scene.add(this.playerHorse.group);
+    this.exteriorGroup.add(this.playerHorse.group);
 
     const shadowTex = this.createShadowTex();
     this.playerMesh = this.makeSpriteMesh(this.charFrames.man[0], 1.5, 2.2);
@@ -360,7 +367,7 @@ export class AyutthayaWorld {
     npcDefs.forEach((n) => {
       const m = this.makeSpriteMesh(this.charFrames[n.kind][0], 1.48, 2.15);
       m.position.set(n.x, 0.94, n.z);
-      this.scene.add(m);
+      this.exteriorGroup.add(m);
       this.npcMeshes[n.id] = m;
     });
 
@@ -385,7 +392,7 @@ export class AyutthayaWorld {
       flLight.position.set(0, 1.8, 0.6);
       fg.add(flLight);
       fg.visible = false;
-      this.scene.add(fg);
+      this.exteriorGroup.add(fg);
       return { id: fd.id, label: fd.label, x: fd.x, active: false, extinguished: false, group: fg, light: flLight };
     });
 
@@ -397,7 +404,7 @@ export class AyutthayaWorld {
       );
       sm.position.set(-90 + i * 38, 4.8, -5.5);
       sm.visible = false;
-      this.scene.add(sm);
+      this.exteriorGroup.add(sm);
       this.smokePlumes.push(sm);
     }
 
@@ -416,7 +423,7 @@ export class AyutthayaWorld {
       new THREE.LineBasicMaterial({ color: '#cbd5e1', transparent: true, opacity: 0.36 })
     );
     this.rainSystem.visible = false;
-    this.scene.add(this.rainSystem);
+    this.exteriorGroup.add(this.rainSystem);
 
     // Optimize static PointLights once on mobile/tablet (ZERO per-frame light .visible changes!)
     if (isMobileOrTablet) {
@@ -610,11 +617,19 @@ export class AyutthayaWorld {
     hasSword: boolean,
     gameMinutes: number,
     weather: WeatherType,
-    mood: AyutthayaMood
+    mood: AyutthayaMood,
+    room: Ch4RoomId = 'outside'
   ): void {
     this.animClock += dt;
     const hr = (gameMinutes % 1440) / 60;
     const isNight = hr >= 18.5 || hr < 5.5;
+    const isInside = room !== 'outside';
+
+    this.exteriorGroup.visible = !isInside;
+    (Object.keys(this.roomGroups) as Ch4RoomId[]).forEach((rid) => {
+      const grp = this.roomGroups[rid];
+      if (grp) grp.visible = rid === room;
+    });
 
     // Dynamic Sky Gradient, Sun/Moon Arc, Drifting Clouds & Natural Rain/Wind Weather!
     const topCol =
@@ -713,7 +728,7 @@ export class AyutthayaWorld {
         ? 1.72 + gallopBob
         : 0.95;
     this.playerMesh.position.set(playerX, playerY, playerZ);
-    this.playerShadow.position.set(playerX, 0.02, playerZ);
+    this.playerShadow.position.set(playerX, isInside ? 0.048 : 0.02, playerZ);
     this.playerShadow.visible = !isRowing;
 
     const frame = isMoving && !isRidingHorse ? Math.floor(this.animClock * (isRowing ? 6 : 9)) % 4 : 0;
@@ -883,10 +898,10 @@ export class AyutthayaWorld {
       if (sm.visible) sm.position.y = 4.2 + Math.sin(this.animClock * 0.8 + si) * 0.7;
     });
 
-    // Enemy & Survivor facing + walk stride + HP bar scale
+    // Enemy & Survivor facing + walk stride + HP bar scale (only shown outside!)
     this.enemyViews.forEach((ev, idx) => {
-      ev.mesh.visible = ev.alive;
-      if (!ev.alive) return;
+      ev.mesh.visible = !isInside && ev.alive;
+      if (!ev.mesh.visible) return;
       ev.mesh.position.x = ev.x;
       ev.mesh.rotation.y = ev.dir * (Math.PI / 2);
       const stride = Math.sin(this.animClock * (ev.kind === 'phee_ha' ? 5.2 : 7.0) + idx);
@@ -899,8 +914,8 @@ export class AyutthayaWorld {
     });
 
     this.survivorViews.forEach((sv, idx) => {
-      sv.mesh.visible = sv.alive;
-      if (!sv.alive) return;
+      sv.mesh.visible = !isInside && sv.alive;
+      if (!sv.mesh.visible) return;
       sv.mesh.position.x = sv.x;
       const moveDir = sv.rescued ? 1 : playerX >= sv.x ? 1 : -1;
       sv.mesh.rotation.y = moveDir * (Math.PI / 2);
@@ -926,13 +941,29 @@ export class AyutthayaWorld {
       this.rainSystem.position.y = -((this.animClock * 16) % 3);
     }
 
-    // Smooth camera follow
-    const camX = THREE.MathUtils.clamp(playerX, CH4_MIN_X + 6, CH4_MAX_X - 6);
-    const alpha = 1 - Math.exp(-8.5 * Math.min(dt, 0.05));
-    this.camera.position.x = THREE.MathUtils.lerp(this.camera.position.x, camX, alpha);
-    this.camera.position.y = THREE.MathUtils.lerp(this.camera.position.y, isRowing ? 2.8 : 2.35, alpha);
-    this.camera.position.z = THREE.MathUtils.lerp(this.camera.position.z, this.targetCamZ + (isRowing ? 1.8 : 0), alpha);
-    this.camera.lookAt(this.camera.position.x, this.camera.position.y - 0.15, isRowing ? 2.5 : 0);
+    // Smooth camera follow & crisp room framing inside palaces/temples/halls
+    if (isInside) {
+      const rMeta = CH4_ROOM_META[room as Exclude<Ch4RoomId, 'outside'>];
+      (this.scene.background as THREE.Color).set('#18100c');
+      (this.scene.fog as THREE.FogExp2).density = 0.002;
+      this.hemiLight.intensity = 0.78;
+      this.sunLight.intensity = 0.62;
+      this.sunLight.position.set(this.camera.position.x + 6, 12, 14);
+      this.sunLight.target.position.set(this.camera.position.x, 0, -1);
+      const camX = THREE.MathUtils.clamp(playerX, -(rMeta.halfW - 4.2), rMeta.halfW - 4.2);
+      const alpha = 1 - Math.exp(-8.5 * Math.min(dt, 0.05));
+      this.camera.position.x = THREE.MathUtils.lerp(this.camera.position.x, camX, alpha);
+      this.camera.position.y = THREE.MathUtils.lerp(this.camera.position.y, rMeta.camY, alpha);
+      this.camera.position.z = THREE.MathUtils.lerp(this.camera.position.z, rMeta.camZ * this.zoomFactor, alpha);
+      this.camera.lookAt(this.camera.position.x, rMeta.camY - 0.18, -0.5);
+    } else {
+      const camX = THREE.MathUtils.clamp(playerX, CH4_MIN_X + 6, CH4_MAX_X - 6);
+      const alpha = 1 - Math.exp(-8.5 * Math.min(dt, 0.05));
+      this.camera.position.x = THREE.MathUtils.lerp(this.camera.position.x, camX, alpha);
+      this.camera.position.y = THREE.MathUtils.lerp(this.camera.position.y, isRowing ? 2.8 : 2.35, alpha);
+      this.camera.position.z = THREE.MathUtils.lerp(this.camera.position.z, this.targetCamZ + (isRowing ? 1.8 : 0), alpha);
+      this.camera.lookAt(this.camera.position.x, this.camera.position.y - 0.15, isRowing ? 2.5 : 0);
+    }
     this.renderer.render(this.scene, this.camera);
   }
 

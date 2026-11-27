@@ -149,7 +149,7 @@ function buildOctagonBastion(
  * Wat Chaiwatthanaram 5-Prang Complex, Sanctuary Sala, Mass Grave Pit, Preta & Evacuation Fleet.
  */
 export function buildAyutthayaInnerCity(
-  scene: THREE.Scene,
+  scene: THREE.Object3D,
   brickMat: THREE.Material,
   buildJunkShipFn: (x: number, z: number, title: string, isEvac: boolean) => THREE.Group
 ): AyutthayaInnerHandles {
