@@ -1693,21 +1693,50 @@ export class IsaanWorld {
       this.scene.add(lotusFront);
     });
 
-    // Golden Thai Sri Lanka Bell Chedi (พระเจดีย์สีทองทรงระฆังข้างอุโบสถ at x = +34.4, z = -2.65)
-    this.addBox(this.scene, 2.4, 0.45, 2.4, '#e7e5e4', 34.4, 0.22, -2.65);
-    this.addBox(this.scene, 1.8, 0.45, 1.8, '#f5f0e6', 34.4, 0.68, -2.65);
-    const chediBell = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.45, 0.85, 1.35, 16),
-      new THREE.MeshStandardMaterial({ color: '#eab308', metalness: 0.72, roughness: 0.28 })
-    );
-    chediBell.position.set(34.4, 1.55, -2.65);
-    this.scene.add(chediBell);
-    const chediSpire = new THREE.Mesh(
-      new THREE.ConeGeometry(0.44, 1.75, 12),
-      new THREE.MeshStandardMaterial({ color: '#fde047', metalness: 0.78, roughness: 0.2 })
-    );
-    chediSpire.position.set(34.4, 3.05, -2.65);
-    this.scene.add(chediSpire);
+    // Authentic Multi-Tier Golden Thai Sri Lanka Bell Chedi (พระเจดีย์สีทองทรงลังกา ฐานปัทม์ 3 ชั้น + มาลัยเถา + องค์ระฆังโค้ง + บัลลังก์ + ปล้องไฉน 8 ชั้น!)
+    const cxChedi = 34.4;
+    const czChedi = -2.65;
+    const goldMat = new THREE.MeshStandardMaterial({ color: '#eab308', metalness: 0.72, roughness: 0.25 });
+    const brightGoldMat = new THREE.MeshStandardMaterial({ color: '#fde047', metalness: 0.78, roughness: 0.2 });
+    // 1) 3-Tier stepped white stucco base plinths with golden lotus mouldings
+    this.addBox(this.scene, 2.75, 0.34, 2.75, '#e7e5e4', cxChedi, 0.17, czChedi);
+    this.addBox(this.scene, 2.82, 0.08, 2.82, '#ca8a04', cxChedi, 0.36, czChedi);
+    this.addBox(this.scene, 2.25, 0.32, 2.25, '#f5f0e6', cxChedi, 0.54, czChedi);
+    this.addBox(this.scene, 2.32, 0.08, 2.32, '#eab308', cxChedi, 0.72, czChedi);
+    this.addBox(this.scene, 1.75, 0.28, 1.75, '#fafaf9', cxChedi, 0.88, czChedi);
+    // 2) Triple Malai Thao golden lotus rings (มาลัยเถา 3 ชั้น)
+    [1.06, 1.18, 1.3].forEach((ry, ri) => {
+      const ring = new THREE.Mesh(new THREE.CylinderGeometry(0.84 - ri * 0.06, 0.88 - ri * 0.06, 0.12, 18), goldMat);
+      ring.position.set(cxChedi, ry, czChedi);
+      this.scene.add(ring);
+    });
+    // 3) Curved Sri Lanka Bell Dome (องค์ระฆังคว่ำทรงกลมโค้งมน)
+    const bellDome = new THREE.Mesh(new THREE.SphereGeometry(0.78, 20, 14, 0, Math.PI * 2, 0, Math.PI * 0.58), goldMat);
+    bellDome.scale.set(1.0, 1.25, 1.0);
+    bellDome.position.set(cxChedi, 1.32, czChedi);
+    this.scene.add(bellDome);
+    // 4) Square Harmika Balustrade (บัลลังก์)
+    this.addBox(this.scene, 0.72, 0.24, 0.72, '#ca8a04', cxChedi, 2.36, czChedi);
+    this.addBox(this.scene, 0.78, 0.07, 0.78, '#fde047', cxChedi, 2.5, czChedi);
+    // 5) 8-Ring Plong Chanai Spire (ปล้องไฉน 8 ชั้นเรียงลดหลั่น) + Plee Yod + Crystal Orb!
+    for (let pi = 0; pi < 8; pi++) {
+      const r = 0.3 - pi * 0.028;
+      const ringSpire = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.86, r, 0.13, 14), pi % 2 === 0 ? brightGoldMat : goldMat);
+      ringSpire.position.set(cxChedi, 2.6 + pi * 0.13, czChedi);
+      this.scene.add(ringSpire);
+    }
+    const chediFinial = new THREE.Mesh(new THREE.ConeGeometry(0.09, 0.75, 12), brightGoldMat);
+    chediFinial.position.set(cxChedi, 3.98, czChedi);
+    const chediOrb = new THREE.Mesh(new THREE.SphereGeometry(0.065, 10, 10), new THREE.MeshBasicMaterial({ color: '#fef9c3' }));
+    chediOrb.position.set(cxChedi, 4.38, czChedi);
+    this.scene.add(chediFinial, chediOrb);
+    // Small incense altar & warm gold spotlight illuminating the Chedi
+    this.addBox(this.scene, 0.65, 0.42, 0.35, '#d6d3d1', cxChedi, 0.21, czChedi + 1.55);
+    const chediPot = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.06, 0.1, 10), goldMat);
+    chediPot.position.set(cxChedi, 0.46, czChedi + 1.55);
+    const chediLight = new THREE.PointLight('#fde68a', 3.4, 9, 1.1);
+    chediLight.position.set(cxChedi, 2.6, czChedi + 1.45);
+    this.scene.add(chediPot, chediLight);
 
     // Festive Isaan Tung Flags (ธงตุงอีสาน) flanking temple plaza
     [28.6, 46.2, 49.4].forEach((tx, ti) => {
