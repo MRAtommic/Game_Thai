@@ -667,6 +667,7 @@ export class IsaanWorld {
       })
     );
     m.castShadow = true;
+    m.receiveShadow = false;
     return m;
   }
 
@@ -1647,17 +1648,17 @@ export class IsaanWorld {
     // Warm wooden ceiling beam, wall wainscot & Thai vintage wall calendar
     this.addBox(house, 16.2, 0.14, 0.18, '#593722', 0, 3.3, -1.42);
     this.addBox(house, 16.2, 0.85, 0.06, '#4f311c', 0, 0.42, -1.44);
-    // Teak Kitchen Cupboard (ตู้กับข้าวไม้สัก) + Vintage CRT TV on stand + Standing Fan (left zone x = -6.6 .. -4.8)
-    this.addBox(house, 1.1, 1.85, 0.55, '#6b4226', -6.6, 0.92, -1.15);
-    this.addBox(house, 0.9, 1.2, 0.04, '#cbd5e1', -6.6, 1.15, -0.86); // wire-mesh cupboard doors
-    this.addBox(house, 1.15, 0.65, 0.55, '#4f311c', -5.2, 0.32, -1.15); // TV table
-    this.addBox(house, 0.72, 0.58, 0.45, '#1e293b', -5.2, 0.94, -1.15); // retro CRT TV
-    this.addBox(house, 0.48, 0.4, 0.04, '#38bdf8', -5.2, 0.96, -0.92); // glowing TV screen
-    // Home Buddha Altar Shelf & Family Portrait Frame of Grandma Boonma (หิ้งพระ & รูปย่า x = -3.8)
-    this.addBox(house, 0.95, 0.1, 0.45, '#78350f', -3.8, 2.35, -1.25);
-    this.addBox(house, 0.24, 0.38, 0.2, '#eab308', -3.8, 2.58, -1.25); // golden home Buddha
-    this.addBox(house, 0.65, 0.78, 0.06, '#92400e', -2.9, 2.15, -1.42); // framed family portrait!
-    this.addBox(house, 0.5, 0.62, 0.04, '#fef3c7', -2.9, 2.15, -1.39);
+    // Teak Kitchen Cupboard (moved cleanly right of Exit Door -6.7!) + Vintage CRT TV on stand + Standing Fan
+    this.addBox(house, 1.0, 1.85, 0.55, '#6b4226', -5.3, 0.92, -1.15);
+    this.addBox(house, 0.84, 1.2, 0.04, '#cbd5e1', -5.3, 1.15, -0.86); // wire-mesh cupboard doors
+    this.addBox(house, 1.15, 0.65, 0.55, '#4f311c', -4.05, 0.32, -1.15); // TV table
+    this.addBox(house, 0.72, 0.58, 0.45, '#1e293b', -4.05, 0.94, -1.15); // retro CRT TV
+    this.addBox(house, 0.48, 0.4, 0.04, '#38bdf8', -4.05, 0.96, -0.92); // glowing TV screen
+    // Home Buddha Altar Shelf & Family Portrait Frame of Grandma Boonma (x = -2.8)
+    this.addBox(house, 0.95, 0.1, 0.45, '#78350f', -2.8, 2.35, -1.25);
+    this.addBox(house, 0.24, 0.38, 0.2, '#eab308', -2.8, 2.58, -1.25); // golden home Buddha
+    this.addBox(house, 0.65, 0.78, 0.06, '#92400e', -1.85, 2.15, -1.42); // framed family portrait!
+    this.addBox(house, 0.5, 0.62, 0.04, '#fef3c7', -1.85, 2.15, -1.39);
     // Large woven floor mat + Khantoke dinner tray + Kratib + Bai Sri tray
     const rug = new THREE.Mesh(
       new THREE.PlaneGeometry(3.8, 2.0),

@@ -705,46 +705,86 @@ export function buildExpandedVillageLife(scene: THREE.Scene, awningMat: THREE.Ma
   addPart(schoolSwing, 0.62, 0.06, 0.28, '#92400e', 0, -1.46, 0);
   scene.add(schoolSwing);
 
-  // 00B) Jae Tan's Village Grocery Store + Boonterm Top-up Kiosk (ร้านเจ๊แตน โชห่วย x = -89.5)
-  addPart(scene, 4.8, 2.7, 2.2, '#fef3c7', -89.5, 1.35, -2.25, 0.85);
-  addPart(scene, 5.2, 0.16, 2.7, '#0369a1', -89.5, 2.8, -2.05, 0.55);
+  // 00B) Deep 2.5D Jae Tan's Village Grocery Store + Transparent Drink Chiller + Boonterm Kiosk (x = -89.5)
+  addPart(scene, 5.0, 2.7, 0.16, '#fef3c7', -89.5, 1.35, -3.25, 0.6); // deep bright cream back wall
+  addPart(scene, 5.0, 0.12, 2.2, '#cbd5e1', -89.5, 0.06, -2.2, 0.4); // store terrace floor
+  [-91.85, -87.15].forEach((wx) => addPart(scene, 0.28, 2.75, 2.2, '#fde68a', wx, 1.38, -2.2, 0.75));
+  addPart(scene, 5.4, 0.18, 2.6, '#0369a1', -89.5, 2.8, -2.05, 0.5); // blue corrugated awning roof
   const shopSign = new THREE.Mesh(
-    new THREE.PlaneGeometry(2.6, 0.64),
+    new THREE.PlaneGeometry(3.1, 0.72),
     new THREE.MeshBasicMaterial({ map: makeBannerTex('#0369a1', '#facc15', '#ffffff', 'ร้านเจ๊แตน โชห่วย', 'ถ่านไฟฉาย • ยาดม • น้ำแดง • บุญเติม') })
   );
-  shopSign.position.set(-89.5, 2.45, -0.68);
+  shopSign.position.set(-89.5, 2.52, -0.72);
   scene.add(shopSign);
-  addPart(scene, 2.6, 0.82, 0.68, '#78350f', -89.9, 0.41, -1.05); // shop counter
+  // Illuminated stocked snack shelves + transparent glass drink cooler visible inside the open storefront!
+  addPart(scene, 2.2, 1.75, 0.42, '#78350f', -90.4, 0.92, -2.9, 0.65);
+  ['#ef4444', '#facc15', '#22c55e', '#38bdf8'].forEach((pc, pi) => {
+    addPart(scene, 0.34, 0.28, 0.22, pc, -91.1 + pi * 0.45, 1.45, -2.75, 0.35);
+    addPart(scene, 0.34, 0.26, 0.22, pc, -91.1 + pi * 0.45, 0.95, -2.75, 0.35);
+  });
+  // Transparent glass village drink chiller (-88.4) showing glowing colored drinks inside
+  addPart(scene, 1.25, 1.95, 0.55, '#e2e8f0', -88.4, 1.0, -2.85, 0.3);
+  addPart(scene, 1.05, 1.55, 0.04, '#bae6fd', -88.4, 1.05, -2.6, 0.1);
+  [-88.72, -88.4, -88.08].forEach((dx, di) => {
+    addPart(scene, 0.16, 0.32, 0.16, ['#38bdf8', '#dc2626', '#22c55e'][di], dx, 1.38, -2.45, 0.3);
+    addPart(scene, 0.16, 0.3, 0.16, '#f59e0b', dx, 0.85, -2.45, 0.3);
+  });
+  const sGlassMat = new THREE.MeshStandardMaterial({
+    color: '#bae6fd',
+    transparent: true,
+    opacity: 0.24,
+    roughness: 0.08,
+    depthWrite: false,
+  });
+  const chillerGlass = new THREE.Mesh(new THREE.BoxGeometry(1.1, 1.6, 0.03), sGlassMat);
+  chillerGlass.position.set(-88.4, 1.05, -2.35);
+  scene.add(chillerGlass);
+  // Front hardwood counter + transparent glass sweet jar showcase!
+  addPart(scene, 2.5, 0.85, 0.65, '#78350f', -89.9, 0.42, -1.25);
+  const candyCase = new THREE.Mesh(new THREE.BoxGeometry(1.25, 0.38, 0.42), sGlassMat);
+  candyCase.position.set(-90.1, 1.04, -1.22);
+  scene.add(candyCase);
   ['#ef4444', '#22c55e', '#facc15'].forEach((jc, ji) => {
     const jar = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.11, 0.26, 10), new THREE.MeshStandardMaterial({ color: jc, roughness: 0.3 }));
-    jar.position.set(-90.5 + ji * 0.42, 0.94, -1.02);
+    jar.position.set(-90.5 + ji * 0.4, 0.98, -1.22);
     scene.add(jar);
   });
   // Orange Boonterm top-up machine kiosk at front right of store!
-  addPart(scene, 0.52, 1.55, 0.42, '#ea580c', -87.6, 0.78, -0.92, 0.4);
-  addPart(scene, 0.36, 0.42, 0.06, '#7dd3fc', -87.6, 1.18, -0.7, 0.2);
+  addPart(scene, 0.52, 1.55, 0.42, '#ea580c', -87.4, 0.78, -0.92, 0.4);
+  addPart(scene, 0.36, 0.42, 0.06, '#7dd3fc', -87.4, 1.18, -0.7, 0.2);
   const shopVendor = makeVillagerFigure('#f472b6', '#1e293b');
-  shopVendor.position.set(-89.9, 0, -1.55);
+  shopVendor.position.set(-89.9, 0, -1.9);
   scene.add(shopVendor);
-  const shopLight = new THREE.PointLight('#fde68a', 4.2, 11, 1.1);
-  shopLight.position.set(-89.5, 2.4, -0.2);
-  scene.add(shopLight);
+  const inShopBulb = new THREE.PointLight('#ffffff', 3.6, 8, 1.0);
+  inShopBulb.position.set(-89.5, 2.35, -1.7);
+  const shopLight = new THREE.PointLight('#fde68a', 4.6, 13, 1.05);
+  shopLight.position.set(-89.5, 2.5, 1.45);
+  scene.add(inShopBulb, shopLight);
 
-  // 00C) Ban Thung Health Clinic & Community Hall (อนามัยบ้านทุ่ง x = +96.0)
-  addPart(scene, 5.4, 2.9, 2.3, '#f8fafc', 96.0, 1.45, -2.35, 0.8);
-  addPart(scene, 5.8, 0.18, 2.7, '#0f766e', 96.0, 3.0, -2.25, 0.6);
+  // 00C) Deep 2.5D Ban Thung Health Clinic & Community Hall (อนามัยบ้านทุ่ง x = +96.0) with see-through glass reception!
+  addPart(scene, 5.4, 2.9, 0.18, '#f8fafc', 96.0, 1.45, -3.35, 0.45); // clean clinical back wall
+  addPart(scene, 5.4, 0.12, 2.2, '#e2e8f0', 96.0, 0.06, -2.3, 0.35);
+  [93.45, 98.55].forEach((cx) => addPart(scene, 0.32, 2.9, 2.2, '#f1f5f9', cx, 1.45, -2.3, 0.55));
+  addPart(scene, 5.8, 0.18, 2.7, '#0f766e', 96.0, 3.0, -2.25, 0.55);
+  addPart(scene, 2.4, 0.85, 0.55, '#0f766e', 96.0, 0.44, -2.55, 0.45); // reception desk inside clinic
+  addPart(scene, 1.6, 1.5, 0.35, '#ffffff', 97.4, 0.85, -2.95, 0.35); // glowing medicine cabinet inside
+  const clinicGlass = new THREE.Mesh(new THREE.BoxGeometry(4.6, 2.2, 0.03), sGlassMat);
+  clinicGlass.position.set(96.0, 1.25, -1.25);
+  scene.add(clinicGlass);
   // Red medical cross emblem + Clinic banner
-  addPart(scene, 0.55, 0.16, 0.06, '#dc2626', 96.0, 2.35, -1.16);
-  addPart(scene, 0.16, 0.55, 0.06, '#dc2626', 96.0, 2.35, -1.16);
+  addPart(scene, 0.55, 0.16, 0.06, '#dc2626', 96.0, 2.55, -1.16);
+  addPart(scene, 0.16, 0.55, 0.06, '#dc2626', 96.0, 2.55, -1.16);
   const clinicSign = new THREE.Mesh(
-    new THREE.PlaneGeometry(2.5, 0.58),
+    new THREE.PlaneGeometry(2.6, 0.58),
     new THREE.MeshBasicMaterial({ map: makeBannerTex('#0f766e', '#fef08a', '#ffffff', 'รพ.สต. อนามัยบ้านทุ่ง', 'สมุดเวชระเบียน • ปฐมพยาบาล') })
   );
-  clinicSign.position.set(96.0, 1.72, -1.16);
+  clinicSign.position.set(96.0, 2.02, -1.14);
   scene.add(clinicSign);
-  const clinicLight = new THREE.PointLight('#bae6fd', 4.0, 11, 1.1);
-  clinicLight.position.set(96.0, 2.5, -0.4);
-  scene.add(clinicLight);
+  const inClinicLight = new THREE.PointLight('#ffffff', 3.4, 8, 1.0);
+  inClinicLight.position.set(96.0, 2.45, -1.85);
+  const clinicLight = new THREE.PointLight('#bae6fd', 4.4, 13, 1.05);
+  clinicLight.position.set(96.0, 2.55, 1.45);
+  scene.add(inClinicLight, clinicLight);
 
   // 00D) Wooden Footbridge & Blooming Lotus Pads in Village Pond (+21.8 .. +24.8)
   addPart(scene, 2.4, 0.12, 0.95, '#78502e', 23.2, 0.36, -1.6);

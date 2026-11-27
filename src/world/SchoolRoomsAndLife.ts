@@ -14,6 +14,22 @@ import { buildRealisticCar, buildRealisticMotorcycle, buildRealisticSchoolBus } 
 
 export const CH3_FLOOR_H = 4.2;
 
+function setSpriteFacing(mesh: THREE.Mesh, facing: 1 | -1): void {
+  const uv = mesh.geometry.attributes.uv as THREE.BufferAttribute;
+  if (facing === 1) {
+    uv.setXY(0, 0, 1);
+    uv.setXY(1, 1, 1);
+    uv.setXY(2, 0, 0);
+    uv.setXY(3, 1, 0);
+  } else {
+    uv.setXY(0, 1, 1);
+    uv.setXY(1, 0, 1);
+    uv.setXY(2, 1, 0);
+    uv.setXY(3, 0, 0);
+  }
+  uv.needsUpdate = true;
+}
+
 export interface SchoolLifeRefs {
   flagMesh: THREE.Mesh;
   busGroup: THREE.Group;
@@ -108,7 +124,7 @@ export function buildSchoolRooms(
       })
     );
     m.position.set(x, y + 0.96, z);
-    m.scale.x = facing;
+    setSpriteFacing(m, facing);
     parent.add(m);
     const sh = new THREE.Mesh(
       new THREE.PlaneGeometry(0.95, 0.42),
@@ -219,7 +235,9 @@ export function buildSchoolRooms(
 
   // 5) HAUNTED THAI MUSIC ROOM
   const mr = makeShell('music_room', 16.4, darkWall, '#451a03', '#ffb380', 2.4);
-  [-7.2, 7.2].forEach((cx) => addBox(mr, 1.6, 4.1, 0.6, '#7f1d1d', cx, 2.05, -1.35));
+  // Narrow theater wing curtains strictly clear of the Music Room exit door (-7.05)!
+  addBox(mr, 0.72, 4.1, 0.6, '#7f1d1d', -7.85, 2.05, -1.35);
+  addBox(mr, 1.6, 4.1, 0.6, '#7f1d1d', 7.2, 2.05, -1.35);
   addBox(mr, 16.2, 0.55, 0.55, '#991b1b', 0, 3.9, -1.25);
   addBox(mr, 8.8, 0.34, 2.8, '#5c2c16', 2.6, 0.17, -0.45, 0.45);
   addBox(mr, 1.6, 1.05, 0.85, '#92400e', 5.4, 0.86, -0.95);
@@ -303,7 +321,7 @@ export function buildCampusGroundProps(
       })
     );
     m.position.set(x, y + 0.96, z);
-    m.scale.x = facing;
+    setSpriteFacing(m, facing);
     exteriorGroup.add(m);
     const sh = new THREE.Mesh(
       new THREE.PlaneGeometry(0.95, 0.42),
@@ -499,24 +517,40 @@ export function buildCampusGroundProps(
     addBox(exteriorGroup, 0.22, 3.8, 0.22, '#f8fafc', px, 1.9, 2.3);
     addBox(exteriorGroup, 0.22, 3.8, 0.22, '#f8fafc', px, 1.9, -2.5);
   });
-  // Food stalls + Soup pots + Co-op Sign!
+  // Food stalls + Transparent Glass Curry/Noodle Showcases + Glass Drink Chiller + Coop Vendors!
   addBox(exteriorGroup, 15.2, 1.1, 0.9, '#fef9c3', 50, 0.55, -2.1);
-  [44.5, 45.8, 51.0, 52.2].forEach((px) => {
+  const coopGlass = new THREE.Mesh(
+    new THREE.BoxGeometry(6.8, 0.62, 0.04),
+    new THREE.MeshStandardMaterial({ color: '#bae6fd', transparent: true, opacity: 0.24, roughness: 0.08, depthWrite: false })
+  );
+  coopGlass.position.set(49.2, 1.42, -1.65);
+  exteriorGroup.add(coopGlass);
+  // Visible thai curry trays & stainless noodle pots inside glass canteen counter!
+  [44.4, 45.8, 51.0, 52.2].forEach((px, pi) => {
     const pot = new THREE.Mesh(
       new THREE.CylinderGeometry(0.24, 0.22, 0.32, 12),
       new THREE.MeshStandardMaterial({ color: '#cbd5e1', metalness: 0.7, roughness: 0.25 })
     );
     pot.position.set(px, 1.25, -2.0);
     exteriorGroup.add(pot);
+    addBox(exteriorGroup, 0.42, 0.08, 0.32, ['#65a30d', '#ea580c', '#facc15', '#b91c1c'][pi], px + 0.55, 1.14, -1.96, 0.3);
   });
+  // Transparent glass beverage fridge on right wing (+55.8) inside canteen
+  addBox(exteriorGroup, 1.4, 2.25, 0.65, '#e2e8f0', 55.8, 1.12, -2.15, 0.3);
+  addBox(exteriorGroup, 1.2, 1.8, 0.04, '#bae6fd', 55.8, 1.18, -1.85);
+  [55.4, 55.8, 56.2].forEach((dx, di) => {
+    addBox(exteriorGroup, 0.16, 0.34, 0.16, ['#38bdf8', '#22c55e', '#ef4444'][di], dx, 1.48, -1.78, 0.3);
+    addBox(exteriorGroup, 0.16, 0.32, 0.16, '#f59e0b', dx, 0.92, -1.78, 0.3);
+  });
+  makeNpc('vendor_coop', 48.2, 0.12, -2.65, 1);
   const coopSign = new THREE.Mesh(
     new THREE.PlaneGeometry(7.2, 1.1),
     new THREE.MeshBasicMaterial({ map: createSchoolSignTexture('โรงอาหาร & สหกรณ์โรงเรียน', 'ก๋วยเตี๋ยว • ข้าวแกง • น้ำปั่น • ถ่านไฟฉาย', '#b45309', '#78350f', '#fef08a') })
   );
   coopSign.position.set(50, 3.25, 2.68);
   exteriorGroup.add(coopSign);
-  const coopLight = new THREE.PointLight('#fde68a', 6.5, 18, 1.0);
-  coopLight.position.set(50, 3.3, 0.8);
+  const coopLight = new THREE.PointLight('#fde68a', 6.8, 20, 0.95);
+  coopLight.position.set(50, 3.3, 1.65);
   exteriorGroup.add(coopLight);
 
   // Canteen wooden dining tables & benches with seated eating students & food plates!
@@ -959,7 +993,7 @@ export function animateSchoolLife(
         const jY = isHandler ? shooterJump : isDefender ? defenderJump : 0;
         const playerZ = isHandler ? 0.15 : isDefender ? 0.28 : idx === 0 ? -0.75 : 0.95;
         bp.mesh.position.set(targetX, 0.96 + jY, playerZ);
-        bp.mesh.scale.x = isHandler ? dir : isDefender ? -dir : targetX < ballX ? 1 : -1;
+        setSpriteFacing(bp.mesh, (isHandler ? dir : isDefender ? -dir : targetX < ballX ? 1 : -1) as 1 | -1);
         const running = p < 0.45 && (isHandler || isDefender || Math.abs(Math.cos(clock * 1.1 + bp.phase)) > 0.35);
         (bp.mesh.material as THREE.MeshStandardMaterial).map = charFrames[idx === 2 ? 'student_girl' : 'student_boy'][
           running ? Math.floor(clock * 8) % 4 : 0
@@ -977,7 +1011,7 @@ export function animateSchoolLife(
       if (st.x >= st.maxX) st.dir = -1;
       if (st.x <= st.minX) st.dir = 1;
       st.mesh.position.set(st.x, 0.96, st.z);
-      st.mesh.scale.x = st.dir;
+      setSpriteFacing(st.mesh, st.dir);
       (st.mesh.material as THREE.MeshStandardMaterial).map = charFrames[st.kind][Math.floor(clock * 6) % 4];
     });
 

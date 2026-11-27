@@ -2103,47 +2103,151 @@ export class DormWorld {
     this.addBox(seven, 12.0, 0.2, 0.05, '#f97316', 0, 3.42, -1.43);
     this.addBox(seven, 12.0, 0.18, 0.05, '#16a34a', 0, 3.22, -1.43);
     this.addBox(seven, 12.0, 0.14, 0.05, '#ef4444', 0, 3.05, -1.43);
-    // Snack rack island placed neatly clear of Exit Door (-4.6 .. -3.89)
-    this.addBox(seven, 0.95, 1.45, 0.65, '#f8fafc', -2.95, 0.72, -1.1);
-    [-3.25, -2.95, -2.65].forEach((sx, si) => {
-      this.addBox(seven, 0.2, 0.32, 0.18, ['#ef4444', '#f59e0b', '#22c55e'][si], sx, 1.15, -0.82);
-      this.addBox(seven, 0.2, 0.3, 0.18, ['#ec4899', '#3b82f6', '#eab308'][si], sx, 0.65, -0.82);
+    // 1) Open-Front 3-Tier Recessed Snack & Cup-Noodle Rack (clear of Exit Door -4.6)
+    const rackX = -2.95;
+    this.addBox(seven, 0.96, 1.58, 0.04, '#475569', rackX, 0.82, -1.38, 0.65); // dark perforated steel back
+    [-3.43, -2.47].forEach((rx) => this.addBox(seven, 0.05, 1.58, 0.56, '#cbd5e1', rx, 0.82, -1.12, 0.4));
+    [0.32, 0.78, 1.24, 1.58].forEach((sy, si) => {
+      this.addBox(seven, 0.94, 0.04, 0.54, '#f8fafc', rackX, sy, -1.12, 0.35);
+      if (si < 3) this.addBox(seven, 0.94, 0.04, 0.03, si % 2 === 0 ? '#16a34a' : '#f97316', rackX, sy, -0.84);
     });
-    // Illuminated Drink Chiller Fridge (x = -1.2) with transparent glass door!
-    this.addBox(seven, 2.1, 2.45, 0.65, '#e2e8f0', -1.2, 1.22, -1.15);
-    this.addBox(seven, 1.9, 2.0, 0.04, '#bae6fd', -1.2, 1.25, -0.86);
+    // Real 3D puffed snack bags (top), tapered cup noodles (mid), and cereal/cracker boxes (bottom)
+    [-3.22, -2.95, -2.68].forEach((sx, si) => {
+      const bag = new THREE.Mesh(
+        new THREE.BoxGeometry(0.18, 0.25, 0.09),
+        new THREE.MeshStandardMaterial({ color: ['#ef4444', '#facc15', '#22c55e'][si], roughness: 0.35 })
+      );
+      bag.position.set(sx, 1.4, -1.04);
+      bag.rotation.x = -0.18;
+      seven.add(bag);
+      const cup = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.085, 0.065, 0.16, 12),
+        new THREE.MeshStandardMaterial({ color: ['#f97316', '#dc2626', '#fde047'][si], roughness: 0.3 })
+      );
+      cup.position.set(sx, 0.88, -1.02);
+      seven.add(cup);
+      const lid = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.088, 0.088, 0.015, 12),
+        new THREE.MeshStandardMaterial({ color: '#ffffff', roughness: 0.25 })
+      );
+      lid.position.set(sx, 0.96, -1.02);
+      seven.add(lid);
+      this.addBox(seven, 0.19, 0.26, 0.14, ['#ec4899', '#3b82f6', '#eab308'][si], sx, 0.48, -1.04, 0.4);
+    });
+
+    // Helper: realistic cylindrical PET bottle / long-neck bottle + neck + screw cap + paper label!
+    const addShelfBottle = (bx: number, by: number, bz: number, bodyCol: string, labelCol: string, tall = false) => {
+      const h = tall ? 0.26 : 0.2;
+      const r = tall ? 0.052 : 0.048;
+      const body = new THREE.Mesh(
+        new THREE.CylinderGeometry(r, r, h, 10),
+        new THREE.MeshStandardMaterial({ color: bodyCol, roughness: 0.2, metalness: 0.08 })
+      );
+      body.position.set(bx, by + h / 2, bz);
+      const neck = new THREE.Mesh(
+        new THREE.CylinderGeometry(r * 0.42, r * 0.92, 0.06, 10),
+        new THREE.MeshStandardMaterial({ color: bodyCol, roughness: 0.2 })
+      );
+      neck.position.set(bx, by + h + 0.03, bz);
+      const cap = new THREE.Mesh(
+        new THREE.CylinderGeometry(r * 0.46, r * 0.46, 0.025, 10),
+        new THREE.MeshStandardMaterial({ color: labelCol, roughness: 0.3 })
+      );
+      cap.position.set(bx, by + h + 0.07, bz);
+      const label = new THREE.Mesh(
+        new THREE.CylinderGeometry(r + 0.003, r + 0.003, h * 0.48, 10),
+        new THREE.MeshStandardMaterial({ color: labelCol, roughness: 0.35 })
+      );
+      label.position.set(bx, by + h * 0.52, bz);
+      seven.add(body, neck, cap, label);
+    };
+
+    // 2) Deep Recessed 2-Door Illuminated Drink Chiller Cooler (x = -1.2)
+    this.addBox(seven, 2.18, 2.45, 0.06, '#e0f2fe', -1.2, 1.24, -1.42, 0.25); // glowing chilled interior back
+    [-2.27, -0.13].forEach((cx) => this.addBox(seven, 0.08, 2.45, 0.68, '#334155', cx, 1.24, -1.1, 0.4)); // side frames
+    this.addBox(seven, 2.22, 0.22, 0.72, '#0f172a', -1.2, 2.38, -1.08, 0.35); // top chiller fascia
+    this.addBox(seven, 2.18, 0.14, 0.68, '#1e293b', -1.2, 0.08, -1.1, 0.5); // bottom plinth
+    this.addBox(seven, 0.07, 2.15, 0.08, '#1e293b', -1.2, 1.2, -0.76, 0.35); // center double-door mullion
+    [-1.34, -1.06].forEach((hx) => this.addBox(seven, 0.025, 0.55, 0.05, '#cbd5e1', hx, 1.22, -0.7, 0.2)); // chrome handles
+    const coolerLight = new THREE.PointLight('#e0f2fe', 2.4, 4.5, 1.0);
+    coolerLight.position.set(-1.2, 2.1, -0.95);
+    seven.add(coolerLight);
+    [0.52, 1.08, 1.62].forEach((sy, si) => {
+      this.addBox(seven, 2.06, 0.03, 0.54, '#cbd5e1', -1.2, sy, -1.12, 0.3);
+      const bodyPalette = ['#38bdf8', '#dc2626', '#22c55e', '#f59e0b', '#7c3aed', '#ec4899'];
+      const labelPalette = ['#ffffff', '#fef08a', '#dcfce7', '#ffedd5', '#ede9fe', '#fce7f3'];
+      [-2.02, -1.72, -1.44, -0.96, -0.68, -0.4].forEach((bx, bi) => {
+        const cIdx = (bi + si) % bodyPalette.length;
+        addShelfBottle(bx, sy + 0.02, -0.98, bodyPalette[cIdx], labelPalette[cIdx], si === 2);
+        addShelfBottle(bx + 0.06, sy + 0.02, -1.2, bodyPalette[(cIdx + 2) % 6], '#ffffff', false); // back row parallax depth!
+      });
+    });
     const chGlass = new THREE.Mesh(
-      new THREE.BoxGeometry(1.94, 2.04, 0.03),
-      new THREE.MeshStandardMaterial({ color: '#e0f2fe', transparent: true, opacity: 0.26, roughness: 0.08, depthWrite: false })
+      new THREE.BoxGeometry(2.12, 2.1, 0.03),
+      new THREE.MeshStandardMaterial({ color: '#e0f2fe', transparent: true, opacity: 0.22, roughness: 0.08, depthWrite: false })
     );
-    chGlass.position.set(-1.2, 1.25, -0.58);
+    chGlass.position.set(-1.2, 1.2, -0.74);
     seven.add(chGlass);
-    // Colored drinks & snacks stocked inside chiller/rack!
-    [-1.9, -1.55, -1.2, -0.85, -0.5].forEach((dx, di) => {
-      const cols = ['#38bdf8', '#dc2626', '#f59e0b', '#22c55e', '#7c3aed'];
-      this.addBox(seven, 0.18, 0.36, 0.16, cols[di], dx, 1.68, -0.72);
-      this.addBox(seven, 0.2, 0.32, 0.16, '#fb923c', dx, 1.05, -0.72);
+
+    // 3) Deep Recessed Liquor & Ready-Meal Display Cabinet (x = +0.85)
+    this.addBox(seven, 1.65, 2.45, 0.06, '#fef3c7', 0.85, 1.24, -1.42, 0.35);
+    [0.05, 1.65].forEach((cx) => this.addBox(seven, 0.08, 2.45, 0.68, '#334155', cx, 1.24, -1.1, 0.4));
+    this.addBox(seven, 1.68, 0.22, 0.72, '#1e293b', 0.85, 2.38, -1.08, 0.4);
+    this.addBox(seven, 1.65, 0.14, 0.68, '#1e293b', 0.85, 0.08, -1.1, 0.5);
+    [0.52, 1.08, 1.62].forEach((sy, si) => {
+      this.addBox(seven, 1.54, 0.03, 0.54, '#cbd5e1', 0.85, sy, -1.12, 0.3);
+      if (si >= 1) {
+        [0.32, 0.58, 0.85, 1.12, 1.38].forEach((lx, li) => {
+          addShelfBottle(lx, sy + 0.02, -1.0, li % 2 === 0 ? '#14532d' : '#78350f', '#facc15', true);
+          addShelfBottle(lx + 0.05, sy + 0.02, -1.22, '#0f172a', '#cbd5e1', true);
+        });
+      } else {
+        // Ready-to-eat Bento trays on bottom tier
+        [0.45, 0.85, 1.25].forEach((bx, bi) => {
+          this.addBox(seven, 0.28, 0.08, 0.24, '#18181b', bx, sy + 0.06, -1.02, 0.4);
+          this.addBox(seven, 0.24, 0.05, 0.2, ['#facc15', '#fb923c', '#ef4444'][bi], bx, sy + 0.11, -1.02, 0.4);
+        });
+      }
     });
-    // Liquor & Bento/Ready-Meal Cabinet (x = +0.8) with transparent glass door!
-    this.addBox(seven, 1.75, 2.45, 0.65, '#f8fafc', 0.85, 1.22, -1.15);
-    this.addBox(seven, 1.55, 1.92, 0.04, '#fef9c3', 0.85, 1.25, -0.86);
     const cabGlass = new THREE.Mesh(
-      new THREE.BoxGeometry(1.58, 1.96, 0.03),
-      new THREE.MeshStandardMaterial({ color: '#fef9c3', transparent: true, opacity: 0.24, roughness: 0.08, depthWrite: false })
+      new THREE.BoxGeometry(1.56, 2.1, 0.03),
+      new THREE.MeshStandardMaterial({ color: '#fef9c3', transparent: true, opacity: 0.2, roughness: 0.08, depthWrite: false })
     );
-    cabGlass.position.set(0.85, 1.25, -0.58);
+    cabGlass.position.set(0.85, 1.2, -0.74);
     seven.add(cabGlass);
-    [0.35, 0.68, 1.0, 1.32].forEach((lx, li) => {
-      this.addBox(seven, 0.16, 0.42, 0.14, li % 2 === 0 ? '#16a34a' : '#b45309', lx, 1.7, -0.72);
-      this.addBox(seven, 0.16, 0.38, 0.14, '#eab308', lx, 1.08, -0.72);
-    });
-    // Bright Checkout Counter + Steamed Bun Warmer (ตู้ซาลาเปา) + Slurpee + Clerk NPC (x = +3.2)
+
+    // 4) Checkout Counter + Glass Steamed Bun Warmer (ตู้ซาลาเปาเห็นลูกข้างใน!) + Slurpee + Clerk NPC
     this.addBox(seven, 2.7, 1.02, 0.9, '#ffffff', 3.25, 0.51, -0.65);
     this.addBox(seven, 2.75, 0.12, 0.96, '#16a34a', 3.25, 1.04, -0.65);
-    this.addBox(seven, 0.44, 0.5, 0.38, '#fef08a', 2.25, 1.34, -0.58); // glowing steamed bun warmer!
-    this.addBox(seven, 0.52, 0.42, 0.35, '#0f172a', 2.85, 1.28, -0.58); // POS monitor
-    this.addBox(seven, 0.46, 0.32, 0.05, '#38bdf8', 2.85, 1.28, -0.4);
-    this.addBox(seven, 0.46, 0.62, 0.42, '#ef4444', 4.15, 1.38, -0.72); // Slurpee dispenser!
+    this.addBox(seven, 0.48, 0.08, 0.4, '#cbd5e1', 2.25, 1.14, -0.58, 0.3);
+    this.addBox(seven, 0.48, 0.06, 0.4, '#dc2626', 2.25, 1.58, -0.58, 0.4);
+    const bunGlass = new THREE.Mesh(
+      new THREE.BoxGeometry(0.46, 0.4, 0.36),
+      new THREE.MeshStandardMaterial({ color: '#fef9c3', transparent: true, opacity: 0.28, roughness: 0.08, depthWrite: false })
+    );
+    bunGlass.position.set(2.25, 1.38, -0.58);
+    seven.add(bunGlass);
+    // 4 fluffy white steamed buns (ซาลาเปา) & shumai inside glass steamer!
+    [2.16, 2.34].forEach((bx) => {
+      [1.24, 1.42].forEach((by) => {
+        const bun = new THREE.Mesh(new THREE.SphereGeometry(0.055, 8, 8), new THREE.MeshStandardMaterial({ color: '#fffbeb', roughness: 0.7 }));
+        bun.scale.set(1.1, 0.78, 1.1);
+        bun.position.set(bx, by, -0.58);
+        seven.add(bun);
+      });
+    });
+    this.addBox(seven, 0.52, 0.42, 0.35, '#0f172a', 2.95, 1.28, -0.58); // POS monitor
+    this.addBox(seven, 0.46, 0.32, 0.05, '#38bdf8', 2.95, 1.28, -0.4);
+    // 2-flavor Slurpee Machine with translucent dome lids!
+    this.addBox(seven, 0.54, 0.52, 0.42, '#cbd5e1', 4.18, 1.34, -0.72, 0.3);
+    [4.04, 4.32].forEach((sx, si) => {
+      const dome = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.11, 0.11, 0.26, 12),
+        new THREE.MeshStandardMaterial({ color: si === 0 ? '#ef4444' : '#38bdf8', roughness: 0.15, transparent: true, opacity: 0.85 })
+      );
+      dome.position.set(sx, 1.72, -0.72);
+      seven.add(dome);
+    });
     const storeClerk = this.makeLitCharacter(this.charFrames.clerk[0], 1.48, 2.2);
     storeClerk.position.set(3.4, 1.02, -1.05);
     seven.add(storeClerk);
@@ -2436,8 +2540,8 @@ export class DormWorld {
     const camTargetX = isInsideRoom
       ? THREE.MathUtils.clamp(playerX, currentRoom === 'rooftop' ? -3.0 : -1.2, currentRoom === 'rooftop' ? 3.0 : 1.2)
       : playerFloor === 0
-      ? THREE.MathUtils.clamp(playerX, -122.0, 38.0)
-      : THREE.MathUtils.clamp(playerX, -7.8, 7.8);
+        ? THREE.MathUtils.clamp(playerX, -122.0, 38.0)
+        : THREE.MathUtils.clamp(playerX, -7.8, 7.8);
     const camTargetY = (isInsideRoom ? 0 : playerFloor * FLOOR_HEIGHT) + 2.05;
 
     this.renderer.toneMappingExposure = sanity < 40 ? 0.94 : 1.1;

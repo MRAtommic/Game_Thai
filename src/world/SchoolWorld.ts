@@ -168,6 +168,7 @@ export class SchoolWorld {
       new THREE.PlaneGeometry(1.42, 2.02),
       new THREE.MeshStandardMaterial({ map: this.charFrames.peem[0], transparent: true, alphaTest: 0.35, side: THREE.DoubleSide })
     );
+    this.playerMesh.receiveShadow = false;
     this.playerShadow = new THREE.Mesh(
       new THREE.PlaneGeometry(0.95, 0.42),
       new THREE.MeshBasicMaterial({ map: shadowTex, transparent: true, opacity: 0.48, depthWrite: false })
@@ -329,13 +330,15 @@ export class SchoolWorld {
       const shopBulb = new THREE.PointLight('#fde68a', 5.2, 12, 1.0);
       shopBulb.position.set(sh.x, 2.45, frontZ + 1.1);
       this.exteriorGroup.add(shopBulb);
-      // Clear see-through glass display counter front on shopfront
+      // Clear see-through glass display counter front & glowing showcase interior inside every shophouse!
       const sGlass = new THREE.Mesh(
-        new THREE.BoxGeometry(3.45, 0.52, 0.03),
+        new THREE.BoxGeometry(3.45, 0.58, 0.03),
         new THREE.MeshStandardMaterial({ color: '#bae6fd', transparent: true, opacity: 0.24, roughness: 0.08, depthWrite: false })
       );
-      sGlass.position.set(sh.x + 0.4, 1.32, frontZ - 0.35);
-      this.exteriorGroup.add(sGlass);
+      sGlass.position.set(sh.x + 0.4, 1.34, frontZ - 0.35);
+      const inShopLight = new THREE.PointLight('#fffbeb', 3.4, 7.5, 1.0);
+      inShopLight.position.set(sh.x, 2.35, frontZ - 0.9);
+      this.exteriorGroup.add(sGlass, inShopLight);
 
       const staffMesh = new THREE.Mesh(
         new THREE.PlaneGeometry(1.36, 1.94),

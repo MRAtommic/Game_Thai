@@ -237,7 +237,7 @@ export function buildRealisticCar(opts: CarOptions): CarBuildResult {
       addMesh(grp, new THREE.BoxGeometry(1.18, 0.54, 1.5), '#7f1d1d', 1.22, 0.54, 0, 0.32, 0.28); // maroon hood
       addMesh(grp, new THREE.BoxGeometry(1.52, 0.56, 1.52), '#f8fafc', -0.02, 0.55, 0, 0.25, 0.2); // white patrol doors
       addMesh(grp, new THREE.BoxGeometry(0.92, 0.56, 1.5), '#7f1d1d', -1.24, 0.55, 0, 0.32, 0.28); // maroon trunk
-      addMesh(grp, new THREE.BoxGeometry(3.54, 0.055, 1.54), '#eab308', 0, 0.62, 0, 0.25); // gold police stripe
+      addMesh(grp, new THREE.BoxGeometry(3.54, 0.05, 1.54), '#eab308', 0, 0.77, 0, 0.25); // upper gold patrol pin-stripe above door emblem
     } else {
       addMesh(grp, new THREE.BoxGeometry(3.56, 0.54, 1.5), bodyCol, 0, 0.54, 0, 0.3, 0.28);
     }
@@ -252,11 +252,11 @@ export function buildRealisticCar(opts: CarOptions): CarBuildResult {
     windR.rotation.z = 0.62;
   }
 
-  // Side wing mirrors & metallic door handles
+  // Side wing mirrors & metallic door handles (positioned cleanly at beltline y = 0.72 clear of door decals!)
   [-0.78, 0.78].forEach((mz) => {
     addMesh(grp, new THREE.BoxGeometry(0.14, 0.1, 0.12), bodyCol, 0.62, 0.85, mz, 0.35);
-    addMesh(grp, new THREE.BoxGeometry(0.18, 0.04, 0.05), '#cbd5e1', 0.18, 0.68, mz * 0.98, 0.3, 0.7);
-    addMesh(grp, new THREE.BoxGeometry(0.18, 0.04, 0.05), '#cbd5e1', -0.45, 0.68, mz * 0.98, 0.3, 0.7);
+    addMesh(grp, new THREE.BoxGeometry(0.18, 0.04, 0.05), '#cbd5e1', 0.18, 0.72, mz * 0.98, 0.3, 0.7);
+    addMesh(grp, new THREE.BoxGeometry(0.18, 0.04, 0.05), '#cbd5e1', -0.45, 0.72, mz * 0.98, 0.3, 0.7);
   });
 
   // Glowing dual headlights + red brake taillights
@@ -274,27 +274,29 @@ export function buildRealisticCar(opts: CarOptions): CarBuildResult {
   }
 
   if (variant === 'police') {
-    // Crisp Thai Police 191 door crest & roof siren lightbar
+    // Crisp Thai Police 191 door crest & roof siren lightbar (counter-scaled for facing so text NEVER mirrors!)
     const pCard = document.createElement('canvas');
     pCard.width = 256;
-    pCard.height = 96;
+    pCard.height = 88;
     const pCtx = pCard.getContext('2d')!;
     pCtx.fillStyle = '#ffffff';
-    pCtx.fillRect(0, 0, 256, 96);
+    pCtx.fillRect(0, 0, 256, 88);
     pCtx.fillStyle = '#7f1d1d';
-    pCtx.fillRect(0, 74, 256, 22);
+    pCtx.fillRect(0, 68, 256, 20);
     pCtx.fillStyle = '#1e293b';
     pCtx.font = 'bold 26px "IBM Plex Sans Thai", sans-serif';
     pCtx.textAlign = 'center';
-    pCtx.fillText('POLICE 191', 128, 36);
+    pCtx.fillText('POLICE 191', 128, 32);
     pCtx.fillStyle = '#b91c1c';
     pCtx.font = 'bold 20px "IBM Plex Sans Thai", sans-serif';
-    pCtx.fillText('ตำรวจสายตรวจ', 128, 64);
+    pCtx.fillText('ตำรวจสายตรวจ', 128, 59);
     const doorMat = new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(pCard) });
-    [-0.77, 0.77].forEach((dz) => {
-      const decal = new THREE.Mesh(new THREE.PlaneGeometry(1.32, 0.48), doorMat);
-      decal.position.set(-0.02, 0.56, dz);
+    [-0.78, 0.78].forEach((dz) => {
+      const decal = new THREE.Mesh(new THREE.PlaneGeometry(1.24, 0.34), doorMat);
+      decal.position.set(-0.02, 0.49, dz);
       if (dz < 0) decal.rotation.y = Math.PI;
+      // Compensate parent group's scale.x = facing so text reads cleanly left-to-right!
+      decal.scale.x = facing;
       grp.add(decal);
     });
     addMesh(grp, new THREE.BoxGeometry(0.28, 0.08, 1.02), '#1e293b', -0.08, 1.31, 0, 0.5);
