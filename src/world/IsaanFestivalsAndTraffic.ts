@@ -66,68 +66,63 @@ function makeWheel(radius: number, width: number): THREE.Group {
 
 let villagerSeedCounter = 0;
 
-function paintVillagerFaceTex(seed: number, skinHex: string, hasGlasses: boolean, hasStache: boolean, rosyCheeks: boolean): THREE.CanvasTexture {
-  const c = document.createElement('canvas');
-  c.width = 64;
-  c.height = 64;
-  const ctx = c.getContext('2d')!;
-  ctx.fillStyle = skinHex;
-  ctx.fillRect(0, 0, 64, 64);
+function attach3DFace(
+  g: THREE.Group,
+  headY: number,
+  radius: number,
+  seed: number,
+  hasGlasses: boolean,
+  hasStache: boolean,
+  rosyCheeks: boolean
+): void {
+  const zFront = radius * 0.92;
+  const eyeMat = new THREE.MeshBasicMaterial({ color: '#0f172a' });
+  const browMat = new THREE.MeshBasicMaterial({ color: '#18181b' });
+  const browTilt = ((seed % 3) - 1) * 0.08;
 
-  // Subtle shading & rosy cheeks
-  if (rosyCheeks) {
-    ctx.fillStyle = 'rgba(244, 114, 182, 0.36)';
-    ctx.beginPath();
-    ctx.arc(19, 39, 5, 0, Math.PI * 2);
-    ctx.arc(45, 39, 5, 0, Math.PI * 2);
-    ctx.fill();
-  }
-  // Eyebrows (varied expressions)
-  ctx.fillStyle = '#18181b';
-  const browTilt = (seed % 3) - 1;
-  ctx.fillRect(17, 22 + browTilt, 9, 2.5);
-  ctx.fillRect(38, 22 - browTilt, 9, 2.5);
-  // Expressive eyes with white glint
-  ctx.fillStyle = '#0f172a';
-  ctx.beginPath();
-  ctx.arc(22, 30, 3.2, 0, Math.PI * 2);
-  ctx.arc(42, 30, 3.2, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = '#ffffff';
-  ctx.fillRect(20, 28, 2, 2);
-  ctx.fillRect(40, 28, 2, 2);
+  [-0.052, 0.052].forEach((ex, idx) => {
+    const eye = new THREE.Mesh(new THREE.SphereGeometry(0.018, 8, 8), eyeMat);
+    eye.position.set(ex, headY + 0.018, zFront + 0.008);
+    g.add(eye);
+
+    const brow = new THREE.Mesh(new THREE.BoxGeometry(0.044, 0.012, 0.015), browMat);
+    brow.position.set(ex, headY + 0.05, zFront + 0.004);
+    brow.rotation.z = idx === 0 ? browTilt : -browTilt;
+    g.add(brow);
+
+    if (rosyCheeks) {
+      const cheek = new THREE.Mesh(
+        new THREE.SphereGeometry(0.022, 8, 6),
+        new THREE.MeshBasicMaterial({ color: '#f472b6' })
+      );
+      cheek.scale.set(1.1, 0.7, 0.4);
+      cheek.position.set(ex * 1.45, headY - 0.022, zFront);
+      g.add(cheek);
+    }
+
+    if (hasGlasses) {
+      const rim = new THREE.Mesh(
+        new THREE.TorusGeometry(0.028, 0.005, 6, 12),
+        new THREE.MeshStandardMaterial({ color: '#1e293b', roughness: 0.3 })
+      );
+      rim.position.set(ex, headY + 0.018, zFront + 0.018);
+      g.add(rim);
+    }
+  });
 
   if (hasGlasses) {
-    ctx.strokeStyle = '#1e293b';
-    ctx.lineWidth = 2;
-    ctx.strokeRect(15, 25, 13, 10);
-    ctx.strokeRect(36, 25, 13, 10);
-    ctx.beginPath();
-    ctx.moveTo(28, 30);
-    ctx.lineTo(36, 30);
-    ctx.stroke();
+    addPart(g, 0.045, 0.008, 0.008, '#1e293b', 0, headY + 0.02, zFront + 0.018);
   }
-  // Nose & Mustache / Smile
-  ctx.fillStyle = 'rgba(0,0,0,0.18)';
-  ctx.fillRect(30.5, 34, 3, 5);
   if (hasStache) {
-    ctx.fillStyle = '#18181b';
-    ctx.fillRect(24, 42, 16, 3);
+    addPart(g, 0.068, 0.016, 0.018, '#18181b', 0, headY - 0.036, zFront + 0.01);
   }
-  ctx.strokeStyle = rosyCheeks ? '#be123c' : '#451a03';
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  if (seed % 2 === 0) {
-    ctx.arc(32, 44, 6, 0.15, Math.PI - 0.15);
-  } else {
-    ctx.moveTo(26, 46);
-    ctx.lineTo(38, 45);
-  }
-  ctx.stroke();
-
-  const tex = new THREE.CanvasTexture(c);
-  tex.colorSpace = THREE.SRGBColorSpace;
-  return tex;
+  // Mouth (subtle smile or calm expression)
+  const mouth = new THREE.Mesh(
+    new THREE.BoxGeometry(0.046, 0.012, 0.014),
+    new THREE.MeshBasicMaterial({ color: rosyCheeks ? '#be123c' : '#451a03' })
+  );
+  mouth.position.set(0, headY - 0.055, zFront + 0.006);
+  g.add(mouth);
 }
 
 function makeVillagerFigure(shirtCol: string, pantsCol: string, hatCol?: string, bottleCol?: string): THREE.Group {
@@ -152,16 +147,21 @@ function makeVillagerFigure(shirtCol: string, pantsCol: string, hatCol?: string,
   rightLeg.name = 'legR';
   g.add(leftLeg, rightLeg);
 
-  // Sculpted torso + neck + optional Isaan Pha Khao Ma sash across chest
+  // Sculpted torso + neck + clean collar/belt (zero z-fighting!)
   const torso = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.16, 0.18, 0.64, 10),
+    new THREE.CylinderGeometry(0.16, 0.18, 0.64, 12),
     new THREE.MeshStandardMaterial({ color: shirtCol, roughness: 0.72 })
   );
   torso.position.set(0, 0.84, 0);
   g.add(torso);
   if (seed % 3 === 0 && shirtCol !== '#ffffff') {
-    const sash = addPart(g, 0.08, 0.56, 0.26, '#dc2626', 0.02, 0.86, 0.02);
-    sash.rotation.z = 0.42;
+    // Traditional Isaan Pha Khao Ma waist belt around cylinder torso
+    const belt = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.184, 0.186, 0.1, 12),
+      new THREE.MeshStandardMaterial({ color: '#dc2626', roughness: 0.75 })
+    );
+    belt.position.set(0, 0.62, 0);
+    g.add(belt);
   }
   addPart(g, 0.1, 0.12, 0.1, skinCol, 0, 1.18, 0);
 
@@ -176,23 +176,18 @@ function makeVillagerFigure(shirtCol: string, pantsCol: string, hatCol?: string,
   rightArm.name = 'armR';
   g.add(leftArm, rightArm);
 
-  // Rounded 3D head with unique painted face & varied hairstyles!
+  // Rounded 3D head with clean 3D eyes/brows/glasses/mouth (NO flat square plane!)
   const head = new THREE.Mesh(
-    new THREE.SphereGeometry(0.155, 14, 12),
+    new THREE.SphereGeometry(0.155, 16, 14),
     new THREE.MeshStandardMaterial({ color: skinCol, roughness: 0.65 })
   );
   head.position.set(0, 1.35, 0);
   g.add(head);
-  const facePlane = new THREE.Mesh(
-    new THREE.PlaneGeometry(0.21, 0.21),
-    new THREE.MeshStandardMaterial({ map: paintVillagerFaceTex(seed, skinCol, hasGlasses, hasStache, isFemale), roughness: 0.6 })
-  );
-  facePlane.position.set(0, 1.35, 0.135);
-  g.add(facePlane);
+  attach3DFace(g, 1.35, 0.155, seed, hasGlasses, hasStache, isFemale);
 
-  // Varied hairstyles (cap, side-part, bun, bob, spiky)
+  // Varied hairstyles (cap, side-part, bun, pompadour)
   const hairMat = new THREE.MeshStandardMaterial({ color: hairCol, roughness: 0.85 });
-  const hairCap = new THREE.Mesh(new THREE.SphereGeometry(0.162, 12, 10, 0, Math.PI * 2, 0, Math.PI * 0.52), hairMat);
+  const hairCap = new THREE.Mesh(new THREE.SphereGeometry(0.162, 14, 10, 0, Math.PI * 2, 0, Math.PI * 0.5), hairMat);
   hairCap.position.set(0, 1.37, -0.01);
   g.add(hairCap);
   if (isFemale) {
@@ -200,7 +195,7 @@ function makeVillagerFigure(shirtCol: string, pantsCol: string, hatCol?: string,
     bun.position.set(0, 1.48, -0.12);
     g.add(bun);
   } else if (seed % 4 === 0) {
-    addPart(g, 0.22, 0.08, 0.16, hairCol, 0, 1.5, 0.03); // stylish pompadour
+    addPart(g, 0.2, 0.07, 0.14, hairCol, 0, 1.5, 0.03);
   }
 
   if (hatCol) {
@@ -792,17 +787,12 @@ export function buildTrafficAndParkedVehicles(scene: THREE.Scene): MovingVehicle
           g.add(armL, armR);
           // Rounded head with expressive painted singer/dancer face + flowing dark hair + feathered Mor Lam crown!
           const head = new THREE.Mesh(
-            new THREE.SphereGeometry(0.145, 14, 12),
+            new THREE.SphereGeometry(0.145, 16, 14),
             new THREE.MeshStandardMaterial({ color: '#e8bc96', roughness: 0.6 })
           );
           head.position.set(0, 1.36, 0);
           g.add(head);
-          const face = new THREE.Mesh(
-            new THREE.PlaneGeometry(0.2, 0.2),
-            new THREE.MeshStandardMaterial({ map: paintVillagerFaceTex(perfSeed * 2, '#e8bc96', false, false, true), roughness: 0.55 })
-          );
-          face.position.set(0, 1.36, 0.13);
-          g.add(face);
+          attach3DFace(g, 1.36, 0.145, perfSeed * 2, false, false, true);
           addPart(g, 0.28, 0.36, 0.14, '#111827', 0, 1.32, -0.08);
           const hairCap = new THREE.Mesh(
             new THREE.SphereGeometry(0.152, 12, 10, 0, Math.PI * 2, 0, Math.PI * 0.52),
