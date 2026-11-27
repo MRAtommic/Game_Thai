@@ -891,7 +891,8 @@ export class IsaanWorld {
       this.scene.add(coop);
     });
 
-    const treePositions = [-103, -90, -77, -64, -60.5, -21, -18.8, -14, -7.2, 7.2, 13.0, 16.0, 93.8, 100.5, 106.0, 117.0];
+    // Trees & banana clumps placed strictly in open land gaps clear of School (-116..-110), Store (-92..-87), and Clinic (+93..+99)
+    const treePositions = [-101.5, -84.0, -77, -64, -60.5, -21, -18.8, -14, -7.2, 7.2, 13.0, 16.0, 91.2, 100.8, 106.0, 117.0];
     treePositions.forEach((tx, idx) => {
       const tr = idx % 2 === 0 ? build25DStreetTree({ scale: 1.12 }) : build25DBananaClump(1.08);
       tr.position.set(tx, 0, -2.9 - (idx % 3) * 0.45);
@@ -918,22 +919,27 @@ export class IsaanWorld {
       this.addBox(this.scene, 2.8, 0.08, 0.08, '#6b4c2e', rx, 0.55, -2.05);
     });
 
-    // Bamboo Clumps cleanly placed away from buildings, pond & bus shelters
-    [-20.5, -7.8, 94.4, 98.5].forEach((bx) => {
+    // Bamboo Clumps cleanly placed strictly OUTSIDE all buildings (clear of Clinic +93..+99!)
+    [-20.5, -7.8, 91.6, 100.2].forEach((bx) => {
       for (let k = -1; k <= 1; k++) {
         const stalk = this.addBox(this.scene, 0.09, 5.2 + Math.abs(k) * 0.4, 0.09, '#3f6212', bx + k * 0.24, 2.6, -2.85);
         stalk.rotation.z = k * 0.06;
       }
     });
 
-    [-17.5, -9.2, 14.0, 96.5].forEach((px) => {
-      this.addBox(this.scene, 0.24, 6.8, 0.24, '#473628', px, 3.4, -4.2);
-      const crown = new THREE.Mesh(
-        new THREE.ConeGeometry(1.5, 1.3, 6),
-        new THREE.MeshStandardMaterial({ color: '#1e3f20', roughness: 0.85 })
+    // Tall Sugar Palm trees with multi-frond 2.5D fan crowns cleanly outside buildings!
+    [-17.5, -9.2, 14.0, 101.8].forEach((px) => {
+      const trunk = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.11, 0.18, 6.8, 8),
+        new THREE.MeshStandardMaterial({ color: '#473628', roughness: 0.9 })
       );
-      crown.position.set(px, 7.0, -4.2);
-      this.scene.add(crown);
+      trunk.position.set(px, 3.4, -4.2);
+      this.scene.add(trunk);
+      for (let f = 0; f < 6; f++) {
+        const frond = this.addBox(this.scene, 1.55, 0.06, 0.34, f % 2 === 0 ? '#1b4332' : '#2d6a4f', px, 6.85, -4.2);
+        frond.rotation.y = (f * Math.PI) / 3;
+        frond.rotation.z = 0.28;
+      }
     });
 
     // Paddy Spirit Shrine (ศาลปู่ตาริมทุ่งนา at +17.5, behind walkway at z = -1.25)
