@@ -270,9 +270,9 @@ export class SchoolWorld {
     // Clean Green Campus Hedge & Brick Perimeter Wall behind East Grounds & Courtyard
     this.addBox(this.exteriorGroup, 92, 1.55, 0.45, '#14532d', 82, 0.77, -3.6, 0.9);
     this.addBox(this.exteriorGroup, 92, 0.4, 0.65, '#f8fafc', 82, 0.2, -3.6, 0.8);
-    // Low cream brick campus wall along courtyard behind flagpole (-46 .. -14)
-    this.addBox(this.exteriorGroup, 34, 1.25, 0.35, '#e2e8f0', -30, 0.62, -2.55, 0.85);
-    this.addBox(this.exteriorGroup, 34, 0.22, 0.42, '#7f1d1d', -30, 1.32, -2.55, 0.75);
+    // Low cream brick campus wall & wrought-iron fence running cleanly AFTER Guard Booth (-43 .. -14)
+    this.addBox(this.exteriorGroup, 30, 1.25, 0.35, '#e2e8f0', -28.5, 0.62, -2.55, 0.85);
+    this.addBox(this.exteriorGroup, 30, 0.22, 0.42, '#7f1d1d', -28.5, 1.32, -2.55, 0.75);
 
     const treeTex = createStreetTreeTexture();
     // Place trees strictly in open clear gaps BETWEEN houses, shophouses, gate & campus facilities (ZERO overlap!)
@@ -404,8 +404,8 @@ export class SchoolWorld {
       }
     });
 
-    // Fence pillars + black wrought-iron school fence bars strictly AFTER gate entrance (-47 .. -14, NO pole inside gate at -52!)
-    for (let fx = -47; fx <= -14; fx += 6.5) {
+    // Fence pillars + iron fence starting AFTER Guard Booth (-43 .. -14) so nothing sticks behind Gate/Booth
+    for (let fx = -42.5; fx <= -14; fx += 6.5) {
       this.addBox(this.exteriorGroup, 0.36, 2.25, 0.36, '#f8fafc', fx, 1.12, -2.55);
       if (fx + 6.5 <= -13) {
         const spanW = Math.min(6.5, -13 - fx);

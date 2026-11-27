@@ -381,24 +381,17 @@ export function buildCampusGroundProps(
   exteriorGroup.add(bamiGrp);
   makeNpc('vendor_coop', -61.0, 0.12, -2.55, 1);
 
-  // Natural Thai School Entrance Archway (-55.4 .. -48.6 at z = -1.95) with ONE wide centered nameplate cleanly above pillar capitals!
-  [-55.4, -48.6].forEach((gx) => {
-    addBox(exteriorGroup, 1.35, 0.42, 1.35, '#e2e8f0', gx, 0.21, -1.95, 0.75); // stone base plinth
-    addBox(exteriorGroup, 1.12, 4.15, 1.12, '#7f1d1d', gx, 2.48, -1.95, 0.7);
-    addBox(exteriorGroup, 1.32, 0.22, 1.32, '#eab308', gx, 4.62, -1.95, 0.4); // below overhead beam
-    const lantern = new THREE.Mesh(new THREE.SphereGeometry(0.16, 10, 10), new THREE.MeshBasicMaterial({ color: '#fde68a' }));
-    lantern.position.set(gx, 3.1, -1.3);
-    exteriorGroup.add(lantern);
+  // Clean Original Thai School Entrance Archway (-55.2 .. -48.8) with ONE crisp centered nameplate
+  [-55.2, -48.8].forEach((gx) => {
+    addBox(exteriorGroup, 1.1, 4.8, 1.1, '#7f1d1d', gx, 2.4, -1.95, 0.72);
   });
-  // Crimson lintel & traditional Thai red-tile roof strictly ABOVE pillar capitals (y = 4.74+) so nothing overlaps the sign!
-  addBox(exteriorGroup, 8.6, 1.28, 1.32, '#450a0a', -52, 5.38, -1.95, 0.65);
-  addBox(exteriorGroup, 9.2, 0.32, 1.75, '#b91c1c', -52, 6.14, -1.95, 0.55);
+  addBox(exteriorGroup, 8.2, 1.25, 1.2, '#450a0a', -52, 4.9, -1.95, 0.65);
   const archTex = createSchoolSignTexture('โรงเรียนมัธยมจันทรารัตน์', 'วิชา จริยา นาฏศิลป์สยาม', '#7f1d1d', '#450a0a', '#facc15');
-  const archSign = new THREE.Mesh(new THREE.PlaneGeometry(7.6, 1.12), new THREE.MeshBasicMaterial({ map: archTex }));
-  archSign.position.set(-52, 5.38, -1.26);
+  const archSign = new THREE.Mesh(new THREE.PlaneGeometry(7.6, 1.15), new THREE.MeshBasicMaterial({ map: archTex }));
+  archSign.position.set(-52, 4.9, -1.32);
   exteriorGroup.add(archSign);
   const archLight = new THREE.PointLight('#fde68a', 5.8, 15, 1.0);
-  archLight.position.set(-52, 4.4, -0.5);
+  archLight.position.set(-52, 4.3, -0.5);
   exteriorGroup.add(archLight);
 
   // Detailed School Guard Booth (ป้อมยามโรงเรียน -45.5) with sliding glass window, service ledge, door & barrier post
