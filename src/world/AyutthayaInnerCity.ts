@@ -1,7 +1,10 @@
 import * as THREE from 'three';
 import {
   addPartBox,
+  buildThaiTieredRoof,
+  makeAyutthayaBrickTex,
   makeAyutthayaFigure,
+  makeAyutthayaRoofTex,
   makeAyutthayaSignTex,
   makeAyutthayaWarElephant,
 } from './AyutthayaArchitecture';
@@ -29,29 +32,38 @@ function buildSiamesePrang(
   g.position.set(x, 0, z);
   g.scale.setScalar(scale);
 
-  // Stepped sandstone/laterite base plinth
-  addPartBox(g, 4.6, 0.8, 4.6, brickMat, 0, 0.4, 0);
-  addPartBox(g, 3.8, 0.75, 3.8, stoneMat, 0, 1.15, 0);
+  // Triple-tiered Redented Laterite & Sandstone Base Plinth
+  addPartBox(g, 5.2, 0.7, 5.2, brickMat, 0, 0.35, 0);
+  addPartBox(g, 4.4, 0.65, 4.4, stoneMat, 0, 1.0, 0);
+  addPartBox(g, 3.6, 0.55, 3.6, brickMat, 0, 1.55, 0);
 
-  // Iconic Khmer-Ayutthaya tapered corn-cob spire tiers with projecting pediment niches
+  // Sculpted Khmer-Ayutthaya corn-cob spire tiers with redented niche reliefs & antefix pinnacles
   const tiers = [
-    { rTop: 1.4, rBot: 1.75, h: 1.3, y: 2.15 },
-    { rTop: 1.12, rBot: 1.4, h: 1.3, y: 3.4 },
-    { rTop: 0.85, rBot: 1.12, h: 1.2, y: 4.6 },
-    { rTop: 0.58, rBot: 0.85, h: 1.1, y: 5.7 },
-    { rTop: 0.34, rBot: 0.58, h: 1.0, y: 6.7 },
+    { rTop: 1.48, rBot: 1.82, h: 1.25, y: 2.4 },
+    { rTop: 1.2, rBot: 1.48, h: 1.2, y: 3.58 },
+    { rTop: 0.94, rBot: 1.2, h: 1.15, y: 4.72 },
+    { rTop: 0.68, rBot: 0.94, h: 1.05, y: 5.78 },
+    { rTop: 0.44, rBot: 0.68, h: 0.95, y: 6.72 },
+    { rTop: 0.24, rBot: 0.44, h: 0.85, y: 7.58 },
   ];
-  tiers.forEach((t) => {
-    const core = new THREE.Mesh(new THREE.CylinderGeometry(t.rTop, t.rBot, t.h, 8), brickMat);
+  tiers.forEach((t, ti) => {
+    const core = new THREE.Mesh(new THREE.CylinderGeometry(t.rTop, t.rBot, t.h, 12), brickMat);
     core.position.y = t.y;
     g.add(core);
-    // Cardinal directional spire niches
-    addPartBox(g, t.rBot * 1.45, t.h * 0.42, t.rBot * 1.45, stoneMat, 0, t.y - 0.12, 0);
+    // Cardinal directional spire niches & corner stone rings
+    addPartBox(g, t.rBot * 1.48, t.h * 0.36, t.rBot * 0.52, stoneMat, 0, t.y - 0.1, 0);
+    addPartBox(g, t.rBot * 0.52, t.h * 0.36, t.rBot * 1.48, stoneMat, 0, t.y - 0.1, 0);
+    if (ti % 2 === 0) {
+      const ring = new THREE.Mesh(new THREE.TorusGeometry(t.rTop * 1.04, 0.055, 6, 12), stoneMat);
+      ring.rotation.x = Math.PI / 2;
+      ring.position.y = t.y + t.h * 0.48;
+      g.add(ring);
+    }
   });
 
-  const finial = new THREE.Mesh(new THREE.ConeGeometry(0.28, 1.25, 8), goldMat);
-  finial.position.y = 7.75;
-  g.add(finial);
+  const nophasun = new THREE.Mesh(new THREE.ConeGeometry(0.26, 1.45, 10), goldMat);
+  nophasun.position.y = 8.65;
+  g.add(nophasun);
   parent.add(g);
 }
 
@@ -67,17 +79,67 @@ function buildGoldenBellChedi(
   g.position.set(x, 0, z);
   g.scale.setScalar(scale);
 
-  // Octagonal whitewashed Sri Lankan-Ayutthaya stepped base + gleaming golden bell dome!
-  addPartBox(g, 4.2, 0.9, 4.2, whiteMat, 0, 0.45, 0);
-  const plinth = new THREE.Mesh(new THREE.CylinderGeometry(1.55, 1.85, 1.1, 8), whiteMat);
-  plinth.position.y = 1.4;
-  const bell = new THREE.Mesh(new THREE.SphereGeometry(1.45, 14, 10, 0, Math.PI * 2, 0, Math.PI * 0.62), goldMat);
-  bell.position.y = 2.05;
-  const harmika = new THREE.Mesh(new THREE.CylinderGeometry(0.58, 0.72, 0.65, 8), goldMat);
-  harmika.position.y = 3.65;
-  const spire = new THREE.Mesh(new THREE.ConeGeometry(0.5, 3.1, 12), goldMat);
-  spire.position.y = 5.45;
-  g.add(plinth, bell, harmika, spire);
+  // Triple-stepped Whitewashed Redented Circumambulatory Terrace Base (ฐานประทักษิณ 3 ชั้น) + Gold Moldings
+  addPartBox(g, 4.8, 0.65, 4.8, whiteMat, 0, 0.32, 0);
+  addPartBox(g, 4.1, 0.55, 4.1, whiteMat, 0, 0.9, 0);
+  addPartBox(g, 4.2, 0.12, 4.2, goldMat, 0, 1.2, 0);
+  const plinth = new THREE.Mesh(new THREE.CylinderGeometry(1.55, 1.88, 0.95, 16), whiteMat);
+  plinth.position.y = 1.68;
+  const goldCollar = new THREE.Mesh(new THREE.CylinderGeometry(1.48, 1.62, 0.24, 20), goldMat);
+  goldCollar.position.y = 2.22;
+
+  // Smooth gleaming high-segment Golden Bell Dome (องค์ระฆังทอง) + Square Harmika Throne + Ringed Plong Chanai Spire!
+  const bell = new THREE.Mesh(new THREE.SphereGeometry(1.48, 24, 16, 0, Math.PI * 2, 0, Math.PI * 0.58), goldMat);
+  bell.position.y = 2.38;
+  const harmika = new THREE.Mesh(new THREE.BoxGeometry(0.92, 0.42, 0.92), goldMat);
+  harmika.position.y = 3.92;
+  g.add(plinth, goldCollar, bell, harmika);
+
+  for (let r = 0; r < 7; r++) {
+    const rad = 0.48 - r * 0.055;
+    const disc = new THREE.Mesh(new THREE.CylinderGeometry(rad * 0.85, rad, 0.22, 16), goldMat);
+    disc.position.y = 4.25 + r * 0.24;
+    g.add(disc);
+  }
+  const needle = new THREE.Mesh(new THREE.ConeGeometry(0.14, 1.9, 12), goldMat);
+  needle.position.y = 6.75;
+  g.add(needle);
+  parent.add(g);
+}
+
+function buildOctagonBastion(
+  parent: THREE.Object3D,
+  x: number,
+  z: number,
+  brickMat: THREE.Material,
+  whiteMat: THREE.Material,
+  roofMat: THREE.Material,
+  goldMat: THREE.Material
+): void {
+  const g = new THREE.Group();
+  g.position.set(x, 0, z);
+  const baseBrick = new THREE.Mesh(new THREE.CylinderGeometry(2.6, 2.95, 1.85, 8), brickMat);
+  baseBrick.position.y = 0.92;
+  const cornice = new THREE.Mesh(new THREE.CylinderGeometry(2.72, 2.65, 0.22, 8), whiteMat);
+  cornice.position.y = 1.92;
+  const upperKeep = new THREE.Mesh(new THREE.CylinderGeometry(2.42, 2.55, 2.7, 8), whiteMat);
+  upperKeep.position.y = 3.32;
+  const rim = new THREE.Mesh(new THREE.CylinderGeometry(2.58, 2.48, 0.2, 8), whiteMat);
+  rim.position.y = 4.74;
+  // Gun slits around keep perimeter
+  for (let a = 0; a < 8; a++) {
+    const ang = (a / 8) * Math.PI * 2;
+    const merlon = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.3, 0.65, 6), whiteMat);
+    merlon.position.set(Math.cos(ang) * 2.32, 5.1, Math.sin(ang) * 2.32);
+    g.add(merlon);
+  }
+  const roofLow = new THREE.Mesh(new THREE.ConeGeometry(2.85, 1.15, 8), roofMat);
+  roofLow.position.y = 5.45;
+  const roofHigh = new THREE.Mesh(new THREE.ConeGeometry(1.75, 1.1, 8), roofMat);
+  roofHigh.position.y = 6.2;
+  const spire = new THREE.Mesh(new THREE.ConeGeometry(0.16, 0.85, 8), goldMat);
+  spire.position.y = 7.05;
+  g.add(baseBrick, cornice, upperKeep, rim, roofLow, roofHigh, spire);
   parent.add(g);
 }
 
@@ -91,38 +153,57 @@ export function buildAyutthayaInnerCity(
   brickMat: THREE.Material,
   buildJunkShipFn: (x: number, z: number, title: string, isEvac: boolean) => THREE.Group
 ): AyutthayaInnerHandles {
-  const goldMat = new THREE.MeshStandardMaterial({ color: '#eab308', metalness: 0.68, roughness: 0.22 });
-  const whiteStuccoMat = new THREE.MeshStandardMaterial({ color: '#f1ebe0', roughness: 0.75 });
-  const redTileMat = new THREE.MeshStandardMaterial({ color: '#991b1b', roughness: 0.72 });
-  const greenTrimMat = new THREE.MeshStandardMaterial({ color: '#15803d', roughness: 0.65 });
+  const goldMat = new THREE.MeshStandardMaterial({ color: '#eab308', metalness: 0.72, roughness: 0.2 });
+  const whiteStuccoMat = new THREE.MeshStandardMaterial({ color: '#f3ede0', roughness: 0.68 });
+  const terracottaWallMat = new THREE.MeshStandardMaterial({ color: '#9c3a28', roughness: 0.78 });
+  const redTileMat = new THREE.MeshStandardMaterial({ map: makeAyutthayaRoofTex('#991b1b', '#c23622', '#15803d'), roughness: 0.62 });
+  const bastionRoofMat = new THREE.MeshStandardMaterial({ map: makeAyutthayaRoofTex('#7c2d12', '#9a3412', '#ca8a04'), roughness: 0.68 });
+  const fineWallBrickMat = new THREE.MeshStandardMaterial({ map: makeAyutthayaBrickTex(44, 2), roughness: 0.84 });
+  const greenTrimMat = new THREE.MeshStandardMaterial({ color: '#15803d', roughness: 0.6 });
   const darkWoodMat = new THREE.MeshStandardMaterial({ color: '#452613', roughness: 0.88 });
   const ironMat = new THREE.MeshStandardMaterial({ color: '#1e293b', metalness: 0.75, roughness: 0.35 });
 
   // =========================================================================
-  // 1) Continuous Red-Brick Ayutthaya Backdrop Wall & Sema Battlements (-12 .. +144)
+  // 1) Fine-Brick Ayutthaya City Wall, Buttresses, Cornices, Sema Crenellations & Octagon Bastions (-12 .. +144)
   // =========================================================================
-  const backWall = new THREE.Mesh(new THREE.BoxGeometry(156, 4.4, 1.15), brickMat);
-  backWall.position.set(66, 2.2, -7.2);
+  addPartBox(scene, 156, 0.42, 1.48, whiteStuccoMat, 66, 0.21, -7.2); // limestone plinth step 1
+  addPartBox(scene, 156, 0.34, 1.32, terracottaWallMat, 66, 0.56, -7.2); // brick plinth step 2
+  const backWall = new THREE.Mesh(new THREE.BoxGeometry(156, 3.65, 1.12), fineWallBrickMat);
+  backWall.position.set(66, 2.52, -7.2);
   scene.add(backWall);
-  for (let bx = -10; bx <= 142; bx += 2.2) {
-    const sema = new THREE.Mesh(new THREE.ConeGeometry(0.38, 0.76, 4), brickMat);
-    sema.rotation.y = Math.PI / 4;
-    sema.position.set(bx, 4.72, -7.2);
-    scene.add(sema);
+  addPartBox(scene, 156, 0.22, 1.34, whiteStuccoMat, 66, 4.44, -7.2); // upper white cornice molding
+  addPartBox(scene, 156, 0.14, 1.18, terracottaWallMat, 66, 4.62, -7.2);
+
+  // Rhythmic Pilaster Buttresses every 6m + Authentic Curved Sema Lotus Battlements every 1.4m
+  for (let px = -9; px <= 141; px += 6) {
+    addPartBox(scene, 0.48, 4.35, 1.28, whiteStuccoMat, px, 2.25, -7.14);
+  }
+  for (let bx = -10.5; bx <= 142.5; bx += 1.4) {
+    addPartBox(scene, 0.72, 0.46, 0.34, whiteStuccoMat, bx, 4.86, -7.2);
+    const semaCap = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.36, 0.34, 10), whiteStuccoMat);
+    semaCap.rotation.x = Math.PI / 2;
+    semaCap.position.set(bx, 5.1, -7.2);
+    const finialTip = new THREE.Mesh(new THREE.ConeGeometry(0.14, 0.24, 6), whiteStuccoMat);
+    finialTip.position.set(bx, 5.42, -7.2);
+    scene.add(semaCap, finialTip);
   }
 
-  // Western Victory Gate Archway crossing the Royal Road (x = +10, open 3.8m archway!)
-  [7.2, 12.8].forEach((px) => addPartBox(scene, 1.35, 4.8, 1.7, brickMat, px, 2.4, -2.5));
-  addPartBox(scene, 7.0, 1.15, 1.74, brickMat, 10, 4.4, -2.5);
-  // Wing walls connecting Victory Gate cleanly back to the city perimeter
-  [-4.2, -6.0].forEach(() => {});
-  addPartBox(scene, 1.1, 4.2, 4.4, brickMat, 7.2, 2.1, -4.8);
-  addPartBox(scene, 1.1, 4.2, 4.4, brickMat, 12.8, 2.1, -4.8);
-  // Multi-tier Thai Gate Tower Spire atop Victory Gate
-  addPartBox(scene, 5.4, 0.16, 2.4, redTileMat, 10, 5.1, -2.5);
-  addPartBox(scene, 3.6, 0.16, 1.8, redTileMat, 10, 5.45, -2.5);
-  const vSpire = new THREE.Mesh(new THREE.ConeGeometry(0.42, 1.45, 8), goldMat);
-  vSpire.position.set(10, 6.25, -2.5);
+  // Iconic White-Masonry Octagonal Fortress Bastions (ป้อมเพชร & ป้อมมุมกำแพง) framing the city corners!
+  buildOctagonBastion(scene, -11.5, -6.2, brickMat, whiteStuccoMat, bastionRoofMat, goldMat);
+  buildOctagonBastion(scene, 144.2, -6.2, brickMat, whiteStuccoMat, bastionRoofMat, goldMat);
+
+  // Western Victory Gate Archway crossing the Royal Road (x = +10, grand arched portal + Prasat roof tower)
+  [7.1, 12.9].forEach((px) => {
+    addPartBox(scene, 1.55, 4.85, 1.85, brickMat, px, 2.42, -2.5);
+    addPartBox(scene, 1.72, 0.42, 2.02, whiteStuccoMat, px, 0.21, -2.5);
+    addPartBox(scene, 1.68, 0.22, 1.98, whiteStuccoMat, px, 4.78, -2.5);
+  });
+  addPartBox(scene, 7.4, 1.05, 1.84, whiteStuccoMat, 10, 4.42, -2.5);
+  addPartBox(scene, 1.1, 4.35, 4.4, brickMat, 7.2, 2.18, -4.8);
+  addPartBox(scene, 1.1, 4.35, 4.4, brickMat, 12.8, 2.18, -4.8);
+  buildThaiTieredRoof(scene, 10, 4.95, -2.5, 6.8, 2.5, redTileMat, goldMat, greenTrimMat, 2);
+  const vSpire = new THREE.Mesh(new THREE.ConeGeometry(0.32, 1.55, 10), goldMat);
+  vSpire.position.set(10, 7.25, -2.5);
   scene.add(vSpire);
 
   const gateSign = new THREE.Mesh(
@@ -187,83 +268,85 @@ export function buildAyutthayaInnerCity(
   });
 
   // =========================================================================
-  // 3) Grand Royal Palace of Ayutthaya & Lotus Garden (+42 .. +90)
+  // 3) Grand Royal Palace of Ayutthaya, Terracotta Enclosure & Lotus Garden (+42 .. +90)
   // =========================================================================
-  // Red Royal Inner Courtyard Wall with gilded Palace Gate (x = +44) & Royal Lotus Pond!
-  [41.5, 89.5].forEach((px) => addPartBox(scene, 0.85, 3.6, 1.2, brickMat, px, 1.8, -2.5));
-  addPartBox(scene, 14, 2.2, 0.42, brickMat, 51, 1.1, -5.6);
-  addPartBox(scene, 14, 2.2, 0.42, brickMat, 80, 1.1, -5.6);
+  // Ornamental Crimson-Terracotta Courtyard Enclosure Wall with Lotus Sema Caps (inspired by Phra Borom Maha Ratchawang!)
+  addPartBox(scene, 48, 2.25, 0.45, terracottaWallMat, 65.5, 1.12, -5.85);
+  addPartBox(scene, 48, 0.2, 0.56, whiteStuccoMat, 65.5, 2.26, -5.85);
+  for (let kx = 43; kx <= 88; kx += 1.25) {
+    addPartBox(scene, 0.56, 0.45, 0.34, terracottaWallMat, kx, 2.55, -5.85);
+    const kTip = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.28, 0.32, 8), terracottaWallMat);
+    kTip.rotation.x = Math.PI / 2;
+    kTip.position.set(kx, 2.78, -5.85);
+    scene.add(kTip);
+  }
+  [41.5, 89.5].forEach((px) => addPartBox(scene, 0.95, 3.6, 1.25, terracottaWallMat, px, 1.8, -2.5));
 
-  // Heroic Royal Audience Throne Hall (พระที่นั่งวิหารสมเด็จ / พระมหาปราสาท x = +66, z = -3.8)
+  // Heroic Royal Audience Throne Hall (พระที่นั่งสรรเพชญมหาปราสาท x = +66, z = -3.8)
   const palX = 66;
   const palZ = -3.8;
-  addPartBox(scene, 13.5, 0.72, 4.4, whiteStuccoMat, palX, 0.36, palZ);
-  addPartBox(scene, 14.2, 0.22, 4.8, goldMat, palX, 0.78, palZ);
-  // White marble palace approach stairway + gilded balustrades & lotus pillar bases
-  const pStair = addPartBox(scene, 2.8, 0.22, 1.5, whiteStuccoMat, palX, 0.38, palZ + 2.45);
-  pStair.rotation.x = 0.45;
-  [-1.48, 1.48].forEach((bx) => {
-    const rail = addPartBox(scene, 0.16, 0.28, 1.55, goldMat, palX + bx, 0.62, palZ + 2.45);
-    rail.rotation.x = 0.45;
+  addPartBox(scene, 14.8, 0.55, 5.2, whiteStuccoMat, palX, 0.28, palZ);
+  addPartBox(scene, 13.8, 0.42, 4.6, whiteStuccoMat, palX, 0.72, palZ);
+  addPartBox(scene, 14.1, 0.16, 4.75, goldMat, palX, 0.96, palZ);
+  // White marble palace approach stairway + gilded Naga balustrades & lotus pillar capitals
+  const pStair = addPartBox(scene, 3.0, 0.22, 1.6, whiteStuccoMat, palX, 0.42, palZ + 2.55);
+  pStair.rotation.x = 0.48;
+  [-1.6, 1.6].forEach((bx) => {
+    const rail = addPartBox(scene, 0.18, 0.3, 1.65, goldMat, palX + bx, 0.68, palZ + 2.55);
+    rail.rotation.x = 0.48;
   });
   [-5.6, -2.8, 0, 2.8, 5.6].forEach((ox) => {
-    [1.9, -1.9].forEach((oz) => {
-      addPartBox(scene, 0.3, 3.4, 0.3, goldMat, palX + ox, 2.55, palZ + oz);
-      addPartBox(scene, 0.46, 0.24, 0.46, whiteStuccoMat, palX + ox, 4.18, palZ + oz); // lotus capital!
+    [1.95, -1.95].forEach((oz) => {
+      addPartBox(scene, 0.32, 3.55, 0.32, goldMat, palX + ox, 2.72, palZ + oz);
+      addPartBox(scene, 0.48, 0.26, 0.48, whiteStuccoMat, palX + ox, 4.4, palZ + oz); // lotus capital
     });
   });
-  addPartBox(scene, 10.6, 3.2, 2.6, whiteStuccoMat, palX, 2.45, palZ);
-  // Illuminated gilded royal throne hall windows with carved gold frames & arched portal
+  addPartBox(scene, 10.8, 3.3, 2.65, whiteStuccoMat, palX, 2.62, palZ);
+  // Carved golden royal windows with warm interior light & grand arched portal
   const throneGlow = new THREE.MeshBasicMaterial({ color: '#fde047' });
   [-3.8, -1.9, 1.9, 3.8].forEach((wx) => {
-    addPartBox(scene, 0.78, 1.38, 0.1, goldMat, palX + wx, 2.45, palZ + 1.31);
-    addPartBox(scene, 0.56, 1.18, 0.12, throneGlow, palX + wx, 2.45, palZ + 1.32);
+    addPartBox(scene, 0.82, 1.44, 0.12, goldMat, palX + wx, 2.62, palZ + 1.33);
+    addPartBox(scene, 0.56, 1.2, 0.14, throneGlow, palX + wx, 2.62, palZ + 1.34);
   });
-  addPartBox(scene, 1.58, 2.22, 0.12, goldMat, palX, 1.95, palZ + 1.33);
-  addPartBox(scene, 1.16, 1.92, 0.14, throneGlow, palX, 1.85, palZ + 1.34);
+  addPartBox(scene, 1.68, 2.32, 0.14, goldMat, palX, 2.12, palZ + 1.35);
+  addPartBox(scene, 1.22, 2.0, 0.16, throneGlow, palX, 2.02, palZ + 1.36);
 
-  // Layered Multi-Tiered Thai Crimson & Emerald-Bordered Palace Roofs + Golden Chofa Horns & Mondop Spire!
-  [
-    { w: 15.2, h: 0.48, d: 5.4, y: 4.5, mat: greenTrimMat },
-    { w: 14.4, h: 0.56, d: 4.9, y: 4.95, mat: redTileMat },
-    { w: 11.4, h: 0.52, d: 4.1, y: 5.55, mat: greenTrimMat },
-    { w: 10.6, h: 0.6, d: 3.6, y: 6.0, mat: redTileMat },
-    { w: 7.4, h: 0.55, d: 2.8, y: 6.65, mat: goldMat },
-  ].forEach((tier, ti) => {
-    addPartBox(scene, tier.w, tier.h, tier.d, tier.mat, palX, tier.y, palZ);
-    if (ti === 1 || ti === 3) {
-      [-tier.w * 0.48, tier.w * 0.48].forEach((cx) => {
-        const chofa = new THREE.Mesh(new THREE.ConeGeometry(0.16, 0.95, 6), goldMat);
-        chofa.position.set(palX + cx, tier.y + 0.62, palZ);
-        chofa.rotation.z = cx > 0 ? -0.35 : 0.35;
-        scene.add(chofa);
-      });
-    }
-  });
-  const mondopRoof = new THREE.Mesh(new THREE.ConeGeometry(2.2, 3.4, 4), goldMat);
-  mondopRoof.rotation.y = Math.PI / 4;
-  mondopRoof.position.set(palX, 8.6, palZ);
-  const finialP = new THREE.Mesh(new THREE.ConeGeometry(0.32, 1.9, 8), goldMat);
-  finialP.position.set(palX, 11.0, palZ);
-  scene.add(mondopRoof, finialP);
+  // Authentic 3-Tiered Pitched Siamese Palace Roofs with Golden Gables & Chofa Horns + Towering 7-Tiered Mondop Spire!
+  buildThaiTieredRoof(scene, palX, 4.45, palZ, 15.2, 5.2, redTileMat, goldMat, greenTrimMat, 3);
+  const prangTier1 = new THREE.Mesh(new THREE.CylinderGeometry(1.4, 2.1, 1.2, 8), goldMat);
+  prangTier1.position.set(palX, 7.65, palZ);
+  const mondopRoof = new THREE.Mesh(new THREE.ConeGeometry(1.9, 3.2, 8), goldMat);
+  mondopRoof.position.set(palX, 9.65, palZ);
+  const finialP = new THREE.Mesh(new THREE.ConeGeometry(0.24, 2.2, 10), goldMat);
+  finialP.position.set(palX, 12.15, palZ);
+  scene.add(prangTier1, mondopRoof, finialP);
 
-  // Ornamental Royal Garden Lotus Pond + Thai Garden Sala + Courtiers in Sabai (x = +48 .. +57)
-  addPartBox(scene, 8.5, 0.16, 2.8, whiteStuccoMat, 51.5, 0.08, -1.6);
-  addPartBox(scene, 7.6, 0.08, 2.1, new THREE.MeshStandardMaterial({ color: '#0e7490', roughness: 0.25 }), 51.5, 0.14, -1.6);
-  [48.5, 50.5, 52.8, 54.6].forEach((lx) => {
-    const pad = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.28, 0.02, 8), greenTrimMat);
-    pad.position.set(lx, 0.2, -1.5 + (Math.floor(lx) % 2) * 0.35);
+  // Ornamental Royal Garden Lotus Pond + Carved Jaturamuk Garden Sala Pavilion + Flower Shrubs (x = +47 .. +57)
+  addPartBox(scene, 8.8, 0.18, 3.0, whiteStuccoMat, 51.5, 0.09, -1.6);
+  addPartBox(scene, 7.8, 0.1, 2.2, new THREE.MeshStandardMaterial({ color: '#0e7490', roughness: 0.22, metalness: 0.1 }), 51.5, 0.16, -1.6);
+  [48.5, 50.5, 52.8, 54.6].forEach((lx, li) => {
+    const pad = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 0.025, 10), greenTrimMat);
+    pad.position.set(lx, 0.22, -1.5 + (li % 2) * 0.35);
     scene.add(pad);
+    const flower = new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.14, 6), new THREE.MeshStandardMaterial({ color: '#f472b6', roughness: 0.45 }));
+    flower.rotation.x = Math.PI;
+    flower.position.set(lx + 0.08, 0.28, pad.position.z);
+    scene.add(flower);
   });
-  // Ornate Royal Garden Sala Pavilion beside the Lotus Pond
-  addPartBox(scene, 3.4, 0.2, 2.4, whiteStuccoMat, 47.2, 0.1, -3.5);
-  [-1.4, 1.4].forEach((ox) => {
-    [-0.9, 0.9].forEach((oz) => addPartBox(scene, 0.14, 2.2, 0.14, goldMat, 47.2 + ox, 1.2, -3.5 + oz));
+  [47.2, 55.8].forEach((fx) => {
+    const bush = new THREE.Mesh(new THREE.DodecahedronGeometry(0.45, 0), greenTrimMat);
+    bush.position.set(fx, 0.32, -0.35);
+    const blossom = new THREE.Mesh(new THREE.SphereGeometry(0.18, 6, 6), new THREE.MeshStandardMaterial({ color: '#ef4444' }));
+    blossom.position.set(fx + 0.14, 0.55, -0.25);
+    scene.add(bush, blossom);
   });
-  const sRoof = new THREE.Mesh(new THREE.ConeGeometry(2.4, 1.4, 4), redTileMat);
-  sRoof.rotation.y = Math.PI / 4;
-  sRoof.position.set(47.2, 2.95, -3.5);
-  scene.add(sRoof);
+  // Carved Ayutthaya Royal Garden Sala with marble base, golden columns & 2-tier Thai roof!
+  addPartBox(scene, 3.8, 0.28, 2.8, whiteStuccoMat, 47.2, 0.14, -3.5);
+  addPartBox(scene, 3.4, 0.16, 2.4, goldMat, 47.2, 0.34, -3.5);
+  [-1.35, 1.35].forEach((ox) => {
+    [-0.9, 0.9].forEach((oz) => addPartBox(scene, 0.16, 2.25, 0.16, goldMat, 47.2 + ox, 1.5, -3.5 + oz));
+  });
+  buildThaiTieredRoof(scene, 47.2, 2.6, -3.5, 4.1, 2.9, redTileMat, goldMat, greenTrimMat, 2);
 
   // Ladies of the Court & Royal Guards by the Palace Pond
   const courtLadyA = makeAyutthayaFigure('#f472b6', '#581c87', { sabaiCol: '#fde047' });
@@ -293,21 +376,21 @@ export function buildAyutthayaInnerCity(
   buildGoldenBellChedi(scene, 102.5, -4.4, 1.05, whiteStuccoMat, goldMat);
   buildGoldenBellChedi(scene, 108.5, -4.4, 0.92, whiteStuccoMat, goldMat);
 
-  // Monumental 5-Prang Complex inspired by Wat Chaiwatthanaram (+118 .. +132)!
+  // Monumental 5-Prang Complex inspired by Wat Chaiwatthanaram + Low Cloister Perimeter Wall (+116 .. +133)!
+  addPartBox(scene, 18.5, 0.55, 0.45, brickMat, 125, 0.28, -2.55);
+  addPartBox(scene, 18.7, 0.14, 0.54, whiteStuccoMat, 125, 0.58, -2.55);
   buildSiamesePrang(scene, 117.5, -4.2, 0.65, brickMat, whiteStuccoMat, goldMat);
   buildSiamesePrang(scene, 121.0, -4.6, 0.85, brickMat, whiteStuccoMat, goldMat);
   buildSiamesePrang(scene, 125.0, -4.8, 1.15, brickMat, whiteStuccoMat, goldMat); // Towering Central Prang!
   buildSiamesePrang(scene, 129.0, -4.6, 0.85, brickMat, whiteStuccoMat, goldMat);
   buildSiamesePrang(scene, 132.5, -4.2, 0.65, brickMat, whiteStuccoMat, goldMat);
 
-  // Open Sanctuary Sala (+136) where Monk Khong blesses survivors & keeps people safe
-  addPartBox(scene, 6.8, 0.24, 3.0, darkWoodMat, 136, 0.12, -2.2);
-  [-3.0, 0, 3.0].forEach((px) => addPartBox(scene, 0.22, 3.0, 0.22, redTileMat, 136 + px, 1.6, -0.9));
-  [-3.0, 3.0].forEach((px) => addPartBox(scene, 0.22, 3.0, 0.22, redTileMat, 136 + px, 1.6, -3.5));
-  const salaF = addPartBox(scene, 7.4, 0.12, 2.1, redTileMat, 136, 3.35, -1.38);
-  salaF.rotation.x = 0.4;
-  const salaB = addPartBox(scene, 7.4, 0.12, 2.1, redTileMat, 136, 3.35, -3.02);
-  salaB.rotation.x = -0.4;
+  // Open Sanctuary Sala (+136) with whitewashed marble steps, lotus pillars & authentic 2-tier pitched Thai roof!
+  addPartBox(scene, 7.2, 0.34, 3.4, whiteStuccoMat, 136, 0.17, -2.2);
+  addPartBox(scene, 6.8, 0.22, 3.0, goldMat, 136, 0.42, -2.2);
+  [-3.0, 0, 3.0].forEach((px) => addPartBox(scene, 0.22, 2.95, 0.22, redTileMat, 136 + px, 1.85, -0.9));
+  [-3.0, 3.0].forEach((px) => addPartBox(scene, 0.22, 2.95, 0.22, redTileMat, 136 + px, 1.85, -3.5));
+  buildThaiTieredRoof(scene, 136, 3.35, -2.2, 7.8, 3.8, redTileMat, goldMat, greenTrimMat, 2);
   const templeSign = new THREE.Mesh(
     new THREE.PlaneGeometry(3.8, 0.72),
     new THREE.MeshBasicMaterial({ map: makeAyutthayaSignTex('#451a03', '#facc15', '#fef08a', 'วัดพระศรีสรรเพชญ์ & พระปรางค์ ๕ ยอด', 'เขตอภัยทาน — ปลอดภัยจากผีห่า') })
@@ -322,9 +405,12 @@ export function buildAyutthayaInnerCity(
   // =========================================================================
   // 5) East Wall "Pratu Phi" (Ghost Gate x = +143), Mass Grave Pit (+160) & Evac Fleet (+180)
   // =========================================================================
-  [141.2, 145.6].forEach((px) => addPartBox(scene, 1.2, 4.4, 1.5, brickMat, px, 2.2, -2.5));
-  addPartBox(scene, 5.8, 1.0, 1.54, brickMat, 143.4, 4.1, -2.5);
-  addPartBox(scene, 4.4, 0.18, 2.0, darkWoodMat, 143.4, 4.7, -2.5);
+  [141.2, 145.6].forEach((px) => {
+    addPartBox(scene, 1.35, 4.5, 1.65, brickMat, px, 2.25, -2.5);
+    addPartBox(scene, 1.5, 0.36, 1.8, whiteStuccoMat, px, 0.18, -2.5);
+  });
+  addPartBox(scene, 6.0, 1.0, 1.65, brickMat, 143.4, 4.15, -2.5);
+  buildThaiTieredRoof(scene, 143.4, 4.65, -2.5, 5.4, 2.2, darkWoodMat, goldMat, terracottaWallMat, 2);
   const ghostGateSign = new THREE.Mesh(
     new THREE.PlaneGeometry(3.2, 0.66),
     new THREE.MeshBasicMaterial({ map: makeAyutthayaSignTex('#27120c', '#ef4444', '#fecaca', 'ประตูผี (ทางออกป่าช้าห่า)', 'ห้ามชาวเมืองออกนอกกำแพงยามวิกาล') })

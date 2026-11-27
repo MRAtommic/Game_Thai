@@ -2,10 +2,13 @@ import * as THREE from 'three';
 import {
   addPartBox,
   AyutthayaHorseHandle,
+  buildThaiTieredRoof,
   makeAyutthayaBoat,
   makeAyutthayaBrickTex,
   makeAyutthayaFigure,
+  makeAyutthayaGroundTex,
   makeAyutthayaHorse,
+  makeAyutthayaRoofTex,
   makeAyutthayaSignTex,
   makeAyutthayaTeakHouse,
   makeRoyalSwanBarge,
@@ -48,11 +51,16 @@ function buildJunkShip(x: number, z: number, labelTitle: string, isEvac = false)
   g.add(bow);
 
   [-0.8, 2.1].forEach((mx, mi) => {
-    const h = mi === 0 ? 7.2 : 5.8;
+    const h = mi === 0 ? 7.4 : 6.0;
     addPartBox(g, 0.16, h, 0.16, mastMat, mx, h / 2 + 0.5, 0);
-    const sail = addPartBox(g, 0.08, h * 0.55, mi === 0 ? 2.5 : 2.0, sailMat, mx, h * 0.62 + 0.6, 0);
-    sail.rotation.y = Math.PI / 2;
-    [0.38, 0.56, 0.74].forEach((ry) => addPartBox(g, 2.3, 0.05, 0.1, mastMat, mx, h * ry + 0.6, 0));
+    // Authentic fanned bamboo-battened Chinese junk sails!
+    for (let seg = 0; seg < 4; seg++) {
+      const fanAng = (seg - 1.5) * 0.14;
+      const battenW = (mi === 0 ? 2.55 : 2.05) * (1 - seg * 0.08);
+      const sailPanel = addPartBox(g, battenW, h * 0.13, 0.06, sailMat, mx + Math.sin(fanAng) * 0.32, h * (0.34 + seg * 0.14) + 0.5, 0);
+      sailPanel.rotation.z = fanAng * 0.45;
+      addPartBox(g, battenW + 0.15, 0.04, 0.1, mastMat, mx + Math.sin(fanAng) * 0.32, h * (0.34 + seg * 0.14) + 0.43, 0);
+    }
   });
 
   [-3.8, 0.5, 4.2].forEach((lx) => {
@@ -76,19 +84,31 @@ function buildJunkShip(x: number, z: number, labelTitle: string, isEvac = false)
  * Walled City, Garrison, Royal Palace, Triple Golden Chedis, Five-Prang Wat Chai, Ghost Gate & Mass Grave Pit.
  */
 export function buildAyutthayaLandmarks(scene: THREE.Scene): AyutthayaLandmarkHandles {
-  const brickMat = new THREE.MeshStandardMaterial({ map: makeAyutthayaBrickTex(), roughness: 0.88 });
+  const brickMat = new THREE.MeshStandardMaterial({ map: makeAyutthayaBrickTex(4, 2), roughness: 0.85 });
   const woodDark = new THREE.MeshStandardMaterial({ color: '#3b2112', roughness: 0.9 });
   const woodMid = new THREE.MeshStandardMaterial({ color: '#5c361d', roughness: 0.85 });
   const woodPlank = new THREE.MeshStandardMaterial({ color: '#784626', roughness: 0.84 });
   const thatchMat = new THREE.MeshStandardMaterial({ color: '#a16207', roughness: 0.92 });
-  const redRoofMat = new THREE.MeshStandardMaterial({ color: '#7c2d12', roughness: 0.78 });
+  const redRoofMat = new THREE.MeshStandardMaterial({ map: makeAyutthayaRoofTex('#7c2d12', '#9a3412', '#7c2d12'), roughness: 0.72 });
+  const goldTrimMat = new THREE.MeshStandardMaterial({ color: '#eab308', metalness: 0.7, roughness: 0.22 });
+  const whiteMasonryMat = new THREE.MeshStandardMaterial({ color: '#f3ede0', roughness: 0.72 });
+  const greenTrimMat = new THREE.MeshStandardMaterial({ color: '#15803d', roughness: 0.62 });
   const ironMat = new THREE.MeshStandardMaterial({ color: '#1e293b', metalness: 0.72, roughness: 0.35 });
 
-  // 1) 390m Roadway, Chao Phraya River Canal & 8 Boat Piers
-  addPartBox(scene, 396, 0.3, 15.5, new THREE.MeshStandardMaterial({ color: '#4b3726', roughness: 0.95 }), 0, -0.15, -3.5);
+  // 1) 390m Lush Lawn, Stone-Curbed Terracotta Royal Avenue, Chao Phraya River Canal & 8 Boat Piers
+  addPartBox(
+    scene,
+    396,
+    0.3,
+    15.5,
+    new THREE.MeshStandardMaterial({ map: makeAyutthayaGroundTex(), roughness: 0.9 }),
+    0,
+    -0.15,
+    -3.5
+  );
   const canalWater = new THREE.Mesh(
     new THREE.PlaneGeometry(396, 10.5),
-    new THREE.MeshStandardMaterial({ color: '#0f3b4c', roughness: 0.46, metalness: 0.12 })
+    new THREE.MeshStandardMaterial({ color: '#0e485c', roughness: 0.28, metalness: 0.18 })
   );
   canalWater.rotation.x = -Math.PI / 2;
   canalWater.position.set(0, -0.22, 8.1);
@@ -215,10 +235,15 @@ export function buildAyutthayaLandmarks(scene: THREE.Scene): AyutthayaLandmarkHa
     );
   });
 
-  // Brick Stacks & Rice Granary Yard at -104 (just like historical Ayutthaya riverside print!)
+  // Brick Stacks & Conical Siamese Brick Kiln Yard at -104 (like historical Ayutthaya riverside!)
   const brickStack = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.75, 1.1), brickMat);
   brickStack.position.set(-104, 0.38, -1.6);
-  scene.add(brickStack);
+  const kiln = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 1.05, 2.35, 12), brickMat);
+  kiln.position.set(-101.8, 1.18, -3.5);
+  const kilnCap = new THREE.Mesh(new THREE.TorusGeometry(0.46, 0.08, 6, 12), whiteMasonryMat);
+  kilnCap.rotation.x = Math.PI / 2;
+  kilnCap.position.set(-101.8, 2.36, -3.5);
+  scene.add(brickStack, kiln, kilnCap);
 
   // Open Blacksmith Forge (โรงตีดาบหลวงลุงสิน x = -82)
   const forgeX = -82;
@@ -257,16 +282,19 @@ export function buildAyutthayaLandmarks(scene: THREE.Scene): AyutthayaLandmarkHa
   // 4) Nobleman's Compound / บ้านขุนนางอยุธยา (-60 .. -14, center -38)
   // =========================================================================
   const nobX = -38;
-  // Brick perimeter courtyard walls & ornate open Noble Gate (x = -38)
+  // Whitewashed & Red-Brick Perimeter Courtyard Walls + Ornate Pitched-Roof Noble Gatehouse (x = -38)
   [-52, -24].forEach((wx) => addPartBox(scene, 0.85, 2.8, 3.2, brickMat, wx, 1.4, -3.5));
-  [-46, -30].forEach((px) => addPartBox(scene, 11.0, 2.2, 0.45, brickMat, px, 1.1, -1.9));
-  // Open courtyard Thai Archway at -38
-  [-40.2, -35.8].forEach((gx) => addPartBox(scene, 0.8, 3.3, 0.8, brickMat, gx, 1.65, -1.9));
-  addPartBox(scene, 5.4, 0.65, 0.9, brickMat, nobX, 3.35, -1.9);
-  const nobArchRoof = new THREE.Mesh(new THREE.ConeGeometry(1.6, 1.1, 4), redRoofMat);
-  nobArchRoof.rotation.y = Math.PI / 4;
-  nobArchRoof.position.set(nobX, 4.15, -1.9);
-  scene.add(nobArchRoof);
+  [-46, -30].forEach((px) => {
+    addPartBox(scene, 11.0, 2.2, 0.45, brickMat, px, 1.1, -1.9);
+    addPartBox(scene, 11.1, 0.18, 0.56, whiteMasonryMat, px, 2.24, -1.9);
+  });
+  // Ornate Thai Archway Gatehouse at -38 with stone plinths & 2-tier pitched tile roof
+  [-40.2, -35.8].forEach((gx) => {
+    addPartBox(scene, 0.9, 3.35, 0.9, brickMat, gx, 1.68, -1.9);
+    addPartBox(scene, 1.05, 0.25, 1.05, whiteMasonryMat, gx, 0.12, -1.9);
+  });
+  addPartBox(scene, 5.6, 0.72, 0.96, whiteMasonryMat, nobX, 3.35, -1.9);
+  buildThaiTieredRoof(scene, nobX, 3.7, -1.9, 5.2, 2.1, redRoofMat, goldTrimMat, greenTrimMat, 2);
 
   // Grand Elevated 3-House Nobleman Compound with carved teak panels, balconies, staircases & gold Chofa finials!
   [-44.5, -38, -31.5].forEach((rx, ri) => {

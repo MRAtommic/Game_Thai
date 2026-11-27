@@ -60,6 +60,7 @@ export class AyutthayaWorld {
 
   private hemiLight: THREE.HemisphereLight;
   private sunLight: THREE.DirectionalLight;
+  private fillLight: THREE.DirectionalLight;
   private torchLight: THREE.PointLight;
 
   private landmarks: AyutthayaLandmarkHandles;
@@ -131,15 +132,30 @@ export class AyutthayaWorld {
     });
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobileOrTablet ? 1.0 : 2));
     this.renderer.setSize(window.innerWidth, window.innerHeight);
-    this.renderer.shadowMap.enabled = !isMobileOrTablet;
+    this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.12;
+    this.renderer.toneMappingExposure = 1.08;
 
-    this.hemiLight = new THREE.HemisphereLight('#fde68a', '#1c1917', 1.35);
-    this.sunLight = new THREE.DirectionalLight('#fed7aa', 1.25);
-    this.sunLight.position.set(-20, 22, 16);
-    this.scene.add(this.hemiLight, this.sunLight);
+    this.hemiLight = new THREE.HemisphereLight('#bae6fd', '#443222', 0.68);
+    this.sunLight = new THREE.DirectionalLight('#fff1d6', 2.05);
+    this.sunLight.position.set(-66, 26, 20);
+    this.sunLight.target.position.set(-84, 0, -2);
+    this.sunLight.castShadow = true;
+    const smRes = isMobileOrTablet ? 1024 : 2048;
+    this.sunLight.shadow.mapSize.set(smRes, smRes);
+    this.sunLight.shadow.camera.near = 2;
+    this.sunLight.shadow.camera.far = 85;
+    this.sunLight.shadow.camera.left = -30;
+    this.sunLight.shadow.camera.right = 30;
+    this.sunLight.shadow.camera.top = 20;
+    this.sunLight.shadow.camera.bottom = -16;
+    this.sunLight.shadow.bias = -0.0007;
+    this.sunLight.shadow.normalBias = 0.025;
+
+    this.fillLight = new THREE.DirectionalLight('#93c5fd', 0.42);
+    this.fillLight.position.set(-20, 12, -16);
+    this.scene.add(this.hemiLight, this.sunLight, this.sunLight.target, this.fillLight);
 
     this.torchLight = new THREE.PointLight('#fb923c', 0, 14, 1.1);
     this.torchLight.position.set(-46, 1.7, 1.4);
@@ -197,6 +213,15 @@ export class AyutthayaWorld {
     this.initSprites();
     this.landmarks = buildAyutthayaLandmarks(this.scene);
     buildAyutthayaFoliage(this.scene);
+
+    // Enable authentic cast & receive shadows across Ayutthaya architecture, walls, ships & trees
+    this.scene.traverse((obj) => {
+      if (obj instanceof THREE.Mesh && obj.material instanceof THREE.MeshStandardMaterial) {
+        const isGroundOrWater = obj.geometry instanceof THREE.PlaneGeometry;
+        obj.receiveShadow = true;
+        obj.castShadow = !isGroundOrWater;
+      }
+    });
 
     // Street / pier torches spanning all 380m of Ayutthaya neighborhoods
     [-168, -146, -124, -100, -82, -56, -38, -14, 10, 26, 46, 66, 94, 125, 143, 178].forEach((tx) => {
@@ -672,14 +697,18 @@ export class AyutthayaWorld {
       cl.group.position.y = cl.baseY + Math.sin(this.animClock * 0.4 + cl.x * 0.05) * 0.25;
     });
 
-    this.hemiLight.intensity = mood === 'prosperous' && !isNight ? 1.55 : mood === 'riot' ? 0.92 : 0.82;
-    this.sunLight.intensity = weather === 'storm' ? 0.4 : mood === 'prosperous' && !isNight ? 1.35 : 0.4;
+    this.hemiLight.intensity = mood === 'prosperous' && !isNight ? 0.68 : mood === 'riot' ? 0.56 : 0.48;
+    this.sunLight.intensity = weather === 'storm' ? 0.55 : isNight ? 0.48 : mood === 'prosperous' ? 2.1 : 1.05;
+    this.sunLight.color.set(isNight ? '#93c5fd' : hr >= 16.5 ? '#fdba74' : '#fff1d6');
+    this.sunLight.position.set(this.camera.position.x + (sunT - 0.5) * 26 + 10, 24, 20);
+    this.sunLight.target.position.set(this.camera.position.x, 0, -2);
+    this.fillLight.intensity = isNight ? 0.25 : 0.42;
 
-    // Update protagonist sprite (on shore, seated on wooden boat, OR galloping astride chestnut horse!)
-    const playerZ = isRowing ? 5.15 : 0.85;
+    // Update protagonist sprite (seated inside boat gunwales, standing on shore, or galloping horse)
+    const playerZ = isRowing ? 5.18 : 0.85;
     const gallopBob = isRidingHorse && isMoving ? Math.abs(Math.sin(this.animClock * 11)) * 0.08 : 0;
     const playerY = isRowing
-      ? 0.96 + Math.sin(this.animClock * 4.0) * 0.04
+      ? 0.72 + Math.sin(this.animClock * 4.0) * 0.035
       : isRidingHorse
         ? 1.72 + gallopBob
         : 0.95;
@@ -692,12 +721,15 @@ export class AyutthayaWorld {
     pMat.map = this.charFrames.man[frame];
     this.playerMesh.scale.x = playerFacing;
 
-    // Player's controllable wooden rowing boat & chestnut horse
+    // Player's controllable wooden rowing boat with sweeping oars & chestnut horse
     this.playerBoat.group.visible = isRowing;
     this.dockedPierBoat.visible = !isRowing;
     if (isRowing) {
-      this.playerBoat.group.position.set(playerX, -0.12 + Math.sin(this.animClock * 3.5) * 0.04, 5.2);
+      this.playerBoat.group.position.set(playerX, -0.14 + Math.sin(this.animClock * 3.5) * 0.035, 5.2);
       this.playerBoat.group.scale.x = playerFacing;
+      const pSweep = isMoving ? Math.sin(this.animClock * 5.2) * 0.5 : 0.08;
+      if (this.playerBoat.oarL) this.playerBoat.oarL.rotation.z = pSweep;
+      if (this.playerBoat.oarR) this.playerBoat.oarR.rotation.z = pSweep;
     }
 
     this.playerHorse.group.visible = isRidingHorse && !isRowing;

@@ -30,30 +30,161 @@ export function makeAyutthayaSignTex(
   return tex;
 }
 
-/** Creates an ancient Ayutthaya red-orange brick wall texture. */
-export function makeAyutthayaBrickTex(): THREE.CanvasTexture {
+/** Creates a detailed weathered Ayutthaya Siamese brick & mortar wall texture. */
+export function makeAyutthayaBrickTex(repeatX = 12, repeatY = 3): THREE.CanvasTexture {
   const c = document.createElement('canvas');
   c.width = 256;
   c.height = 256;
   const ctx = c.getContext('2d')!;
-  ctx.fillStyle = '#5c261b';
+  ctx.fillStyle = '#4a2016';
   ctx.fillRect(0, 0, 256, 256);
-  const brickCols = ['#8c3826', '#7b3020', '#9a412d', '#6e2a1d', '#a34932'];
+  const brickCols = ['#9c432b', '#873521', '#ad4d34', '#752b1a', '#b85b3f', '#6b291b'];
   const rowH = 16;
-  const brickW = 36;
+  const brickW = 32;
   for (let row = 0; row < 16; row++) {
     const off = (row % 2) * (brickW / 2);
-    for (let col = -1; col < 9; col++) {
-      ctx.fillStyle = brickCols[(row * 5 + col + 9) % brickCols.length];
-      ctx.fillRect(col * brickW + off + 1, row * rowH + 1, brickW - 2, rowH - 2);
+    for (let col = -1; col < 10; col++) {
+      const x = col * brickW + off;
+      const y = row * rowH;
+      ctx.fillStyle = brickCols[(row * 7 + col * 3 + 16) % brickCols.length];
+      ctx.fillRect(x + 1, y + 1, brickW - 2, rowH - 2);
+      // Subtle top highlight & bottom shadow for 3D brick relief
+      ctx.fillStyle = 'rgba(255, 224, 194, 0.14)';
+      ctx.fillRect(x + 1, y + 1, brickW - 2, 2);
+      ctx.fillStyle = 'rgba(20, 8, 4, 0.22)';
+      ctx.fillRect(x + 1, y + rowH - 3, brickW - 2, 2);
     }
   }
   const tex = new THREE.CanvasTexture(c);
   tex.wrapS = THREE.RepeatWrapping;
   tex.wrapT = THREE.RepeatWrapping;
-  tex.repeat.set(6, 2);
+  tex.repeat.set(repeatX, repeatY);
   tex.colorSpace = THREE.SRGBColorSpace;
   return tex;
+}
+
+/** Creates an authentic scalloped Siamese terracotta/glazed roof-tile texture with ribbed depth. */
+export function makeAyutthayaRoofTex(baseHex = '#991b1b', highlightHex = '#dc2626', borderHex = '#15803d'): THREE.CanvasTexture {
+  const c = document.createElement('canvas');
+  c.width = 256;
+  c.height = 256;
+  const ctx = c.getContext('2d')!;
+  ctx.fillStyle = baseHex;
+  ctx.fillRect(0, 0, 256, 256);
+  // Horizontal overlapping tile courses
+  for (let row = 0; row < 16; row++) {
+    const y = row * 16;
+    ctx.fillStyle = row >= 13 ? borderHex : row % 2 === 0 ? baseHex : highlightHex;
+    ctx.fillRect(0, y, 256, 14);
+    ctx.fillStyle = 'rgba(0,0,0,0.28)';
+    ctx.fillRect(0, y + 14, 256, 2);
+    for (let col = 0; col < 16; col++) {
+      ctx.fillStyle = 'rgba(255,245,220,0.12)';
+      ctx.fillRect(col * 16 + (row % 2) * 8, y, 2, 14);
+    }
+  }
+  const tex = new THREE.CanvasTexture(c);
+  tex.wrapS = THREE.RepeatWrapping;
+  tex.wrapT = THREE.RepeatWrapping;
+  tex.repeat.set(4, 2);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  return tex;
+}
+
+/** Creates an Ayutthaya kingdom ground texture blending lush grass lawns with red-ochre royal avenue & stone curbing. */
+export function makeAyutthayaGroundTex(): THREE.CanvasTexture {
+  const c = document.createElement('canvas');
+  c.width = 512;
+  c.height = 256;
+  const ctx = c.getContext('2d')!;
+  // Top rear half: lush tropical courtyard lawns
+  const lawnGrad = ctx.createLinearGradient(0, 0, 0, 128);
+  lawnGrad.addColorStop(0, '#365314');
+  lawnGrad.addColorStop(1, '#4d7c0f');
+  ctx.fillStyle = lawnGrad;
+  ctx.fillRect(0, 0, 512, 130);
+  // Middle royal thoroughfare: warm compacted terracotta/laterite avenue
+  const roadGrad = ctx.createLinearGradient(0, 124, 0, 224);
+  roadGrad.addColorStop(0, '#7c4d32');
+  roadGrad.addColorStop(0.5, '#8c5a3c');
+  roadGrad.addColorStop(1, '#6b4228');
+  ctx.fillStyle = roadGrad;
+  ctx.fillRect(0, 124, 512, 102);
+  // Crisp stone curbstones & brick paver hints along road edges
+  ctx.fillStyle = '#d6cfc2';
+  ctx.fillRect(0, 122, 512, 5);
+  ctx.fillStyle = '#5c3721';
+  ctx.fillRect(0, 224, 512, 32);
+  // Subtle organic speckles for texture realism
+  for (let i = 0; i < 450; i++) {
+    ctx.fillStyle = i % 2 === 0 ? 'rgba(255,240,210,0.06)' : 'rgba(20,15,10,0.08)';
+    ctx.fillRect((i * 73) % 512, (i * 41) % 256, 5, 3);
+  }
+  const tex = new THREE.CanvasTexture(c);
+  tex.wrapS = THREE.RepeatWrapping;
+  tex.wrapT = THREE.ClampToEdgeWrapping;
+  tex.repeat.set(22, 1);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  return tex;
+}
+
+/** Builds an authentic pitched multi-tier Siamese roof with recessed golden gables, Pan Lom bargeboards & Chofa horns. */
+export function buildThaiTieredRoof(
+  parent: THREE.Object3D,
+  x: number,
+  baseY: number,
+  z: number,
+  width: number,
+  depth: number,
+  roofMat: THREE.Material,
+  goldMat: THREE.Material,
+  trimMat: THREE.Material,
+  tiers = 2
+): void {
+  const grp = new THREE.Group();
+  grp.position.set(x, baseY, z);
+  for (let t = 0; t < tiers; t++) {
+    const scale = 1 - t * 0.24;
+    const w = width * scale;
+    const d = depth * (1 - t * 0.22);
+    const yOff = t * (0.58 + depth * 0.08);
+    const slopeHalfD = d * 0.34;
+    const pitch = 0.56 - t * 0.04;
+    const slopeLen = d * 0.58;
+
+    const frontSlope = new THREE.Mesh(new THREE.BoxGeometry(w, 0.1, slopeLen), roofMat);
+    frontSlope.position.set(0, yOff + slopeHalfD * 0.42, slopeHalfD * 0.55);
+    frontSlope.rotation.x = pitch;
+
+    const backSlope = new THREE.Mesh(new THREE.BoxGeometry(w, 0.1, slopeLen), roofMat);
+    backSlope.position.set(0, yOff + slopeHalfD * 0.42, -slopeHalfD * 0.55);
+    backSlope.rotation.x = -pitch;
+
+    // Green/gold lower eave fascia trim
+    const fasciaF = new THREE.Mesh(new THREE.BoxGeometry(w + 0.06, 0.09, 0.14), trimMat);
+    fasciaF.position.set(0, yOff - 0.02, slopeHalfD * 1.15);
+    const fasciaB = fasciaF.clone();
+    fasciaB.position.z = -slopeHalfD * 1.15;
+
+    // Golden ridge crest & Pan Lom bargeboards at left/right gable ends
+    const ridge = new THREE.Mesh(new THREE.BoxGeometry(w + 0.12, 0.14, 0.18), goldMat);
+    ridge.position.set(0, yOff + slopeHalfD * 0.85, 0);
+
+    grp.add(frontSlope, backSlope, fasciaF, fasciaB, ridge);
+
+    [-w * 0.48, w * 0.48].forEach((gx) => {
+      const gable = new THREE.Mesh(new THREE.ConeGeometry(d * 0.35, slopeHalfD * 0.95, 4), goldMat);
+      gable.rotation.y = Math.PI / 4;
+      gable.scale.set(0.14, 1, 1.38);
+      gable.position.set(gx, yOff + slopeHalfD * 0.42, 0);
+
+      const chofa = new THREE.Mesh(new THREE.ConeGeometry(0.12 * scale, 0.85 * scale, 6), goldMat);
+      chofa.position.set(gx * 1.06, yOff + slopeHalfD * 0.85 + 0.36 * scale, 0);
+      chofa.rotation.z = gx > 0 ? -0.32 : 0.32;
+      grp.add(gable, chofa);
+    });
+  }
+  parent.add(grp);
 }
 
 /** Helper to place a MeshStandard box cleanly onto parent. */
@@ -86,6 +217,7 @@ export function makeAyutthayaFigure(
     isZombie?: boolean;
     hasSword?: boolean;
     hasSpear?: boolean;
+    seatedRowing?: boolean;
   }
 ): THREE.Group {
   const g = new THREE.Group();
@@ -96,23 +228,41 @@ export function makeAyutthayaFigure(
 
   const legL = new THREE.Group();
   legL.name = 'legL';
-  legL.position.set(-0.08, 0.56, 0);
-  const legLM = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.048, 0.54, 7), skinMat);
-  legLM.position.y = -0.27;
-  legL.add(legLM);
-
   const legR = new THREE.Group();
   legR.name = 'legR';
-  legR.position.set(0.08, 0.56, 0);
-  const legRM = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.048, 0.54, 7), skinMat);
-  legRM.position.y = -0.27;
-  legR.add(legRM);
+  if (options?.seatedRowing) {
+    // Natural seated rowing legs: thighs resting forward onto bench & bent shins stepping cleanly onto boat floor
+    [-0.09, 0.09].forEach((lx, li) => {
+      const grp = li === 0 ? legL : legR;
+      grp.position.set(lx, 0.56, 0);
+      const thigh = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.055, 0.34, 7), jongMat);
+      thigh.rotation.x = Math.PI / 2;
+      thigh.position.set(0, 0, 0.17);
+      const shin = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.042, 0.36, 7), skinMat);
+      shin.position.set(0, -0.18, 0.34);
+      grp.add(thigh, shin);
+    });
+  } else {
+    legL.position.set(-0.08, 0.56, 0);
+    const legLM = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.048, 0.54, 7), skinMat);
+    legLM.position.y = -0.27;
+    legL.add(legLM);
+
+    legR.position.set(0.08, 0.56, 0);
+    const legRM = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.048, 0.54, 7), skinMat);
+    legRM.position.y = -0.27;
+    legR.add(legRM);
+  }
   g.add(legL, legR);
 
   const jong = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.19, 0.34, 8), jongMat);
   jong.position.y = 0.68;
   const torso = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.16, 0.44, 8), shirtMat);
   torso.position.y = 1.04;
+  if (options?.seatedRowing) {
+    torso.rotation.x = 0.16;
+    torso.position.z = 0.04;
+  }
   g.add(jong, torso);
 
   if (options?.sabaiCol) {
@@ -213,6 +363,12 @@ export function makeAyutthayaFigure(
     g.add(eye);
   });
 
+  if (options?.seatedRowing) {
+    armL.position.set(-0.2, 1.2, 0.06);
+    armR.position.set(0.2, 1.2, 0.06);
+    armL.rotation.set(-0.92, 0, -0.22);
+    armR.rotation.set(-0.92, 0, 0.22);
+  }
   if (options?.isZombie) {
     torso.rotation.x = 0.24;
     head.rotation.x = -0.15;
@@ -238,7 +394,11 @@ export function makeAyutthayaTeakHouse(
   const woodMid = new THREE.MeshStandardMaterial({ color: '#5c361d', roughness: 0.85 });
   const woodPanel = new THREE.MeshStandardMaterial({ color: '#784626', roughness: 0.82 });
   const frameMat = new THREE.MeshStandardMaterial({ color: '#452613', roughness: 0.86 });
-  const roofMat = new THREE.MeshStandardMaterial({ color: options?.roofColor ?? '#7c2d12', roughness: 0.76 });
+  const roofCol = options?.roofColor ?? '#7c2d12';
+  const roofMat = new THREE.MeshStandardMaterial({
+    map: makeAyutthayaRoofTex(roofCol, options?.nobleGoldTrim ? '#b91c1c' : '#9a3412', options?.nobleGoldTrim ? '#eab308' : roofCol),
+    roughness: 0.68,
+  });
   const trimMat = new THREE.MeshStandardMaterial({
     color: options?.nobleGoldTrim ? '#eab308' : '#9a3412',
     metalness: options?.nobleGoldTrim ? 0.65 : 0.1,
@@ -315,7 +475,7 @@ export function makeAyutthayaTeakHouse(
   return g;
 }
 
-/** Builds a sculpted hollow Thai wooden rowing boat with optional woven bamboo canopy or seated rower. */
+/** Builds a sculpted hollow Thai wooden rowing boat with curved gunwales, cross-thwarts, cargo baskets & seated rower. */
 export function makeAyutthayaBoat(
   length = 4.2,
   withRower = false,
@@ -324,133 +484,204 @@ export function makeAyutthayaBoat(
 ): { group: THREE.Group; oarL?: THREE.Group; oarR?: THREE.Group } {
   const g = new THREE.Group();
   const darkWood = new THREE.MeshStandardMaterial({ color: '#452613', roughness: 0.85 });
-  const plankWood = new THREE.MeshStandardMaterial({ color: '#6e3d20', roughness: 0.8 });
+  const plankWood = new THREE.MeshStandardMaterial({ color: '#784220', roughness: 0.78 });
+  const trimWood = new THREE.MeshStandardMaterial({ color: '#a16207', roughness: 0.72 });
 
-  const floor = new THREE.Mesh(new THREE.BoxGeometry(length * 0.72, 0.08, 0.96), darkWood);
+  // Sculpted interior floorboard & wooden hull ribs (กงเรือ)
+  const floor = new THREE.Mesh(new THREE.BoxGeometry(length * 0.74, 0.07, 0.92), darkWood);
   floor.position.y = 0.08;
   g.add(floor);
+  for (let rx = -length * 0.28; rx <= length * 0.28; rx += 0.65) {
+    addPartBox(g, 0.07, 0.06, 0.9, trimWood, rx, 0.12, 0);
+  }
 
+  // Hollow curved outer gunwales + inner trim rail
   [-0.48, 0.48].forEach((sz) => {
-    const gunwale = new THREE.Mesh(new THREE.BoxGeometry(length * 0.76, 0.28, 0.07), plankWood);
-    gunwale.position.set(0, 0.22, sz);
-    g.add(gunwale);
+    const gunwale = new THREE.Mesh(new THREE.BoxGeometry(length * 0.74, 0.3, 0.08), plankWood);
+    gunwale.position.set(0, 0.23, sz);
+    const rail = new THREE.Mesh(new THREE.BoxGeometry(length * 0.76, 0.06, 0.11), trimWood);
+    rail.position.set(0, 0.38, sz);
+    g.add(gunwale, rail);
   });
 
+  // Upward-curving Siamese Sampan prow & stern with gilded bow post (โขนเรือ)
   [-1, 1].forEach((endDir) => {
-    const prowDeck = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.48, length * 0.26, 4), plankWood);
-    prowDeck.rotation.z = endDir * (Math.PI / 2);
+    const prowDeck = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.49, length * 0.28, 6), plankWood);
+    prowDeck.rotation.z = endDir * (Math.PI / 2 - 0.12);
     prowDeck.rotation.x = Math.PI / 4;
-    prowDeck.scale.set(0.65, 1, 1.08);
-    prowDeck.position.set(endDir * (length * 0.46), 0.24, 0);
-    g.add(prowDeck);
+    prowDeck.scale.set(0.62, 1, 1.05);
+    prowDeck.position.set(endDir * (length * 0.46), 0.28, 0);
+    const tip = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.07, 0.36, 6), trimWood);
+    tip.position.set(endDir * (length * 0.56), 0.48, 0);
+    tip.rotation.z = -endDir * 0.35;
+    g.add(prowDeck, tip);
   });
 
-  [-0.85, 0, 0.85].forEach((bx) => {
-    const seat = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.05, 0.94), darkWood);
-    seat.position.set(bx, 0.26, 0);
+  // 3 Wooden cross-bench thwarts (ม้านั่งพายเรือ)
+  [-0.9, 0, 0.9].forEach((bx) => {
+    const seat = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.055, 0.98), trimWood);
+    seat.position.set(bx, 0.32, 0);
     g.add(seat);
   });
 
   if (hasPrathunCanopy) {
-    // Classic arched woven-bamboo Thai canal cargo canopy (หลังคาเรือประทุน)
+    // Classic arched woven-bamboo Thai canal cargo canopy + rattan wicker baskets
     const canopy = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.56, 0.56, length * 0.42, 8, 1, true, 0, Math.PI),
-      new THREE.MeshStandardMaterial({ color: '#a16207', roughness: 0.92, side: THREE.DoubleSide })
+      new THREE.CylinderGeometry(0.56, 0.56, length * 0.42, 10, 1, true, 0, Math.PI),
+      new THREE.MeshStandardMaterial({ color: '#a16207', roughness: 0.9, side: THREE.DoubleSide })
     );
     canopy.rotation.z = Math.PI / 2;
     canopy.rotation.x = Math.PI / 2;
-    canopy.position.set(-0.25, 0.58, 0);
+    canopy.position.set(-0.3, 0.56, 0);
     g.add(canopy);
+    [-0.1, 0.28].forEach((cx, ci) => {
+      const basket = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.18, 0.14, 0.24, 8),
+        new THREE.MeshStandardMaterial({ color: ci === 0 ? '#ca8a04' : '#b45309', roughness: 0.85 })
+      );
+      basket.position.set(cx, 0.24, ci === 0 ? -0.18 : 0.18);
+      g.add(basket);
+    });
   }
 
-  const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 0.56, 6), darkWood);
-  pole.position.set(length * 0.34, 0.52, 0);
+  const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 0.58, 6), darkWood);
+  pole.position.set(length * 0.35, 0.54, 0);
   const lanternBody = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.06, 0.14, 8), new THREE.MeshBasicMaterial({ color: '#fde68a' }));
-  lanternBody.position.set(length * 0.34, 0.82, 0);
+  lanternBody.position.set(length * 0.35, 0.86, 0);
   g.add(pole, lanternBody);
 
-  let oarL: THREE.Group | undefined;
-  let oarR: THREE.Group | undefined;
+  const rowX = hasPrathunCanopy ? 0.9 : 0;
   if (withRower) {
-    const rower = makeAyutthayaFigure(rowerShirt, '#1e293b', { hatCol: '#ca8a04' });
-    rower.position.set(hasPrathunCanopy ? 0.9 : -0.2, -0.3, 0);
+    // Truly seated on the bench thwart (-0.25 aligns hips cleanly on y=0.32 bench and feet on floor!)
+    const rower = makeAyutthayaFigure(rowerShirt, '#1e293b', { hatCol: '#ca8a04', seatedRowing: true });
+    rower.position.set(rowX, -0.25, 0);
     rower.rotation.y = Math.PI / 2;
     g.add(rower);
-
-    oarL = new THREE.Group();
-    oarL.position.set(hasPrathunCanopy ? 1.1 : 0.1, 0.34, 0.52);
-    const shaftL = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.022, 1.55, 6), darkWood);
-    shaftL.position.set(0, -0.48, 0.25);
-    shaftL.rotation.x = 0.52;
-    const bladeL = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.36, 0.025), plankWood);
-    bladeL.position.set(0, -1.02, 0.56);
-    bladeL.rotation.x = 0.52;
-    oarL.add(shaftL, bladeL);
-    g.add(oarL);
-
-    oarR = oarL.clone();
-    oarR.position.set(oarL.position.x, 0.34, -0.52);
-    oarR.scale.z = -1;
-    g.add(oarR);
   }
+
+  // Animated wooden rowing paddles mounted on port & starboard tholepins
+  const oarL = new THREE.Group();
+  oarL.position.set(rowX + 0.18, 0.38, 0.48);
+  const shaftL = new THREE.Mesh(new THREE.CylinderGeometry(0.024, 0.022, 1.65, 6), trimWood);
+  shaftL.position.set(0, -0.45, 0.24);
+  shaftL.rotation.x = 0.52;
+  const bladeL = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.42, 0.026), plankWood);
+  bladeL.position.set(0, -1.04, 0.58);
+  bladeL.rotation.x = 0.52;
+  oarL.add(shaftL, bladeL);
+  g.add(oarL);
+
+  const oarR = oarL.clone();
+  oarR.position.set(rowX + 0.18, 0.38, -0.48);
+  oarR.scale.z = -1;
+  g.add(oarR);
 
   return { group: g, oarL, oarR };
 }
 
-/** Builds a majestic Royal Ayutthaya Golden Swan Barge (เรือพระที่นั่งสุพรรณหงส์) with royal canopy & oarsmen. */
+/** Builds a detailed hollow Royal Ayutthaya Golden Swan Barge (เรือพระที่นั่งสุพรรณหงส์) with royal canopy & truly seated oarsmen. */
 export function makeRoyalSwanBarge(): { group: THREE.Group; oars: THREE.Group[] } {
   const g = new THREE.Group();
-  const goldMat = new THREE.MeshStandardMaterial({ color: '#eab308', metalness: 0.65, roughness: 0.25 });
-  const redMat = new THREE.MeshStandardMaterial({ color: '#991b1b', roughness: 0.72 });
+  const goldMat = new THREE.MeshStandardMaterial({ color: '#eab308', metalness: 0.7, roughness: 0.22 });
+  const redMat = new THREE.MeshStandardMaterial({ color: '#991b1b', roughness: 0.68 });
+  const woodFloor = new THREE.MeshStandardMaterial({ color: '#3b1f10', roughness: 0.85 });
+  const royalRoofMat = new THREE.MeshStandardMaterial({ map: makeAyutthayaRoofTex('#991b1b', '#dc2626', '#eab308'), roughness: 0.55 });
 
-  // Sleek long gilded barge hull
-  const hull = new THREE.Mesh(new THREE.BoxGeometry(10.8, 0.46, 1.15), goldMat);
-  hull.position.y = 0.22;
-  const trim = new THREE.Mesh(new THREE.BoxGeometry(11.0, 0.14, 1.22), redMat);
-  trim.position.y = 0.42;
-  g.add(hull, trim);
+  // Hollow Sculpted Long Gilded Barge Hull: open interior floor, crimson carpet & tall flared gilded gunwales!
+  const keelFloor = new THREE.Mesh(new THREE.BoxGeometry(9.6, 0.12, 1.18), woodFloor);
+  keelFloor.position.y = 0.12;
+  const carpet = new THREE.Mesh(new THREE.BoxGeometry(8.8, 0.03, 0.48), redMat);
+  carpet.position.y = 0.19;
+  g.add(keelFloor, carpet);
 
-  // Sculpted sweeping golden swan prow + tail
-  const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.24, 2.2, 8), goldMat);
-  neck.position.set(5.9, 1.15, 0);
-  neck.rotation.z = -0.35;
-  const swanHead = new THREE.Mesh(new THREE.SphereGeometry(0.24, 8, 8), goldMat);
-  swanHead.position.set(6.35, 2.15, 0);
-  const beak = new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.38, 6), goldMat);
-  beak.rotation.z = -Math.PI / 2;
-  beak.position.set(6.62, 2.12, 0);
-  const tail = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.22, 1.9, 8), goldMat);
-  tail.position.set(-5.8, 1.0, 0);
-  tail.rotation.z = 0.42;
-  g.add(neck, swanHead, beak, tail);
-
-  // Central Royal Busabok Pavilion Canopy
-  addPartBox(g, 2.2, 0.2, 1.1, redMat, 0, 0.56, 0);
-  [-0.9, 0.9].forEach((px) => {
-    [-0.45, 0.45].forEach((pz) => addPartBox(g, 0.08, 1.35, 0.08, goldMat, px, 1.25, pz));
+  [-0.58, 0.58].forEach((sz) => {
+    addPartBox(g, 9.8, 0.36, 0.09, goldMat, 0, 0.3, sz);
+    addPartBox(g, 9.9, 0.12, 0.11, redMat, 0, 0.46, sz);
+    addPartBox(g, 9.95, 0.06, 0.13, goldMat, 0, 0.54, sz);
   });
-  const canopy = new THREE.Mesh(new THREE.ConeGeometry(1.15, 1.15, 4), goldMat);
-  canopy.rotation.y = Math.PI / 4;
-  canopy.position.set(0, 2.45, 0);
-  g.add(canopy);
+  [-1, 1].forEach((endDir) => {
+    const endHull = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.62, 2.2, 6), goldMat);
+    endHull.rotation.z = endDir * (Math.PI / 2 - 0.1);
+    endHull.rotation.x = Math.PI / 4;
+    endHull.scale.set(0.55, 1, 1.04);
+    endHull.position.set(endDir * 5.7, 0.34, 0);
+    g.add(endHull);
+  });
 
-  // Crimson-coated Royal Oarsmen & gilded paddles
+  // Carved Royal Golden Swan Prow (S-curved neck, crest, feathered cheeks, hanging crystal tassel) & curved Tail
+  const neckLow = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.26, 1.35, 10), goldMat);
+  neckLow.position.set(5.95, 0.95, 0);
+  neckLow.rotation.z = -0.34;
+  const neckHigh = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.17, 1.25, 10), goldMat);
+  neckHigh.position.set(6.28, 1.98, 0);
+  neckHigh.rotation.z = 0.12;
+  const swanHead = new THREE.Mesh(new THREE.SphereGeometry(0.24, 10, 8), goldMat);
+  swanHead.scale.set(1.2, 1.0, 0.9);
+  swanHead.position.set(6.22, 2.58, 0);
+  const crest = new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.48, 6), goldMat);
+  crest.position.set(6.14, 2.86, 0);
+  crest.rotation.z = 0.35;
+  const beak = new THREE.Mesh(new THREE.ConeGeometry(0.09, 0.42, 7), goldMat);
+  beak.rotation.z = -Math.PI / 2;
+  beak.position.set(6.54, 2.52, 0);
+  const tassel = new THREE.Mesh(new THREE.ConeGeometry(0.11, 0.55, 8), redMat);
+  tassel.rotation.x = Math.PI;
+  tassel.position.set(6.58, 2.16, 0);
+  [-0.42, 0.42].forEach((wz) => {
+    const wing = new THREE.Mesh(new THREE.BoxGeometry(1.15, 0.36, 0.08), goldMat);
+    wing.position.set(5.05, 0.58, wz);
+    wing.rotation.z = 0.25;
+    g.add(wing);
+  });
+  const tailLow = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.22, 1.4, 8), goldMat);
+  tailLow.position.set(-5.7, 0.92, 0);
+  tailLow.rotation.z = 0.44;
+  const tailTip = new THREE.Mesh(new THREE.ConeGeometry(0.11, 0.9, 6), goldMat);
+  tailTip.position.set(-6.12, 1.72, 0);
+  tailTip.rotation.z = 0.18;
+  g.add(neckLow, neckHigh, swanHead, crest, beak, tassel, tailLow, tailTip);
+
+  // Ornate Central Royal Busabok Pavilion Throne: Multi-step dais, golden pillars, valance curtains & Mondop spire
+  addPartBox(g, 2.35, 0.16, 1.18, goldMat, 0, 0.28, 0);
+  addPartBox(g, 1.95, 0.22, 0.96, redMat, 0, 0.44, 0);
+  addPartBox(g, 1.65, 0.1, 0.84, goldMat, 0, 0.58, 0);
+  [-0.78, 0.78].forEach((px) => {
+    [-0.38, 0.38].forEach((pz) => addPartBox(g, 0.085, 1.5, 0.085, goldMat, px, 1.32, pz));
+  });
+  addPartBox(g, 1.72, 0.18, 0.88, redMat, 0, 1.96, 0); // embroidered royal cornice
+  const bTier1 = new THREE.Mesh(new THREE.ConeGeometry(1.22, 0.72, 4), royalRoofMat);
+  bTier1.rotation.y = Math.PI / 4;
+  bTier1.position.set(0, 2.38, 0);
+  const bTier2 = new THREE.Mesh(new THREE.ConeGeometry(0.84, 0.7, 4), goldMat);
+  bTier2.rotation.y = Math.PI / 4;
+  bTier2.position.set(0, 2.78, 0);
+  const bSpire = new THREE.Mesh(new THREE.ConeGeometry(0.14, 0.9, 8), goldMat);
+  bSpire.position.set(0, 3.4, 0);
+  g.add(bTier1, bTier2, bSpire);
+
+  // Cross-benches & Truly Seated Royal Crimson Oarsmen gripping gilded paddles
   const oars: THREE.Group[] = [];
-  [-3.8, -2.5, 2.5, 3.8].forEach((rx) => {
-    const oarsman = makeAyutthayaFigure('#991b1b', '#eab308', { helmetGold: true });
-    oarsman.position.set(rx, -0.15, 0);
+  [-4.1, -3.1, -2.1, 2.1, 3.1, 4.1].forEach((rx) => {
+    addPartBox(g, 0.34, 0.06, 1.16, redMat, rx, 0.34, 0); // thwart seat bench
+    const oarsman = makeAyutthayaFigure('#991b1b', '#eab308', { helmetGold: true, seatedRowing: true });
+    oarsman.position.set(rx, -0.2, 0);
     oarsman.rotation.y = Math.PI / 2;
     oarsman.scale.setScalar(0.84);
     g.add(oarsman);
 
-    const oar = new THREE.Group();
-    oar.position.set(rx, 0.4, 0.58);
-    const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 1.65, 6), goldMat);
-    shaft.position.set(0, -0.52, 0.28);
-    shaft.rotation.x = 0.5;
-    oar.add(shaft);
-    g.add(oar);
-    oars.push(oar);
+    [-0.56, 0.56].forEach((sz, si) => {
+      const oar = new THREE.Group();
+      oar.position.set(rx + 0.16, 0.48, sz);
+      const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.024, 0.022, 1.75, 6), goldMat);
+      shaft.position.set(0, -0.54, si === 0 ? -0.3 : 0.3);
+      shaft.rotation.x = si === 0 ? -0.52 : 0.52;
+      const blade = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.42, 0.025), goldMat);
+      blade.position.set(0, -1.18, si === 0 ? -0.64 : 0.64);
+      blade.rotation.x = si === 0 ? -0.52 : 0.52;
+      oar.add(shaft, blade);
+      g.add(oar);
+      if (si === 1) oars.push(oar);
+    });
   });
 
   return { group: g, oars };
