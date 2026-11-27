@@ -100,10 +100,11 @@ export class SchoolWorld {
     this.camera = new THREE.PerspectiveCamera(42, window.innerWidth / window.innerHeight, 0.1, 180);
     this.camera.position.set(-106, 2.2, 13.0);
 
-    this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    const isMobileOrTablet = window.matchMedia('(pointer: coarse)').matches || navigator.maxTouchPoints > 0;
+    this.renderer = new THREE.WebGLRenderer({ canvas, antialias: !isMobileOrTablet, powerPreference: 'high-performance' });
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobileOrTablet ? 1.25 : 2));
     this.renderer.setSize(window.innerWidth, window.innerHeight);
-    this.renderer.shadowMap.enabled = true;
+    this.renderer.shadowMap.enabled = !isMobileOrTablet;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1.12;
@@ -899,9 +900,10 @@ export class SchoolWorld {
         ? THREE.MathUtils.clamp(px, -118, 118)
         : THREE.MathUtils.clamp(px, -7, 30);
     const targetY = (isInside ? 0 : pFloor * CH3_FLOOR_H) + 2.15;
-    this.camera.position.x = THREE.MathUtils.lerp(this.camera.position.x, targetX, Math.min(1, dt * 6));
-    this.camera.position.y = THREE.MathUtils.lerp(this.camera.position.y, targetY, Math.min(1, dt * 6));
-    this.camera.position.z = THREE.MathUtils.lerp(this.camera.position.z, this.targetCamZ, Math.min(1, dt * 6));
+    const camAlpha = 1 - Math.exp(-8.5 * Math.min(dt, 0.05));
+    this.camera.position.x = THREE.MathUtils.lerp(this.camera.position.x, targetX, camAlpha);
+    this.camera.position.y = THREE.MathUtils.lerp(this.camera.position.y, targetY, camAlpha);
+    this.camera.position.z = THREE.MathUtils.lerp(this.camera.position.z, this.targetCamZ, camAlpha);
     this.camera.lookAt(this.camera.position.x, this.camera.position.y - 0.15, 0);
 
     // Track Sky Backdrop, Celestial Disc, Clouds & Dynamic High-Res Sun/Moon Shadow Camera with Camera!
@@ -1239,7 +1241,8 @@ export class SchoolWorld {
 
   public resize(): void {
     this.updateCameraFraming(true);
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    const isMobileOrTablet = window.matchMedia('(pointer: coarse)').matches || navigator.maxTouchPoints > 0;
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobileOrTablet ? 1.25 : 2));
     this.renderer.setSize(Math.max(1, window.innerWidth), Math.max(1, window.innerHeight));
   }
 

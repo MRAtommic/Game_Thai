@@ -64,26 +64,151 @@ function makeWheel(radius: number, width: number): THREE.Group {
   return wg;
 }
 
+let villagerSeedCounter = 0;
+
+function paintVillagerFaceTex(seed: number, skinHex: string, hasGlasses: boolean, hasStache: boolean, rosyCheeks: boolean): THREE.CanvasTexture {
+  const c = document.createElement('canvas');
+  c.width = 64;
+  c.height = 64;
+  const ctx = c.getContext('2d')!;
+  ctx.fillStyle = skinHex;
+  ctx.fillRect(0, 0, 64, 64);
+
+  // Subtle shading & rosy cheeks
+  if (rosyCheeks) {
+    ctx.fillStyle = 'rgba(244, 114, 182, 0.36)';
+    ctx.beginPath();
+    ctx.arc(19, 39, 5, 0, Math.PI * 2);
+    ctx.arc(45, 39, 5, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  // Eyebrows (varied expressions)
+  ctx.fillStyle = '#18181b';
+  const browTilt = (seed % 3) - 1;
+  ctx.fillRect(17, 22 + browTilt, 9, 2.5);
+  ctx.fillRect(38, 22 - browTilt, 9, 2.5);
+  // Expressive eyes with white glint
+  ctx.fillStyle = '#0f172a';
+  ctx.beginPath();
+  ctx.arc(22, 30, 3.2, 0, Math.PI * 2);
+  ctx.arc(42, 30, 3.2, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(20, 28, 2, 2);
+  ctx.fillRect(40, 28, 2, 2);
+
+  if (hasGlasses) {
+    ctx.strokeStyle = '#1e293b';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(15, 25, 13, 10);
+    ctx.strokeRect(36, 25, 13, 10);
+    ctx.beginPath();
+    ctx.moveTo(28, 30);
+    ctx.lineTo(36, 30);
+    ctx.stroke();
+  }
+  // Nose & Mustache / Smile
+  ctx.fillStyle = 'rgba(0,0,0,0.18)';
+  ctx.fillRect(30.5, 34, 3, 5);
+  if (hasStache) {
+    ctx.fillStyle = '#18181b';
+    ctx.fillRect(24, 42, 16, 3);
+  }
+  ctx.strokeStyle = rosyCheeks ? '#be123c' : '#451a03';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  if (seed % 2 === 0) {
+    ctx.arc(32, 44, 6, 0.15, Math.PI - 0.15);
+  } else {
+    ctx.moveTo(26, 46);
+    ctx.lineTo(38, 45);
+  }
+  ctx.stroke();
+
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  return tex;
+}
+
 function makeVillagerFigure(shirtCol: string, pantsCol: string, hatCol?: string, bottleCol?: string): THREE.Group {
+  const seed = villagerSeedCounter++;
+  const skins = ['#dfad82', '#cf9970', '#c48a62', '#e8bc96'];
+  const skinCol = skins[seed % skins.length];
+  const hairCols = ['#18181b', '#292524', '#3f2e21', '#9ca3af'];
+  const hairCol = hairCols[seed % hairCols.length];
+  const isFemale = seed % 3 === 1;
+  const hasGlasses = seed % 5 === 2;
+  const hasStache = !isFemale && seed % 4 === 3;
+
   const g = new THREE.Group();
-  const leftLeg = addPart(g, 0.14, 0.52, 0.16, pantsCol, -0.08, 0.26, 0);
-  const rightLeg = addPart(g, 0.14, 0.52, 0.16, pantsCol, 0.08, 0.26, 0);
+  // Rounded legs (left/right kept as legL/legR for animation!)
+  const legGeo = new THREE.CylinderGeometry(0.072, 0.064, 0.52, 8);
+  const legMat = new THREE.MeshStandardMaterial({ color: pantsCol, roughness: 0.78 });
+  const leftLeg = new THREE.Mesh(legGeo, legMat);
+  leftLeg.position.set(-0.08, 0.26, 0);
+  const rightLeg = new THREE.Mesh(legGeo, legMat);
+  rightLeg.position.set(0.08, 0.26, 0);
   leftLeg.name = 'legL';
   rightLeg.name = 'legR';
-  addPart(g, 0.34, 0.66, 0.24, shirtCol, 0, 0.85, 0);
-  const leftArm = addPart(g, 0.1, 0.48, 0.1, '#cf9970', -0.23, 0.86, 0);
-  const rightArm = addPart(g, 0.1, 0.48, 0.1, '#cf9970', 0.23, 0.86, 0);
+  g.add(leftLeg, rightLeg);
+
+  // Sculpted torso + neck + optional Isaan Pha Khao Ma sash across chest
+  const torso = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.16, 0.18, 0.64, 10),
+    new THREE.MeshStandardMaterial({ color: shirtCol, roughness: 0.72 })
+  );
+  torso.position.set(0, 0.84, 0);
+  g.add(torso);
+  if (seed % 3 === 0 && shirtCol !== '#ffffff') {
+    const sash = addPart(g, 0.08, 0.56, 0.26, '#dc2626', 0.02, 0.86, 0.02);
+    sash.rotation.z = 0.42;
+  }
+  addPart(g, 0.1, 0.12, 0.1, skinCol, 0, 1.18, 0);
+
+  // Rounded arms (armL/armR kept for waving/dancing!)
+  const armGeo = new THREE.CylinderGeometry(0.048, 0.044, 0.48, 8);
+  const armMat = new THREE.MeshStandardMaterial({ color: skinCol, roughness: 0.7 });
+  const leftArm = new THREE.Mesh(armGeo, armMat);
+  leftArm.position.set(-0.22, 0.86, 0);
+  const rightArm = new THREE.Mesh(armGeo, armMat);
+  rightArm.position.set(0.22, 0.86, 0);
   leftArm.name = 'armL';
   rightArm.name = 'armR';
-  addPart(g, 0.26, 0.26, 0.24, '#cf9970', 0, 1.34, 0);
-  addPart(g, 0.27, 0.1, 0.25, '#18181b', 0, 1.46, 0);
+  g.add(leftArm, rightArm);
+
+  // Rounded 3D head with unique painted face & varied hairstyles!
+  const head = new THREE.Mesh(
+    new THREE.SphereGeometry(0.155, 14, 12),
+    new THREE.MeshStandardMaterial({ color: skinCol, roughness: 0.65 })
+  );
+  head.position.set(0, 1.35, 0);
+  g.add(head);
+  const facePlane = new THREE.Mesh(
+    new THREE.PlaneGeometry(0.21, 0.21),
+    new THREE.MeshStandardMaterial({ map: paintVillagerFaceTex(seed, skinCol, hasGlasses, hasStache, isFemale), roughness: 0.6 })
+  );
+  facePlane.position.set(0, 1.35, 0.135);
+  g.add(facePlane);
+
+  // Varied hairstyles (cap, side-part, bun, bob, spiky)
+  const hairMat = new THREE.MeshStandardMaterial({ color: hairCol, roughness: 0.85 });
+  const hairCap = new THREE.Mesh(new THREE.SphereGeometry(0.162, 12, 10, 0, Math.PI * 2, 0, Math.PI * 0.52), hairMat);
+  hairCap.position.set(0, 1.37, -0.01);
+  g.add(hairCap);
+  if (isFemale) {
+    const bun = new THREE.Mesh(new THREE.SphereGeometry(0.075, 10, 8), hairMat);
+    bun.position.set(0, 1.48, -0.12);
+    g.add(bun);
+  } else if (seed % 4 === 0) {
+    addPart(g, 0.22, 0.08, 0.16, hairCol, 0, 1.5, 0.03); // stylish pompadour
+  }
+
   if (hatCol) {
-    const hat = new THREE.Mesh(new THREE.ConeGeometry(0.32, 0.2, 8), new THREE.MeshStandardMaterial({ color: hatCol }));
+    const hat = new THREE.Mesh(new THREE.ConeGeometry(0.32, 0.2, 12), new THREE.MeshStandardMaterial({ color: hatCol }));
     hat.position.set(0, 1.54, 0);
     g.add(hat);
   }
   if (bottleCol) {
-    // Khai lao / Thai white liquor bottle held in swaying hand
     const bottle = new THREE.Mesh(
       new THREE.CylinderGeometry(0.04, 0.055, 0.28, 8),
       new THREE.MeshStandardMaterial({ color: bottleCol, roughness: 0.25 })
@@ -632,36 +757,67 @@ export function buildTrafficAndParkedVehicles(scene: THREE.Scene): MovingVehicle
         });
 
         const makeShowPerformer = (dressCol: string, plumeCol: string, isLeadSinger = false): THREE.Group => {
+          const perfSeed = villagerSeedCounter++;
           const g = new THREE.Group();
-          const legL = addPart(g, 0.1, 0.52, 0.1, '#dfb089', -0.07, 0.26, 0);
-          const legR = addPart(g, 0.1, 0.52, 0.1, '#dfb089', 0.07, 0.26, 0);
+          const legGeo = new THREE.CylinderGeometry(0.055, 0.048, 0.52, 8);
+          const legMat = new THREE.MeshStandardMaterial({ color: '#dfb089', roughness: 0.7 });
+          const legL = new THREE.Mesh(legGeo, legMat);
+          legL.position.set(-0.07, 0.26, 0);
+          const legR = new THREE.Mesh(legGeo, legMat);
+          legR.position.set(0.07, 0.26, 0);
           legL.name = 'legL';
           legR.name = 'legR';
+          g.add(legL, legR);
           // Flared sparkling sequined mini-skirt + metallic gold belt + fitted bodice
           const skirt = new THREE.Mesh(
-            new THREE.ConeGeometry(0.28, 0.42, 10),
+            new THREE.ConeGeometry(0.28, 0.42, 12),
             new THREE.MeshStandardMaterial({ color: dressCol, roughness: 0.28, metalness: 0.45 })
           );
           skirt.position.set(0, 0.62, 0);
           g.add(skirt);
-          addPart(g, 0.28, 0.07, 0.2, '#facc15', 0, 0.78, 0, 0.3, 0.6); // gold sequin waist
-          addPart(g, 0.28, 0.42, 0.2, dressCol, 0, 0.98, 0, 0.35, 0.35);
-          const armL = addPart(g, 0.08, 0.44, 0.08, '#dfb089', -0.2, 1.0, 0);
-          const armR = addPart(g, 0.08, 0.44, 0.08, '#dfb089', 0.2, 1.0, 0);
+          addPart(g, 0.28, 0.07, 0.2, '#facc15', 0, 0.78, 0, 0.3, 0.6);
+          const bodice = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.13, 0.14, 0.4, 10),
+            new THREE.MeshStandardMaterial({ color: dressCol, roughness: 0.35, metalness: 0.35 })
+          );
+          bodice.position.set(0, 0.98, 0);
+          g.add(bodice);
+          const armGeo = new THREE.CylinderGeometry(0.042, 0.038, 0.44, 8);
+          const armL = new THREE.Mesh(armGeo, legMat);
+          armL.position.set(-0.2, 1.0, 0);
+          const armR = new THREE.Mesh(armGeo, legMat);
+          armR.position.set(0.2, 1.0, 0);
           armL.name = 'armL';
           armR.name = 'armR';
-          // Head + long flowing dark hair + glamorous tall feathered Mor Lam showgirl crown!
-          addPart(g, 0.24, 0.25, 0.22, '#e8bc96', 0, 1.36, 0);
+          g.add(armL, armR);
+          // Rounded head with expressive painted singer/dancer face + flowing dark hair + feathered Mor Lam crown!
+          const head = new THREE.Mesh(
+            new THREE.SphereGeometry(0.145, 14, 12),
+            new THREE.MeshStandardMaterial({ color: '#e8bc96', roughness: 0.6 })
+          );
+          head.position.set(0, 1.36, 0);
+          g.add(head);
+          const face = new THREE.Mesh(
+            new THREE.PlaneGeometry(0.2, 0.2),
+            new THREE.MeshStandardMaterial({ map: paintVillagerFaceTex(perfSeed * 2, '#e8bc96', false, false, true), roughness: 0.55 })
+          );
+          face.position.set(0, 1.36, 0.13);
+          g.add(face);
           addPart(g, 0.28, 0.36, 0.14, '#111827', 0, 1.32, -0.08);
-          addPart(g, 0.25, 0.1, 0.23, '#18181b', 0, 1.48, 0);
+          const hairCap = new THREE.Mesh(
+            new THREE.SphereGeometry(0.152, 12, 10, 0, Math.PI * 2, 0, Math.PI * 0.52),
+            new THREE.MeshStandardMaterial({ color: '#18181b', roughness: 0.85 })
+          );
+          hairCap.position.set(0, 1.38, -0.01);
+          g.add(hairCap);
           const crown = new THREE.Mesh(
-            new THREE.ConeGeometry(0.14, 0.3, 6),
+            new THREE.ConeGeometry(0.14, 0.3, 8),
             new THREE.MeshStandardMaterial({ color: '#facc15', metalness: 0.7, roughness: 0.25 })
           );
           crown.position.set(0, 1.62, 0);
           const plume = new THREE.Mesh(
-            new THREE.BoxGeometry(0.46, 0.24, 0.06),
-            new THREE.MeshStandardMaterial({ color: plumeCol, emissive: plumeCol, emissiveIntensity: 0.25 })
+            new THREE.TorusGeometry(0.2, 0.055, 6, 12, Math.PI),
+            new THREE.MeshStandardMaterial({ color: plumeCol, emissive: plumeCol, emissiveIntensity: 0.28 })
           );
           plume.position.set(0, 1.72, -0.02);
           g.add(crown, plume);

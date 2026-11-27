@@ -485,14 +485,15 @@ export class IsaanWorld {
     this.camera = new THREE.PerspectiveCamera(42, window.innerWidth / window.innerHeight, 0.1, 110);
     this.camera.position.set(0, 2.3, 13.4);
 
+    const isMobileOrTablet = window.matchMedia('(pointer: coarse)').matches || navigator.maxTouchPoints > 0;
     this.renderer = new THREE.WebGLRenderer({
       canvas,
-      antialias: true,
+      antialias: !isMobileOrTablet,
       powerPreference: 'high-performance',
     });
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobileOrTablet ? 1.25 : 2));
     this.renderer.setSize(window.innerWidth, window.innerHeight);
-    this.renderer.shadowMap.enabled = true;
+    this.renderer.shadowMap.enabled = !isMobileOrTablet;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1.12;
@@ -2525,9 +2526,11 @@ export class IsaanWorld {
     }
 
     const camX = isInside ? THREE.MathUtils.clamp(playerX, -1.6, 1.6) : THREE.MathUtils.clamp(playerX, CH2_MIN_X + 5.5, CH2_MAX_X - 5.5);
-    this.camera.position.x = THREE.MathUtils.lerp(this.camera.position.x, camX, Math.min(1, dt * 5.5));
-    this.camera.position.y = THREE.MathUtils.lerp(this.camera.position.y, 2.2, Math.min(1, dt * 5.5));
-    this.camera.position.z = THREE.MathUtils.lerp(this.camera.position.z, this.targetCamZ, Math.min(1, dt * 6.0));
+    const camAlpha = 1 - Math.exp(-8.5 * Math.min(dt, 0.05));
+    const camZAlpha = 1 - Math.exp(-9.0 * Math.min(dt, 0.05));
+    this.camera.position.x = THREE.MathUtils.lerp(this.camera.position.x, camX, camAlpha);
+    this.camera.position.y = THREE.MathUtils.lerp(this.camera.position.y, 2.2, camAlpha);
+    this.camera.position.z = THREE.MathUtils.lerp(this.camera.position.z, this.targetCamZ, camZAlpha);
     this.camera.lookAt(this.camera.position.x, this.camera.position.y - 0.2, 0);
     this.renderer.render(this.scene, this.camera);
   }
@@ -2569,7 +2572,8 @@ export class IsaanWorld {
 
   public resize(): void {
     this.updateCameraFraming(true);
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    const isMobileOrTablet = window.matchMedia('(pointer: coarse)').matches || navigator.maxTouchPoints > 0;
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobileOrTablet ? 1.25 : 2));
     this.renderer.setSize(Math.max(1, window.innerWidth), Math.max(1, window.innerHeight));
   }
 

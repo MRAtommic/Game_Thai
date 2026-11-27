@@ -190,14 +190,15 @@ export class DormWorld {
     );
     this.camera.position.set(0, 2.2, 12.6);
 
+    const isMobileOrTablet = window.matchMedia('(pointer: coarse)').matches || navigator.maxTouchPoints > 0;
     this.renderer = new THREE.WebGLRenderer({
       canvas,
-      antialias: true,
+      antialias: !isMobileOrTablet,
       powerPreference: 'high-performance',
     });
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobileOrTablet ? 1.25 : 2));
     this.renderer.setSize(window.innerWidth, window.innerHeight);
-    this.renderer.shadowMap.enabled = true;
+    this.renderer.shadowMap.enabled = !isMobileOrTablet;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1.1;
@@ -2806,9 +2807,11 @@ export class DormWorld {
 
     this.renderer.toneMappingExposure = sanity < 40 ? 0.94 : 1.1;
 
-    this.camera.position.x = THREE.MathUtils.lerp(this.camera.position.x, camTargetX, Math.min(1, dt * 5.5));
-    this.camera.position.y = THREE.MathUtils.lerp(this.camera.position.y, camTargetY, Math.min(1, dt * 5.5));
-    this.camera.position.z = THREE.MathUtils.lerp(this.camera.position.z, desiredCamZ, Math.min(1, dt * 6.0));
+    const camAlpha = 1 - Math.exp(-8.5 * Math.min(dt, 0.05));
+    const camZAlpha = 1 - Math.exp(-9.0 * Math.min(dt, 0.05));
+    this.camera.position.x = THREE.MathUtils.lerp(this.camera.position.x, camTargetX, camAlpha);
+    this.camera.position.y = THREE.MathUtils.lerp(this.camera.position.y, camTargetY, camAlpha);
+    this.camera.position.z = THREE.MathUtils.lerp(this.camera.position.z, desiredCamZ, camZAlpha);
     this.camera.lookAt(this.camera.position.x, this.camera.position.y - 0.16, desiredLookZ);
     if (drunkMode) {
       this.camera.rotation.z += Math.sin(this.animClock * 3.1) * 0.048;
@@ -2999,7 +3002,8 @@ export class DormWorld {
 
   public resize(): void {
     this.updateCameraFraming(true);
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    const isMobileOrTablet = window.matchMedia('(pointer: coarse)').matches || navigator.maxTouchPoints > 0;
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobileOrTablet ? 1.25 : 2));
     this.renderer.setSize(Math.max(1, window.innerWidth), Math.max(1, window.innerHeight));
   }
 
