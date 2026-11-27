@@ -295,38 +295,83 @@ export class SchoolWorld {
       this.exteriorGroup.add(mtn);
     }
 
-    // Midground Thai roadside buildings along West Town Street (-122 .. -64) + Utility Power Poles & Catenary Cables
-    [-118, -96, -82, -68].forEach((bx, bi) => {
-      const col = bi % 2 === 0 ? '#334155' : '#475569';
-      this.addBox(this.exteriorGroup, 7.2, 4.2 + (bi % 2) * 1.4, 3.4, col, bx, 2.1, -6.2, 0.9);
-      this.addBox(this.exteriorGroup, 7.5, 0.55, 3.6, '#1e293b', bx, 4.4 + (bi % 2) * 1.4, -6.2, 0.8);
+    // Sidewalk paving apron behind street curb (-132 .. -52, z = -3.3 .. -9.0) so roadside buildings sit solidly on ground!
+    this.addBox(this.exteriorGroup, 80, 0.16, 5.8, '#64748b', -92, 0.08, -6.1, 0.85);
+    this.addBox(this.exteriorGroup, 80, 0.14, 0.28, '#cbd5e1', -92, 0.07, -3.25, 0.8);
+
+    // Grounded 2-Story Thai Town Shophouses (ตึกแถว 2 ชั้น) with flush roofs, shop shutters, striped awnings & glowing upper windows!
+    const shophouseWin = createThaiWindowTexture(true);
+    [
+      { x: -119, wall: '#e2e8f0', roof: '#1e3a8a', awning: '#b91c1c', sign: 'ร้านขายของชำ' },
+      { x: -96, wall: '#fef3c7', roof: '#7c2d12', awning: '#0f766e', sign: 'ร้านกาแฟโบราณ' },
+      { x: -82, wall: '#dbeafe', roof: '#1e293b', awning: '#1d4ed8', sign: 'ร้านเครื่องเขียน' },
+      { x: -68, wall: '#f1f5f9', roof: '#7f1d1d', awning: '#b45309', sign: 'คลินิก & ร้านยา' },
+    ].forEach((sh) => {
+      const bw = 7.4;
+      const bh = 5.4;
+      const bz = -6.0;
+      const frontZ = bz + 1.75; // -4.25
+      // Grounded main structure (y = 0.16 .. 5.56) + flush cornice & sloped roof (ZERO floating gap!)
+      this.addBox(this.exteriorGroup, bw, bh, 3.5, sh.wall, sh.x, 0.16 + bh / 2, bz, 0.88);
+      this.addBox(this.exteriorGroup, bw + 0.35, 0.22, 3.85, '#cbd5e1', sh.x, 0.16 + bh + 0.1, bz, 0.7);
+      this.addBox(this.exteriorGroup, bw + 0.6, 0.75, 4.0, sh.roof, sh.x, 0.16 + bh + 0.55, bz, 0.65);
+
+      // Ground floor roll-up shop shutter + awning canopy + signboard
+      this.addBox(this.exteriorGroup, 4.4, 2.35, 0.08, '#94a3b8', sh.x, 1.34, frontZ + 0.02, 0.45);
+      this.addBox(this.exteriorGroup, 1.4, 2.35, 0.1, '#475569', sh.x - 2.3, 1.34, frontZ + 0.02, 0.55); // glass/wood side door
+      this.addBox(this.exteriorGroup, 5.2, 0.12, 1.1, sh.awning, sh.x, 2.68, frontZ + 0.48, 0.75).rotation.x = 0.28;
+      const shopSign = new THREE.Mesh(
+        new THREE.PlaneGeometry(3.2, 0.58),
+        new THREE.MeshBasicMaterial({ map: createSchoolSignTexture(sh.sign, 'เปิดบริการ', sh.roof, '#0f172a', '#fde68a') })
+      );
+      shopSign.position.set(sh.x, 3.12, frontZ + 0.08);
+      this.exteriorGroup.add(shopSign);
+
+      // 2nd Floor balcony rail & warm glowing Thai windows
+      this.addBox(this.exteriorGroup, bw - 0.6, 0.52, 0.14, '#cbd5e1', sh.x, 3.45, frontZ + 0.18, 0.8);
+      [-1.7, 1.7].forEach((wx) => {
+        const w = new THREE.Mesh(new THREE.PlaneGeometry(1.75, 1.25), new THREE.MeshBasicMaterial({ map: shophouseWin }));
+        w.position.set(sh.x + wx, 4.42, frontZ + 0.04);
+        this.exteriorGroup.add(w);
+        this.addBox(this.exteriorGroup, 1.9, 0.1, 0.12, sh.roof, sh.x + wx, 3.76, frontZ + 0.06, 0.6);
+      });
     });
+
+    // Utility Power Poles & Catenary Cables along entire 248m town/school street
     for (let px = -120; px <= 116; px += 18) {
-      this.addBox(this.exteriorGroup, 0.24, 8.2, 0.24, '#334155', px, 4.1, -4.4, 0.9);
-      this.addBox(this.exteriorGroup, 1.35, 0.12, 0.14, '#475569', px, 7.6, -4.4, 0.7);
+      this.addBox(this.exteriorGroup, 0.24, 8.2, 0.24, '#334155', px, 4.1, -3.75, 0.9);
+      this.addBox(this.exteriorGroup, 1.35, 0.12, 0.14, '#475569', px, 7.6, -3.75, 0.7);
       if (px + 18 <= 118) {
         const sagPts = [
-          new THREE.Vector3(px, 7.55, -4.4),
-          new THREE.Vector3(px + 9, 6.95, -4.4),
-          new THREE.Vector3(px + 18, 7.55, -4.4),
+          new THREE.Vector3(px, 7.55, -3.75),
+          new THREE.Vector3(px + 9, 6.95, -3.75),
+          new THREE.Vector3(px + 18, 7.55, -3.75),
         ];
         const wireGeo = new THREE.BufferGeometry().setFromPoints(new THREE.QuadraticBezierCurve3(...sagPts).getPoints(10));
         this.exteriorGroup.add(new THREE.Line(wireGeo, new THREE.LineBasicMaterial({ color: '#0f172a', transparent: true, opacity: 0.72 })));
       }
     }
 
-    // Road curbstone, bold White/Yellow Dashed Road Markings, Bike Lane Stripes & School Crosswalk (-128 .. -53)
-    this.addBox(this.exteriorGroup, 76, 0.14, 0.28, '#cbd5e1', -91, 0.07, -3.3, 0.8);
-    this.addBox(this.exteriorGroup, 75, 0.02, 0.14, '#e2e8f0', -91, 0.025, 0.85, 0.5); // shoulder bike lane solid edge line
-    this.addBox(this.exteriorGroup, 75, 0.02, 0.14, '#e2e8f0', -91, 0.025, 5.1, 0.5);  // outer road shoulder line
-    for (let rx = -126; rx <= -58; rx += 4.8) {
-      this.addBox(this.exteriorGroup, 2.5, 0.024, 0.2, '#f8fafc', rx, 0.03, 2.95, 0.4); // crisp white center dashed lane line
-      this.addBox(this.exteriorGroup, 2.2, 0.022, 0.12, '#facc15', rx, 0.028, 0.15, 0.4); // yellow bike-shoulder guide dash
+    // Crisp Flush Asphalt Road Markings (PlaneGeometry flat on pavement so ZERO boxy thickness or crosswalk overlap!)
+    const addRoadMark = (w: number, d: number, col: string, x: number, z: number) => {
+      const m = new THREE.Mesh(
+        new THREE.PlaneGeometry(w, d),
+        new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: 0.92, depthWrite: false })
+      );
+      m.rotation.x = -Math.PI / 2;
+      m.position.set(x, 0.012, z);
+      this.exteriorGroup.add(m);
+    };
+    addRoadMark(75, 0.12, '#e2e8f0', -91, -2.35); // far white edge stripe along sidewalk curb
+    addRoadMark(75, 0.12, '#e2e8f0', -91, 5.25);  // near white edge stripe
+    for (let rx = -126; rx <= -58; rx += 4.6) {
+      // Skip centerline dashes directly inside Zebra Crosswalks (-88 & -56.5)
+      if (Math.abs(rx + 88.0) < 2.2 || Math.abs(rx + 56.5) < 2.4) continue;
+      addRoadMark(2.0, 0.14, '#facc15', rx, 1.55); // realistic yellow highway dashed centerline
     }
-    // Zebra Pedestrian Crosswalk (ทางม้าลาย) outside School Gate (-56.5) & Songthaew Stop (-88)
     [-56.5, -88.0].forEach((zx) => {
-      for (let zBar = -0.3; zBar <= 4.7; zBar += 0.82) {
-        this.addBox(this.exteriorGroup, 2.4, 0.026, 0.42, '#f8fafc', zx, 0.032, zBar, 0.45);
+      for (let zBar = -1.6; zBar <= 4.4; zBar += 0.85) {
+        addRoadMark(2.2, 0.42, '#f8fafc', zx, zBar);
       }
     });
 
@@ -828,18 +873,19 @@ export class SchoolWorld {
     this.celestialGroup.add(this.sunDisc, this.sunHalo);
     this.scene.add(this.celestialGroup);
 
-    // Drifting soft cloud layers
+    // Seamless soft cloud sprites (opaque fill on canvas + soft mesh opacity so circles never show overlapping rings!)
     const cc = document.createElement('canvas');
-    cc.width = 192;
-    cc.height = 64;
+    cc.width = 256;
+    cc.height = 96;
     const cctx = cc.getContext('2d')!;
-    cctx.fillStyle = 'rgba(255,255,255,0.68)';
+    cctx.fillStyle = '#ffffff';
     [
-      [56, 38, 28],
-      [96, 28, 34],
-      [136, 38, 26],
-      [76, 42, 22],
-      [116, 42, 22],
+      [70, 56, 32],
+      [114, 42, 40],
+      [158, 48, 34],
+      [194, 60, 24],
+      [50, 66, 22],
+      [130, 62, 30],
     ].forEach(([cx, cy, cr]) => {
       cctx.beginPath();
       cctx.arc(cx, cy, cr, 0, Math.PI * 2);
@@ -850,7 +896,7 @@ export class SchoolWorld {
     for (let i = 0; i < 8; i++) {
       const cm = new THREE.Mesh(
         new THREE.PlaneGeometry(18 + (i % 3) * 5, 6.2),
-        new THREE.MeshBasicMaterial({ map: cTex, transparent: true, opacity: 0.45, fog: false, depthWrite: false })
+        new THREE.MeshBasicMaterial({ map: cTex, transparent: true, opacity: 0.36, fog: false, depthWrite: false })
       );
       const bx = -120 + i * 34;
       cm.position.set(bx, 13.5 + (i % 3) * 2.4, -44 - (i % 2) * 3);
