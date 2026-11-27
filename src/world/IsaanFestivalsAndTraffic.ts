@@ -662,37 +662,99 @@ export function buildTrafficAndParkedVehicles(scene: THREE.Scene): MovingVehicle
 
         const ferrisWheel = new THREE.Group();
         ferrisWheel.position.set(wheelCenterX, wheelCenterY, wheelZ);
-        const rim = new THREE.Mesh(
-          new THREE.TorusGeometry(3.35, 0.09, 8, 28),
-          new THREE.MeshStandardMaterial({ color: '#facc15', emissive: '#ca8a04', emissiveIntensity: 0.4, metalness: 0.5 })
+
+        // Twin parallel steel rims (front & back) + glowing center carnival star hub!
+        [-0.34, 0.34].forEach((rz) => {
+          const rim = new THREE.Mesh(
+            new THREE.TorusGeometry(3.35, 0.085, 8, 32),
+            new THREE.MeshStandardMaterial({ color: '#facc15', emissive: '#ca8a04', emissiveIntensity: 0.4, metalness: 0.5 })
+          );
+          rim.position.z = rz;
+          const innerRing = new THREE.Mesh(
+            new THREE.TorusGeometry(2.15, 0.05, 6, 28),
+            new THREE.MeshStandardMaterial({ color: '#cbd5e1', metalness: 0.6, roughness: 0.35 })
+          );
+          innerRing.position.z = rz;
+          ferrisWheel.add(rim, innerRing);
+        });
+        const hubCenter = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.42, 0.42, 0.84, 14),
+          new THREE.MeshStandardMaterial({ color: '#eab308', emissive: '#ca8a04', emissiveIntensity: 0.55, metalness: 0.6 })
         );
-        ferrisWheel.add(rim);
+        hubCenter.rotation.x = Math.PI / 2;
+        ferrisWheel.add(hubCenter);
 
         const gondolas: THREE.Group[] = [];
         const bulbs: THREE.Mesh[] = [];
         const gColors = ['#ef4444', '#eab308', '#22c55e', '#3b82f6', '#ec4899'];
+        const riderShirts = ['#f8fafc', '#38bdf8', '#fb923c', '#f472b6', '#a3e635', '#facc15'];
         const spokesCount = 10;
         for (let i = 0; i < spokesCount; i++) {
           const ang = (i / spokesCount) * Math.PI * 2;
-          const spoke = addPart(ferrisWheel, 0.06, 6.65, 0.06, '#e2e8f0', 0, 0, 0, 0.4, 0.7);
-          spoke.rotation.z = ang;
+          [-0.34, 0.34].forEach((sz) => {
+            const spoke = addPart(ferrisWheel, 0.05, 6.68, 0.05, '#e2e8f0', 0, 0, sz, 0.4, 0.7);
+            spoke.rotation.z = ang;
+          });
 
           const gx = Math.cos(ang) * 3.35;
           const gy = Math.sin(ang) * 3.35;
+          // Crossbar axle connecting front & back rims at each gondola pivot
+          addPart(ferrisWheel, 0.06, 0.06, 0.72, '#cbd5e1', gx, gy, 0, 0.35, 0.75);
+
           const gon = new THREE.Group();
           gon.position.set(gx, gy, 0);
-          addPart(gon, 0.58, 0.46, 0.48, gColors[i % gColors.length], 0, -0.34, 0, 0.45);
-          addPart(gon, 0.62, 0.08, 0.5, '#fef08a', 0, -0.02, 0, 0.4);
+          const gonCol = gColors[i % gColors.length];
+
+          // Open-frame carnival gondola: suspension hanger rods, lower tub, side/front safety rails & canopy!
+          [-0.24, 0.24].forEach((hx) => {
+            addPart(gon, 0.035, 0.58, 0.035, '#e2e8f0', hx, -0.29, 0, 0.3, 0.75);
+          });
+          // Gondola floor & waist-high tub walls (hollow interior!)
+          addPart(gon, 0.66, 0.06, 0.52, '#334155', 0, -0.66, 0, 0.6); // floor
+          addPart(gon, 0.68, 0.24, 0.06, gonCol, 0, -0.52, 0.24, 0.42); // front lower wall
+          addPart(gon, 0.68, 0.24, 0.06, gonCol, 0, -0.52, -0.24, 0.42); // back lower wall
+          [-0.31, 0.31].forEach((wx) => addPart(gon, 0.06, 0.24, 0.52, gonCol, wx, -0.52, 0, 0.42));
+          // Safety grab bar + canopy roof
+          addPart(gon, 0.62, 0.03, 0.03, '#f8fafc', 0, -0.35, 0.22, 0.3, 0.6);
+          addPart(gon, 0.72, 0.06, 0.56, '#fef08a', 0, -0.04, 0, 0.4);
+          addPart(gon, 0.74, 0.04, 0.58, gonCol, 0, 0.01, 0, 0.4);
+
+          // Real 3D seated passengers inside most gondolas!
+          if (i % 5 !== 4) {
+            const seats = i % 2 === 0 ? [-0.14, 0.14] : [0];
+            seats.forEach((sx, si) => {
+              const sCol = riderShirts[(i + si) % riderShirts.length];
+              // Seated torso, legs, head & hands gripping front rail
+              addPart(gon, 0.16, 0.24, 0.13, sCol, sx, -0.45, -0.04, 0.7);
+              addPart(gon, 0.14, 0.08, 0.18, '#1e293b', sx, -0.56, 0.05, 0.8);
+              const rHead = new THREE.Mesh(
+                new THREE.SphereGeometry(0.08, 8, 7),
+                new THREE.MeshStandardMaterial({ color: '#d9a47c', roughness: 0.75 })
+              );
+              rHead.position.set(sx, -0.27, -0.04);
+              const rHair = new THREE.Mesh(
+                new THREE.SphereGeometry(0.084, 7, 7, 0, Math.PI * 2, 0, Math.PI * 0.55),
+                new THREE.MeshStandardMaterial({ color: si % 2 === 0 ? '#111827' : '#3f2718', roughness: 0.85 })
+              );
+              rHair.position.set(sx, -0.25, -0.04);
+              const arm = addPart(gon, 0.045, 0.18, 0.045, sCol, sx + 0.08, -0.38, 0.1, 0.7);
+              arm.rotation.x = 0.85;
+              gon.add(rHead, rHair);
+            });
+          }
+
           ferrisWheel.add(gon);
           gondolas.push(gon);
 
-          const bulb = new THREE.Mesh(
-            new THREE.SphereGeometry(0.11, 8, 8),
-            new THREE.MeshBasicMaterial({ color: gColors[i % gColors.length] })
-          );
-          bulb.position.set(gx * 0.92, gy * 0.92, 0.14);
-          ferrisWheel.add(bulb);
-          bulbs.push(bulb);
+          [-0.34, 0.34].forEach((bz) => {
+            const bulb = new THREE.Mesh(
+              new THREE.SphereGeometry(0.1, 8, 8),
+              new THREE.MeshBasicMaterial({ color: gonCol })
+            );
+            bulb.position.set(gx * 0.94, gy * 0.94, bz + (bz > 0 ? 0.09 : -0.09));
+            ferrisWheel.add(bulb);
+            bulbs.push(bulb);
+          });
         }
         scene.add(ferrisWheel);
 
