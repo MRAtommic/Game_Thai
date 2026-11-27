@@ -1611,11 +1611,45 @@ export class IsaanWorld {
     this.addBox(this.scene, 0.24, 0.26, 0.8, '#f5f0e6', 26.5, 0.36, 2.45);
     this.addBox(this.scene, 0.3, 0.14, 0.82, '#991b1b', 26.5, 0.56, 2.45);
 
-    // East Side Return Boundary Wall at x = 58.6 (clears Songthaew Shelter at 61.4 completely!)
-    this.addBox(this.scene, 0.36, 0.32, 6.45, '#d6d3d1', 58.6, 0.16, -0.85);
-    this.addBox(this.scene, 0.28, 1.55, 6.45, '#f5f0e6', 58.6, 1.05, -0.85);
-    this.addBox(this.scene, 0.42, 0.24, 6.5, '#7f1d1d', 58.6, 1.92, -0.85);
-    this.addBox(this.scene, 0.32, 0.1, 6.45, '#eab308', 58.6, 2.08, -0.85);
+    // East Side Return Boundary Wall at x = 58.6 split by a Traditional Thai Temple Gate Archway (z = -1.6 .. +0.6)!
+    [
+      { cz: -2.8, len: 2.4 }, // Rear wing: -4.0 .. -1.6
+      { cz: 1.45, len: 1.7 }, // Front wing: +0.6 .. +2.3
+    ].forEach((seg) => {
+      this.addBox(this.scene, 0.36, 0.32, seg.len, '#d6d3d1', 58.6, 0.16, seg.cz);
+      this.addBox(this.scene, 0.28, 1.55, seg.len, '#f5f0e6', 58.6, 1.05, seg.cz);
+      this.addBox(this.scene, 0.42, 0.24, seg.len + 0.04, '#7f1d1d', 58.6, 1.92, seg.cz);
+      this.addBox(this.scene, 0.32, 0.1, seg.len, '#eab308', 58.6, 2.08, seg.cz);
+    });
+    // Thai Temple East Gate Archway Pillars, 2-Tier Mondop Roof & Swung-Open Gate Leaves (z = -0.5)
+    [-1.6, 0.6].forEach((gz, gi) => {
+      this.addBox(this.scene, 0.56, 0.34, 0.56, '#d6d3d1', 58.6, 0.17, gz);
+      this.addBox(this.scene, 0.44, 3.25, 0.44, '#f5f0e6', 58.6, 1.78, gz);
+      this.addBox(this.scene, 0.56, 0.18, 0.56, '#eab308', 58.6, 3.45, gz);
+      const lamp = new THREE.Mesh(new THREE.SphereGeometry(0.11, 8, 8), new THREE.MeshBasicMaterial({ color: '#fde68a' }));
+      lamp.position.set(58.9, 2.35, gz);
+      this.scene.add(lamp);
+      // Swung-open red & gold Lai Thai gate leaf
+      const eLeaf = new THREE.Group();
+      eLeaf.position.set(58.6, 0.85, gz);
+      eLeaf.rotation.y = gi === 0 ? -0.95 : 0.95;
+      const dirZ = gi === 0 ? 1 : -1;
+      this.addBox(eLeaf, 0.06, 0.08, 0.95, '#7f1d1d', 0, 0.48, dirZ * 0.48);
+      this.addBox(eLeaf, 0.06, 0.08, 0.95, '#7f1d1d', 0, -0.45, dirZ * 0.48);
+      for (let bz = 0.18; bz <= 0.85; bz += 0.2) {
+        this.addBox(eLeaf, 0.045, 1.0, 0.045, '#eab308', 0, 0.02, dirZ * bz);
+      }
+      this.scene.add(eLeaf);
+    });
+    this.addBox(this.scene, 0.68, 0.48, 2.85, '#991b1b', 58.6, 3.68, -0.5);
+    this.addBox(this.scene, 0.78, 0.14, 2.95, '#eab308', 58.6, 3.96, -0.5);
+    this.addBox(this.scene, 0.55, 0.36, 1.95, '#7f1d1d', 58.6, 4.18, -0.5);
+    const eastGateSpire = new THREE.Mesh(
+      new THREE.ConeGeometry(0.28, 0.95, 8),
+      new THREE.MeshStandardMaterial({ color: '#eab308', metalness: 0.72, roughness: 0.25 })
+    );
+    eastGateSpire.position.set(58.6, 4.82, -0.5);
+    this.scene.add(eastGateSpire);
 
     // Front Kamphaeng Kaew Low Balustrade Wall split for a Grand Front Temple Entrance Gate (x = 38.8 .. 42.2)!
     [
