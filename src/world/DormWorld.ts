@@ -1453,19 +1453,19 @@ export class DormWorld {
     this.addBox(this.scene, 5.4, 0.12, 0.05, '#f97316', sX, 2.48, -2.15);
     this.addBox(this.scene, 5.4, 0.1, 0.05, '#16a34a', sX, 2.36, -2.15);
     this.addBox(this.scene, 5.4, 0.08, 0.05, '#ef4444', sX, 2.25, -2.15);
-    // 3D snack gondola racks & colorful products inside the window depth (z = -1.78 .. -1.45)
-    [-53.2, -49.8].forEach((gx) => {
-      this.addBox(this.scene, 1.55, 1.55, 0.45, '#e2e8f0', gx, 0.8, -1.72, 0.45);
-      ['#ef4444', '#facc15', '#22c55e', '#38bdf8'].forEach((pc, pi) => {
-        this.addBox(this.scene, 0.24, 0.28, 0.22, pc, gx - 0.52 + pi * 0.35, 1.28, -1.56, 0.35);
-        this.addBox(this.scene, 0.24, 0.26, 0.22, pc, gx - 0.52 + pi * 0.35, 0.78, -1.56, 0.35);
-      });
+    // 3D snack gondola racks on left & right wings (leaving center automatic doorway WIDE OPEN!)
+    const gxL = -53.35;
+    this.addBox(this.scene, 1.35, 1.55, 0.45, '#e2e8f0', gxL, 0.8, -1.78, 0.45);
+    ['#ef4444', '#facc15', '#22c55e', '#38bdf8'].forEach((pc, pi) => {
+      this.addBox(this.scene, 0.22, 0.28, 0.22, pc, gxL - 0.45 + pi * 0.3, 1.28, -1.62, 0.35);
+      this.addBox(this.scene, 0.22, 0.26, 0.22, pc, gxL - 0.45 + pi * 0.3, 0.78, -1.62, 0.35);
     });
-    // Interior checkout desk & glowing cooler backlight inside shopfront
-    this.addBox(this.scene, 1.35, 0.85, 0.55, '#ffffff', sX + 0.1, 0.44, -1.65, 0.35);
-    this.addBox(this.scene, 1.38, 0.08, 0.58, '#16a34a', sX + 0.1, 0.88, -1.65, 0.35);
-    const inShopLight = new THREE.PointLight('#ffffff', 4.2, 8.5, 0.9);
-    inShopLight.position.set(sX, 2.45, -1.15);
+    // Interior checkout counter tucked cleanly on the right wing behind the right window (-49.65), NEVER blocking center door!
+    this.addBox(this.scene, 1.55, 0.88, 0.6, '#ffffff', -49.65, 0.44, -1.55, 0.35);
+    this.addBox(this.scene, 1.58, 0.08, 0.64, '#16a34a', -49.65, 0.9, -1.55, 0.35);
+    this.addBox(this.scene, 1.65, 1.65, 0.4, '#e2e8f0', -51.5, 0.85, -1.96, 0.4); // deep rear chilled aisle wall rack
+    const inShopLight = new THREE.PointLight('#ffffff', 4.6, 9.5, 0.9);
+    inShopLight.position.set(sX, 2.45, -1.0);
     this.scene.add(inShopLight);
     // Protruding 3D Sign Canopy (z = -0.18 .. +0.32) with stepped bezel & glowing fascia!
     this.addBox(this.scene, 6.65, 1.15, 0.55, '#f8fafc', sX, 3.32, -0.08, 0.35);
@@ -1476,17 +1476,22 @@ export class DormWorld {
     );
     fascia.position.set(sX, 3.3, 0.21);
     this.scene.add(fascia);
-    // Real aluminum frame + slightly parted automatic transparent sliding glass doors & side display panes (z = -0.18)
-    [-54.15, -52.5, -50.5, -48.85].forEach((mx) => {
+    // Real aluminum frame + OPEN center automatic doorway (-52.2 .. -50.8) + parted sliding glass panels on left/right!
+    [-54.15, -52.45, -50.55, -48.85].forEach((mx) => {
       this.addBox(this.scene, 0.08, 2.7, 0.1, '#334155', mx, 1.35, -0.18, 0.4);
     });
     this.addBox(this.scene, 5.4, 0.1, 0.1, '#334155', sX, 2.68, -0.18, 0.4);
-    const shopFrontGlass = new THREE.Mesh(
-      new THREE.BoxGeometry(5.3, 2.55, 0.03),
-      glassMat
-    );
-    shopFrontGlass.position.set(sX, 1.32, -0.18);
-    this.scene.add(shopFrontGlass);
+    [-53.3, -49.7].forEach((px) => {
+      const sidePane = new THREE.Mesh(new THREE.BoxGeometry(1.62, 2.55, 0.03), glassMat);
+      sidePane.position.set(px, 1.32, -0.18);
+      this.scene.add(sidePane);
+    });
+    // Slightly retracted open sliding door leaves flanking the open center entrance
+    [-52.18, -50.82].forEach((dx) => {
+      const doorLeaf = new THREE.Mesh(new THREE.BoxGeometry(0.42, 2.5, 0.04), glassMat);
+      doorLeaf.position.set(dx, 1.3, -0.15);
+      this.scene.add(doorLeaf);
+    });
     // Exterior threshold step, green welcome mat & sidewalk ATM kiosk flanking storefront!
     this.addBox(this.scene, 5.8, 0.06, 0.65, '#cbd5e1', sX, 0.03, 0.12, 0.6);
     this.addBox(this.scene, 1.5, 0.07, 0.42, '#16a34a', sX, 0.04, 0.16, 0.85);
@@ -2098,23 +2103,23 @@ export class DormWorld {
     this.addBox(seven, 12.0, 0.2, 0.05, '#f97316', 0, 3.42, -1.43);
     this.addBox(seven, 12.0, 0.18, 0.05, '#16a34a', 0, 3.22, -1.43);
     this.addBox(seven, 12.0, 0.14, 0.05, '#ef4444', 0, 3.05, -1.43);
-    // Center snack rack island (-3.8)
-    this.addBox(seven, 1.45, 1.45, 0.65, '#f8fafc', -3.7, 0.72, -1.1);
-    [-4.15, -3.7, -3.25].forEach((sx, si) => {
-      this.addBox(seven, 0.26, 0.32, 0.18, ['#ef4444', '#f59e0b', '#22c55e'][si], sx, 1.15, -0.82);
-      this.addBox(seven, 0.26, 0.3, 0.18, ['#ec4899', '#3b82f6', '#eab308'][si], sx, 0.65, -0.82);
+    // Snack rack island placed neatly clear of Exit Door (-4.6 .. -3.89)
+    this.addBox(seven, 0.95, 1.45, 0.65, '#f8fafc', -2.95, 0.72, -1.1);
+    [-3.25, -2.95, -2.65].forEach((sx, si) => {
+      this.addBox(seven, 0.2, 0.32, 0.18, ['#ef4444', '#f59e0b', '#22c55e'][si], sx, 1.15, -0.82);
+      this.addBox(seven, 0.2, 0.3, 0.18, ['#ec4899', '#3b82f6', '#eab308'][si], sx, 0.65, -0.82);
     });
-    // Illuminated Drink Chiller Fridge (x = -1.6) with transparent glass door!
-    this.addBox(seven, 2.55, 2.45, 0.65, '#e2e8f0', -1.65, 1.22, -1.15);
-    this.addBox(seven, 2.3, 2.0, 0.04, '#bae6fd', -1.65, 1.25, -0.86);
+    // Illuminated Drink Chiller Fridge (x = -1.2) with transparent glass door!
+    this.addBox(seven, 2.1, 2.45, 0.65, '#e2e8f0', -1.2, 1.22, -1.15);
+    this.addBox(seven, 1.9, 2.0, 0.04, '#bae6fd', -1.2, 1.25, -0.86);
     const chGlass = new THREE.Mesh(
-      new THREE.BoxGeometry(2.34, 2.04, 0.03),
+      new THREE.BoxGeometry(1.94, 2.04, 0.03),
       new THREE.MeshStandardMaterial({ color: '#e0f2fe', transparent: true, opacity: 0.26, roughness: 0.08, depthWrite: false })
     );
-    chGlass.position.set(-1.65, 1.25, -0.58);
+    chGlass.position.set(-1.2, 1.25, -0.58);
     seven.add(chGlass);
     // Colored drinks & snacks stocked inside chiller/rack!
-    [-2.45, -2.05, -1.65, -1.25, -0.85].forEach((dx, di) => {
+    [-1.9, -1.55, -1.2, -0.85, -0.5].forEach((dx, di) => {
       const cols = ['#38bdf8', '#dc2626', '#f59e0b', '#22c55e', '#7c3aed'];
       this.addBox(seven, 0.18, 0.36, 0.16, cols[di], dx, 1.68, -0.72);
       this.addBox(seven, 0.2, 0.32, 0.16, '#fb923c', dx, 1.05, -0.72);
