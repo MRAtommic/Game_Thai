@@ -32,43 +32,55 @@ export function drawCh3CharacterCanvas(
   if (kind === 'dancer_ghost' || kind === 'dancer_chase') {
     const chase = kind === 'dancer_chase';
     const fy = frame % 2 === 1 ? -6 : 0;
-    const tilt = chase ? 0.14 : 0.05;
+    const tilt = chase ? 0.19 : 0.07;
 
     ctx.save();
     ctx.translate(64, 96);
     ctx.rotate(tilt);
     ctx.translate(-64, -96);
 
-    // Ominous Thai gold-crimson glow aura
-    const aura = ctx.createRadialGradient(64, 90 + fy, 8, 64, 90 + fy, 62);
-    aura.addColorStop(0, chase ? 'rgba(220, 38, 38, 0.55)' : 'rgba(250, 204, 21, 0.32)');
+    // Suffocating crimson-void shadow aura
+    const aura = ctx.createRadialGradient(64, 88 + fy, 6, 64, 88 + fy, 64);
+    aura.addColorStop(0, chase ? 'rgba(185, 28, 28, 0.72)' : 'rgba(20, 12, 16, 0.65)');
+    aura.addColorStop(0.55, chase ? 'rgba(88, 10, 14, 0.35)' : 'rgba(120, 53, 15, 0.22)');
     aura.addColorStop(1, 'rgba(0,0,0,0)');
     ctx.fillStyle = aura;
     ctx.fillRect(0, 0, w, h);
 
-    // Ornate floating silk skirt (ผ้านุ่งโจง/จีบหน้านางสีแดงดำทอง) fading mistily
-    const sk = ctx.createLinearGradient(0, 102 + fy, 0, 178 + fy);
+    // Long jagged soaked black hair hanging behind shoulders
+    ctx.fillStyle = '#07080c';
+    ctx.beginPath();
+    ctx.moveTo(35, 24 + fy);
+    ctx.lineTo(24, 105 + fy);
+    ctx.lineTo(36, 150 + fy);
+    ctx.lineTo(94, 146 + fy);
+    ctx.lineTo(104, 100 + fy);
+    ctx.lineTo(92, 24 + fy);
+    ctx.closePath();
+    ctx.fill();
+
+    // Tattered blood-soaked gold-crimson pleated skirt fading mistily into void
+    const sk = ctx.createLinearGradient(0, 102 + fy, 0, 182 + fy);
     sk.addColorStop(0, '#7f1d1d');
-    sk.addColorStop(0.55, '#450a0a');
-    sk.addColorStop(1, 'rgba(10, 5, 8, 0)');
+    sk.addColorStop(0.45, '#3b0712');
+    sk.addColorStop(1, 'rgba(5, 3, 6, 0)');
     ctx.fillStyle = sk;
     ctx.beginPath();
     ctx.moveTo(42, 104 + fy);
     ctx.lineTo(86, 104 + fy);
-    ctx.lineTo(94, 176 + fy);
-    ctx.lineTo(34, 176 + fy);
+    ctx.lineTo(96, 180 + fy);
+    ctx.lineTo(32, 180 + fy);
     ctx.closePath();
     ctx.fill();
-    // Gold Thai embroidery center pleat
-    ctx.fillStyle = '#eab308';
-    ctx.fillRect(58, 104 + fy, 12, 55);
+    ctx.fillStyle = '#a16207';
+    ctx.fillRect(58, 104 + fy, 12, 52);
 
-    // Corpselike torso + Golden Sabai (สไบปักดิ้นทองเปื้อนเลือด)
-    ctx.fillStyle = '#a8b0ba';
+    // Corpse-pale torso + Blood-drenched Gold Sabai wrap
+    ctx.fillStyle = '#6b7280';
     ctx.beginPath();
     ctx.roundRect(45, 68 + fy, 38, 40, 6);
     ctx.fill();
-    ctx.fillStyle = '#facc15';
+    ctx.fillStyle = '#ca8a04';
     ctx.beginPath();
     ctx.moveTo(45, 68 + fy);
     ctx.lineTo(74, 68 + fy);
@@ -76,55 +88,94 @@ export function drawCh3CharacterCanvas(
     ctx.lineTo(54, 108 + fy);
     ctx.closePath();
     ctx.fill();
-    ctx.fillStyle = 'rgba(153, 27, 27, 0.85)';
-    ctx.fillRect(54, 78 + fy, 14, 18); // dried blood over sabai
+    // Heavy dried blood streaks across torso & Sabai
+    ctx.fillStyle = 'rgba(127, 14, 22, 0.92)';
+    ctx.beginPath();
+    ctx.ellipse(63, 86 + fy, 13, 18, 0.25, 0, Math.PI * 2);
+    ctx.fill();
 
-    // Gracefully curved Thai dancer arms & golden bangles (กรายรำสุดหลอน!)
+    // Long clawed pale ghost arms + golden wrist bangles reaching forward when chasing!
     ctx.strokeStyle = '#9ca3af';
-    ctx.lineWidth = 8;
+    ctx.lineWidth = 7.5;
     ctx.lineCap = 'round';
     ctx.beginPath();
-    ctx.moveTo(46, 74 + fy);
-    ctx.quadraticCurveTo(22, 62 + fy, 26, 44 + fy);
-    ctx.moveTo(82, 74 + fy);
-    ctx.quadraticCurveTo(106, chase ? 58 + fy : 84 + fy, 102, chase ? 40 + fy : 102 + fy);
+    if (chase) {
+      ctx.moveTo(44, 74 + fy);
+      ctx.quadraticCurveTo(22, 54 + fy, 18, 34 + fy);
+      ctx.moveTo(84, 74 + fy);
+      ctx.quadraticCurveTo(108, 50 + fy, 114, 30 + fy);
+    } else {
+      ctx.moveTo(45, 74 + fy);
+      ctx.quadraticCurveTo(22, 62 + fy, 26, 42 + fy);
+      ctx.moveTo(83, 74 + fy);
+      ctx.quadraticCurveTo(105, 86 + fy, 100, 106 + fy);
+    }
+    ctx.stroke();
+    ctx.strokeStyle = '#eab308';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(chase ? 18 : 24, chase ? 40 + fy : 48 + fy);
+    ctx.lineTo(chase ? 24 : 30, chase ? 42 + fy : 50 + fy);
     ctx.stroke();
 
-    // Bruised broken neck + Pale painted Thai dancer face
-    ctx.fillStyle = '#450a0a';
-    ctx.fillRect(57, 56 + fy, 14, 13);
-    ctx.fillStyle = '#cbd5e1';
+    // Snapped crooked neck + Severely tilted Head with Corpse Shading
+    ctx.fillStyle = '#3f0d14';
+    ctx.fillRect(57, 56 + fy, 14, 14);
+    ctx.save();
+    ctx.translate(64, 41 + fy);
+    ctx.rotate(chase ? -0.38 : 0.24); // Unnerving broken neck head tilt!
+
+    const faceGrad = ctx.createRadialGradient(4, -4, 3, 0, 0, 20);
+    faceGrad.addColorStop(0, '#cbd5e1');
+    faceGrad.addColorStop(1, '#64748b');
+    ctx.fillStyle = faceGrad;
     ctx.beginPath();
-    ctx.ellipse(64, 42 + fy, 16, 19, chase ? -0.15 : 0.08, 0, Math.PI * 2);
+    ctx.ellipse(0, 0, 16, 20, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    // Tall Golden Thai Chada Headdress silhouette!
+    // Golden Chada Crown crooked on head
     ctx.fillStyle = '#eab308';
     ctx.beginPath();
-    ctx.moveTo(48, 30 + fy);
-    ctx.lineTo(80, 30 + fy);
-    ctx.lineTo(70, 14 + fy);
-    ctx.lineTo(64, 2 + fy);
-    ctx.lineTo(58, 14 + fy);
+    ctx.moveTo(-16, -12);
+    ctx.lineTo(16, -12);
+    ctx.lineTo(7, -30);
+    ctx.lineTo(0, -44);
+    ctx.lineTo(-7, -30);
     ctx.closePath();
     ctx.fill();
-    ctx.fillStyle = '#dc2626';
-    ctx.fillRect(52, 26 + fy, 24, 5);
+    ctx.fillStyle = '#991b1b';
+    ctx.fillRect(-12, -16, 24, 5);
 
-    // Wide black eye sockets + piercing red/white pupils + blood tears
-    ctx.fillStyle = '#09090b';
+    // Sunken black eye sockets + Piercing Glowing Red/White Pinpricks + Blood Tears + Screaming Jaw!
+    ctx.fillStyle = '#050507';
     ctx.beginPath();
-    ctx.arc(57, 40 + fy, 4.5, 0, Math.PI * 2);
-    ctx.arc(71, 40 + fy, 4.5, 0, Math.PI * 2);
+    ctx.ellipse(-6, -2, 5, 6, 0.15, 0, Math.PI * 2);
+    ctx.ellipse(7, -2, 5, 6, -0.15, 0, Math.PI * 2);
     ctx.fill();
-    ctx.fillStyle = chase ? '#ef4444' : '#f8fafc';
+    ctx.fillStyle = chase ? '#ff1f1f' : '#e2e8f0';
     ctx.beginPath();
-    ctx.arc(57, 40 + fy, 1.8, 0, Math.PI * 2);
-    ctx.arc(71, 40 + fy, 1.8, 0, Math.PI * 2);
+    ctx.arc(-6, -2, chase ? 2.1 : 1.4, 0, Math.PI * 2);
+    ctx.arc(7, -2, chase ? 2.1 : 1.4, 0, Math.PI * 2);
     ctx.fill();
-    ctx.fillStyle = '#7f1d1d';
-    ctx.fillRect(55, 44 + fy, 3, 9);
-    ctx.fillRect(70, 44 + fy, 3, 9);
+    ctx.fillStyle = '#450a0a';
+    ctx.fillRect(-8, 3, 2.8, 10);
+    ctx.fillRect(6, 3, 2.8, 11);
+
+    if (chase) {
+      ctx.fillStyle = '#090204';
+      ctx.beginPath();
+      ctx.ellipse(0, 12, 5.5, 8.5, 0, 0, Math.PI * 2);
+      ctx.fill();
+    } else {
+      ctx.fillStyle = '#1f080d';
+      ctx.fillRect(-5, 11, 10, 3);
+    }
+
+    // Wet hair strands framing face
+    ctx.fillStyle = '#07080c';
+    ctx.fillRect(-17, -14, 5, 28);
+    ctx.fillRect(12, -14, 5, 28);
+    ctx.restore();
 
     ctx.restore();
     return canvas;

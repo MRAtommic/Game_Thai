@@ -113,7 +113,7 @@ export class Chapter3Engine {
 
   // Ghost Dancer AI & Chase State
   private ghostFloor: FloorIndex = 3;
-  private ghostX = 40.0;
+  private ghostX = 22.0;
   private ghostShowTimer = 0;
   private ghostChase = false;
   private ghostChaseTimer = 0;
@@ -558,15 +558,23 @@ export class Chapter3Engine {
       {
         id: 'ch3_coop',
         floor: 0,
-        x: 70.0,
+        x: 50.0,
         range: 2.8,
         label: 'สหกรณ์ & โรงอาหารโรงเรียน (ซื้อน้ำแดง / ถ่านไฟฉาย)',
         onInteract: () => this.interactCoopShop(),
       },
       {
+        id: 'ch3_outdoor_restroom',
+        floor: 0,
+        x: 67.0,
+        range: 2.6,
+        label: 'หลบเข้าอาคารห้องน้ำโรงเรียน (ที่ซ่อน)',
+        onInteract: () => this.enterHideSpot('อาคารห้องน้ำโรงเรียน'),
+      },
+      {
         id: 'ch3_bball',
         floor: 0,
-        x: 90.0,
+        x: 88.0,
         range: 2.8,
         label: 'สนามบาสโรงเรียน — มินิเกมชู้ตบาส (+25 สติ)',
         onInteract: () => this.interactBasketballGame(),
@@ -584,15 +592,15 @@ export class Chapter3Engine {
       {
         id: 'ch3_library_door',
         floor: 1,
-        x: 8.0,
+        x: 4.0,
         range: 2.0,
         label: 'เข้าไปในหอสมุด & ค้นข่าวเก่า 15 ปีก่อน',
-        onInteract: () => this.enterRoom('library_room', 1, 8.0),
+        onInteract: () => this.enterRoom('library_room', 1, 4.0),
       },
       {
         id: 'ch3_locker_f1a',
         floor: 1,
-        x: 22.0,
+        x: 14.0,
         range: 1.9,
         label: 'ซ่อนตัวในตู้ล็อกเกอร์ชั้น 1',
         onInteract: () => this.enterHideSpot('ตู้ล็อกเกอร์ชั้น 1'),
@@ -600,7 +608,7 @@ export class Chapter3Engine {
       {
         id: 'ch3_teacher_door',
         floor: 1,
-        x: 44.0,
+        x: 21.5,
         range: 2.0,
         label: 'เข้าไปในห้องพักครูหมวดศิลปะ',
         onInteract: () => this.interactTeacherDoor(),
@@ -608,7 +616,7 @@ export class Chapter3Engine {
       {
         id: 'ch3_locker_f1b',
         floor: 1,
-        x: 52.0,
+        x: 28.0,
         range: 1.9,
         label: 'ซ่อนตัวในตู้ล็อกเกอร์มุมบันไดชั้น 1',
         onInteract: () => this.enterHideSpot('ตู้ล็อกเกอร์มุมบันไดชั้น 1'),
@@ -618,15 +626,15 @@ export class Chapter3Engine {
       {
         id: 'ch3_class_door',
         floor: 2,
-        x: 10.0,
+        x: 4.0,
         range: 2.0,
         label: 'เข้าห้องเรียน ม.5/2 (เข้าเรียน / ค้นใต้โต๊ะ)',
-        onInteract: () => this.enterRoom('classroom_2b', 2, 10.0),
+        onInteract: () => this.enterRoom('classroom_2b', 2, 4.0),
       },
       {
         id: 'ch3_locker_f2a',
         floor: 2,
-        x: 24.0,
+        x: 14.0,
         range: 1.9,
         label: 'ซ่อนตัวในตู้ล็อกเกอร์ชั้น 2',
         onInteract: () => this.enterHideSpot('ตู้ล็อกเกอร์ชั้น 2'),
@@ -634,7 +642,7 @@ export class Chapter3Engine {
       {
         id: 'ch3_bath_hide',
         floor: 2,
-        x: 48.0,
+        x: 25.0,
         range: 2.0,
         label: 'หลบเข้าห้องน้ำนักเรียนชั้น 2 (ที่ซ่อน)',
         onInteract: () => this.enterHideSpot('ห้องน้ำนักเรียนชั้น 2'),
@@ -644,7 +652,7 @@ export class Chapter3Engine {
       {
         id: 'ch3_closet_f3',
         floor: 3,
-        x: 18.0,
+        x: 8.0,
         range: 1.9,
         label: 'แอบซ่อนในห้องเก็บชุดรำชั้น 3',
         onInteract: () => this.enterHideSpot('ห้องเก็บชุดรำชั้น 3'),
@@ -652,7 +660,7 @@ export class Chapter3Engine {
       {
         id: 'ch3_music_door',
         floor: 3,
-        x: 42.0,
+        x: 22.0,
         range: 2.2,
         label: 'เปิดประตูห้องดนตรีไทย & นาฏศิลป์ (ชั้น 3)',
         onInteract: () => this.interactMusicDoor(),
@@ -1073,7 +1081,7 @@ export class Chapter3Engine {
       this.showToast('ประตูห้องพักครูหมวดศิลปะล็อกอยู่ — ลองคุยขอพวงกุญแจจากลุงมั่นภารโรงป้อมหน้าโรงเรียน');
       return;
     }
-    this.enterRoom('teacher_office', 1, 44.0);
+    this.enterRoom('teacher_office', 1, 21.5);
   }
 
   private interactTeacherWilai(): void {
@@ -1147,7 +1155,7 @@ export class Chapter3Engine {
       this.showToast('ประตูห้องดนตรีไทยล็อกโซ่! ขอ "กุญแจห้องดนตรีไทย" จากลุงมั่นภารโรงป้อมหน้าโรงเรียน');
       return;
     }
-    this.enterRoom('music_room', 3, 42.0);
+    this.enterRoom('music_room', 3, 22.0);
   }
 
   private interactRanatStage(): void {
@@ -1193,7 +1201,7 @@ export class Chapter3Engine {
               this.ghostChase = true;
               this.ghostChaseTimer = 14;
               this.ghostFloor = 3;
-              this.ghostX = 6.2;
+              this.ghostX = 4.5;
               this.chaseBanner.classList.remove('hidden');
               this.sound.playScare();
               this.showToast('วิญญาณผีนางรำตื่นขึ้นหน้ากระจกแล้ว!! ถ่ายรูปหน้ากระจก [C / E] แล้วรีบหนี!', true);
@@ -1333,7 +1341,7 @@ export class Chapter3Engine {
       <div style="display:flex;flex-direction:column;gap:8px;margin-top:10px">
         <button class="secondary-btn" data-bus="-110">🏠 หน้าบ้านของภีม (-110 ม.)</button>
         <button class="secondary-btn" data-bus="-52">🏫 หน้าซุ้มประตูโรงเรียนมัธยมจันทรารัตน์ (-52 ม.)</button>
-        <button class="secondary-btn" data-bus="68">🍱 หน้าโรงอาหาร & สหกรณ์โรงเรียน (+68 ม.)</button>
+        <button class="secondary-btn" data-bus="50">🍱 หน้าโรงอาหาร & สหกรณ์โรงเรียน (+50 ม.)</button>
       </div>
       `
     );
@@ -1716,10 +1724,10 @@ export class Chapter3Engine {
       'แผนผังโรงเรียนมัธยมจันทรารัตน์ & บ้านภีม',
       `
       <div class="map-floor"><strong>บ้านของภีม & ป้ายสองแถว (-124 .. -56)</strong><div style="font-size:0.84rem;color:#9fa6b8;margin-top:4px">บ้านภีม (-110) • จักรยาน (-104.5) • ป้ายสองแถว (-88)</div></div>
-      <div class="map-floor"><strong>ชั้น 0 — หน้าประตู เสาธง โรงอาหาร & ศาล (-52 .. +124)</strong><div style="font-size:0.84rem;color:#9fa6b8;margin-top:4px">ประตู (-52) • ลุงมั่น (-44) • แก๊งไอ้ก้อง (-38.5) • บันไดขึ้นชั้น 1-3 (+59.5) • สหกรณ์ (+70) • สนามบาส (+90) • ศาลตายาย (+112)</div></div>
-      <div class="map-floor"><strong>ชั้น 1: หอสมุด (+8) • ล็อกเกอร์ (+22/+52) • ห้องพักครู (+44)</strong></div>
-      <div class="map-floor"><strong>ชั้น 2: ห้องเรียน ม.5/2 (+10) • ล็อกเกอร์ (+24) • ห้องน้ำหลบภัย (+48)</strong></div>
-      <div class="map-floor"><strong>ชั้น 3: ห้องเก็บชุดหลบภัย (+18) • ห้องดนตรีไทยต้องคำสาป (+42)</strong></div>
+      <div class="map-floor"><strong>ชั้น 0 — หน้าประตู อาคารเรียน โรงอาหาร ห้องน้ำ สนามบาส (-52 .. +124)</strong><div style="font-size:0.84rem;color:#9fa6b8;margin-top:4px">ประตู (-52) • ลุงมั่น (-44) • แก๊งไอ้ก้อง (-38.5) • บันไดขึ้นชั้น 1-3 (+33.2) • โรงอาหาร & สหกรณ์ (+50) • ห้องน้ำแยก (+67) • สนามบาส (+88) • ศาลตายาย (+112)</div></div>
+      <div class="map-floor"><strong>ชั้น 1: หอสมุด (+4) • ล็อกเกอร์ (+14/+28) • ห้องพักครู (+21.5)</strong></div>
+      <div class="map-floor"><strong>ชั้น 2: ห้องเรียน ม.5/2 (+4) • ล็อกเกอร์ (+14) • ห้องน้ำหลบภัย (+25)</strong></div>
+      <div class="map-floor"><strong>ชั้น 3: ห้องเก็บชุดหลบภัย (+8) • ห้องดนตรีไทยต้องคำสาป (+22)</strong></div>
       `
     );
   }
@@ -1742,12 +1750,12 @@ export class Chapter3Engine {
       tRoom = 'classroom_2b';
       tFloor = 2;
       tx = -3.2;
-      text = 'ขึ้นชั้น 2 เข้าห้องเรียน ม.5/2 เรียนกับครูสมชาย (+25 สติ & +50 ฿)';
+      text = 'ขึ้นชั้น 2 เข้าห้องเรียน ม.5/2 (+4 ม.) เรียนกับครูสมชาย (+25 สติ & +50 ฿)';
     } else if (!f.checkedLibrary) {
       tRoom = 'library_room';
       tFloor = 1;
       tx = 0.2;
-      text = 'เข้าหอสมุดชั้น 1 (+8 ม.) ค้นแฟ้มข่าวเก่าปี 2554';
+      text = 'เข้าหอสมุดชั้น 1 (+4 ม.) ค้นแฟ้มข่าวเก่าปี 2554';
     } else if (!f.talkedJanitor) {
       tx = -44.0;
       text = 'ไปป้อมยามหน้าโรงเรียน (-44 ม.) ขอกุญแจห้องพักครู & ห้องดนตรีไทยจากลุงมั่น';
@@ -1759,12 +1767,12 @@ export class Chapter3Engine {
       tRoom = 'music_room';
       tFloor = 3;
       tx = f.playedRanatNight ? 3.6 : 1.8;
-      text = f.playedRanatNight ? 'ถ่ายรูปหน้ากระจกห้องดนตรีไทย [E/C]' : 'ขึ้นชั้น 3 เข้าห้องดนตรีไทย (+42 ม.) ตีระนาดเอกหน้าเวที!';
+      text = f.playedRanatNight ? 'ถ่ายรูปหน้ากระจกห้องดนตรีไทย [E/C]' : 'ขึ้นชั้น 3 เข้าห้องดนตรีไทย (+22 ม.) ตีระนาดเอกหน้าเวที!';
     } else if (!f.unlockedSafeProof) {
       tRoom = 'teacher_office';
       tFloor = 1;
       tx = 4.6;
-      text = 'เข้าห้องพักครูชั้น 1 (+44 ม.) ไขตู้เซฟ (514) นำชฎาทองออกมา!';
+      text = 'เข้าห้องพักครูชั้น 1 (+21.5 ม.) ไขตู้เซฟ (514) นำชฎาทองออกมา!';
     } else if (!f.confrontedKongTwist) {
       tx = -38.5;
       text = 'ไปเค้นความจริงจากไอ้ก้องหน้าโรงเรียน (-38 ม.) เรื่องครูวิไล!';
@@ -1775,21 +1783,35 @@ export class Chapter3Engine {
       text = 'นำชฎาทองขึ้นห้องดนตรีไทยชั้น 3 วางคืนบนแท่นบูชาปลดปล่อยวิญญาณ!';
     }
 
+    const doorX: Record<Ch3RoomId, number> = {
+      outside: tx,
+      protagonist_house: -110.0,
+      library_room: 4.0,
+      teacher_office: 21.5,
+      classroom_2b: 4.0,
+      music_room: 22.0,
+    };
+
     let direction = '';
     if (this.currentRoom !== tRoom) {
+      const targetOutsideX = doorX[tRoom] ?? tx;
       direction =
         this.currentRoom !== 'outside'
           ? '◀ เดินไปประตูซ้ายเพื่อออกจากห้อง'
           : this.state.floor !== tFloor
           ? Math.abs(this.state.x - CH3_STAIR_X) <= 2.2
             ? tFloor > this.state.floor ? `▲ กด [W] ขึ้นชั้น ${this.state.floor + 1}` : `▼ กด [S] ลงชั้น ${this.state.floor - 1}`
-            : CH3_STAIR_X > this.state.x ? '▶ เดินไปบันไดฝั่งขวา (+59.5 ม.)' : '◀ เดินไปบันไดฝั่งขวา (+59.5 ม.)'
-          : tx < this.state.x ? `◀ เดินไปทางซ้าย (${Math.round(this.state.x - tx)} ม.)` : `▶ เดินไปทางขวา (${Math.round(tx - this.state.x)} ม.)`;
+            : CH3_STAIR_X > this.state.x ? '▶ เดินไปบันไดฝั่งขวา (+33.2 ม.)' : '◀ เดินไปบันไดฝั่งขวา (+33.2 ม.)'
+          : Math.abs(targetOutsideX - this.state.x) <= 2.0
+          ? 'ถึงหน้าประตูห้องแล้ว — กด [E]'
+          : targetOutsideX < this.state.x
+          ? `◀ เดินไปทางซ้าย (${Math.round(this.state.x - targetOutsideX)} ม.)`
+          : `▶ เดินไปทางขวา (${Math.round(targetOutsideX - this.state.x)} ม.)`;
     } else if (this.currentRoom === 'outside' && this.state.floor !== tFloor) {
       direction =
         Math.abs(this.state.x - CH3_STAIR_X) <= 2.2
           ? tFloor > this.state.floor ? `▲ กด [W] ขึ้นชั้น ${this.state.floor + 1}` : `▼ กด [S] ลงชั้น ${this.state.floor - 1}`
-          : CH3_STAIR_X > this.state.x ? '▶ ไปบันไดฝั่งขวา (+59.5 ม.)' : '◀ ไปบันไดฝั่งขวา (+59.5 ม.)';
+          : CH3_STAIR_X > this.state.x ? '▶ ไปบันไดฝั่งขวา (+33.2 ม.)' : '◀ ไปบันไดฝั่งขวา (+33.2 ม.)';
     } else {
       const dx = tx - this.state.x;
       direction = Math.abs(dx) <= 2.0 ? 'ถึงจุดหมายแล้ว — กด [E]' : dx < 0 ? `◀ ซ้าย (${Math.round(-dx)} ม.)` : `▶ ขวา (${Math.round(dx)} ม.)`;
@@ -1988,13 +2010,13 @@ export class Chapter3Engine {
       // Spatial Thai Classical Music & School Ambience
       const h = (this.state.gameMinutes % 1440) / 60;
       const inSchoolHours = h >= 7.0 && h < 16.5;
-      const distCampus = this.currentRoom === 'outside' ? Math.abs(this.state.x - 10) : 0;
+      const distCampus = this.currentRoom === 'outside' ? Math.abs(this.state.x - 24) : 0;
       const musicProx =
         this.currentRoom === 'music_room' || this.ghostChase
           ? 1.0
           : this.currentRoom === 'outside' && this.state.floor === 3
-          ? Math.max(0.25, 1 - Math.abs(this.state.x - 42) / 55)
-          : this.currentRoom === 'outside' && this.state.x > -30 && this.state.x < 85 && (inSchoolHours || isNight)
+          ? Math.max(0.25, 1 - Math.abs(this.state.x - 22) / 42)
+          : this.currentRoom === 'outside' && this.state.x > -30 && this.state.x < 95 && (inSchoolHours || isNight)
           ? 0.22
           : 0;
 
@@ -2008,7 +2030,7 @@ export class Chapter3Engine {
       );
       this.sound.updateSchoolCrowdAmbience(
         dt,
-        1 - distCampus / 68,
+        Math.max(0, 1 - distCampus / 78),
         inSchoolHours && !isNight && !this.ghostChase && !this.cutscene.isPlaying()
       );
       this.sound.updateThaiClassicalAmbience(
@@ -2016,6 +2038,10 @@ export class Chapter3Engine {
         !this.cutscene.isPlaying() ? musicProx : 0,
         isNight || this.ghostChase,
         this.ghostChase
+      );
+      this.sound.updateSchoolChaseMusic(
+        dt,
+        this.ghostChase && !this.cutscene.isPlaying()
       );
 
       this.world.update(

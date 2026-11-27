@@ -18,6 +18,8 @@ export class SoundEngine {
   private thaiMusicTimer = 0.2;
   private thaiMusicStep = 0;
   private schoolCrowdTimer = 0.7;
+  private chaseMusicTimer = 0.15;
+  private chaseMusicStep = 0;
   private howlTimer = 8;
   private heartbeatTimer = 0;
   private chaseStepTimer = 0;
@@ -1244,7 +1246,7 @@ export class SoundEngine {
     }
   }
 
-  /** Lively daytime school campus murmur when students & teachers are active */
+  /** Lively daytime school campus murmur, chatter, sports whistle & basketball bounce */
   public updateSchoolCrowdAmbience(dt: number, proximity: number, active: boolean): void {
     if (!this.ctx || !this.masterGain || !this.initialized || !active || this.muted) return;
     const p = Math.max(0, Math.min(1, proximity));
@@ -1252,7 +1254,7 @@ export class SoundEngine {
 
     this.schoolCrowdTimer -= dt;
     if (this.schoolCrowdTimer > 0) return;
-    this.schoolCrowdTimer = 0.2 + Math.random() * 0.35;
+    this.schoolCrowdTimer = 0.14 + Math.random() * 0.25;
 
     const now = this.ctx.currentTime;
     const dur = 0.16 + Math.random() * 0.24;
@@ -1262,20 +1264,95 @@ export class SoundEngine {
     let lp = 0;
     for (let i = 0; i < len; i++) {
       const env = Math.sin((i / len) * Math.PI);
-      lp = (lp + 0.2 * (Math.random() * 2 - 1)) / 1.2;
+      lp = (lp + 0.22 * (Math.random() * 2 - 1)) / 1.22;
       arr[i] = lp * env;
     }
     const src = this.ctx.createBufferSource();
     src.buffer = buf;
     const flt = this.ctx.createBiquadFilter();
     flt.type = 'bandpass';
-    flt.frequency.value = 390 + Math.random() * 480;
-    flt.Q.value = 2.6;
+    flt.frequency.value = 380 + Math.random() * 540;
+    flt.Q.value = 2.5;
     const g = this.ctx.createGain();
-    g.gain.setValueAtTime(0.095 * p * p, now);
+    g.gain.setValueAtTime(0.11 * p * p, now);
     src.connect(flt);
     flt.connect(g);
     g.connect(this.masterGain);
     src.start(now);
+
+    // Basketball thud / cafeteria tray clink detail!
+    if (Math.random() < 0.22) {
+      const osc = this.ctx.createOscillator();
+      const bg = this.ctx.createGain();
+      const bball = Math.random() < 0.55;
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(bball ? 135 : 1950, now);
+      osc.frequency.exponentialRampToValueAtTime(bball ? 52 : 1400, now + 0.09);
+      bg.gain.setValueAtTime((bball ? 0.065 : 0.035) * p, now);
+      bg.gain.exponentialRampToValueAtTime(0.0001, now + 0.1);
+      osc.connect(bg);
+      bg.connect(this.masterGain);
+      osc.start(now);
+      osc.stop(now + 0.11);
+    }
+  }
+
+  /** Intense Ghost Dancer Thriller Chase Score: pounding bass drum + screeching dissonant Ranat + ankle bells */
+  public updateSchoolChaseMusic(dt: number, isChasing: boolean): void {
+    if (!this.ctx || !this.masterGain || !this.initialized || !isChasing || this.muted) return;
+    this.chaseMusicTimer -= dt;
+    if (this.chaseMusicTimer > 0) return;
+    this.chaseMusicTimer = 0.185; // ~162 BPM adrenaline pulse
+
+    const now = this.ctx.currentTime;
+    const s = this.chaseMusicStep % 16;
+    this.chaseMusicStep++;
+
+    // Heavy pounding drum hit on 0, 3, 6, 8, 12
+    if (s % 2 === 0 || s === 3 || s === 11) {
+      const kick = this.ctx.createOscillator();
+      const kg = this.ctx.createGain();
+      kick.type = 'triangle';
+      kick.frequency.setValueAtTime(105, now);
+      kick.frequency.exponentialRampToValueAtTime(34, now + 0.14);
+      kg.gain.setValueAtTime(0.18, now);
+      kg.gain.exponentialRampToValueAtTime(0.0001, now + 0.16);
+      kick.connect(kg);
+      kg.connect(this.masterGain);
+      kick.start(now);
+      kick.stop(now + 0.17);
+    }
+
+    // Dissonant tritone frantic Ranat Ek run + metallic ankle bell rattle!
+    const panicNotes = [587.33, 622.25, 830.61, 622.25, 932.33, 880, 622.25, 587.33];
+    const f = panicNotes[s % panicNotes.length];
+    const osc = this.ctx.createOscillator();
+    const flt = this.ctx.createBiquadFilter();
+    const g = this.ctx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(f, now);
+    flt.type = 'bandpass';
+    flt.frequency.value = f * 1.5;
+    flt.Q.value = 3.0;
+    g.gain.setValueAtTime(0.068, now);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + 0.15);
+    osc.connect(flt);
+    flt.connect(g);
+    g.connect(this.masterGain);
+    osc.start(now);
+    osc.stop(now + 0.16);
+
+    if (s % 4 === 1) {
+      const bell = this.ctx.createOscillator();
+      const bg = this.ctx.createGain();
+      bell.type = 'sine';
+      bell.frequency.setValueAtTime(3100 + (s % 2) * 350, now);
+      bg.gain.setValueAtTime(0.045, now);
+      bg.gain.exponentialRampToValueAtTime(0.0001, now + 0.12);
+      bell.connect(bg);
+      bg.connect(this.masterGain);
+      bell.start(now);
+      bell.stop(now + 0.13);
+    }
   }
 }
