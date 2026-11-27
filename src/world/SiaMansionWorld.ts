@@ -310,61 +310,155 @@ export function buildSiaMansionWorld(
     }
   });
 
-  // --- 3) ENTERABLE LUXURY INTERIOR ROOMS (เข้าไปสำรวจเก็บหลักฐานได้จริงทุกห้อง!) ---
+  // --- 3) ENTERABLE LUXURY INTERIOR ROOMS (ตกแต่งหรูหรา มีมิติลึกทุกห้อง!) ---
   const tileTex = createThaiTileFloorTexture();
-  const buildSubRoom = (accentCol: string, wallCol: string, evId: 'ev1' | 'ev2' | 'ev3', evCol: string) => {
+  const buildSubRoom = (accentCol: string, wallCol: string, wainscotCol: string, evId: 'ev1' | 'ev2' | 'ev3', evCol: string) => {
     const rg = new THREE.Group();
     rg.visible = false;
-    addBox(rg, 13.0, 4.2, 0.25, wallCol, 0, 2.1, -1.65, 0.65);
-    addBox(rg, 13.0, 0.2, 4.4, '#f8fafc', 0, -0.05, 0.4, 0.3);
+    // Main back wall, recessed Louis wainscoting panels, gold moulding & ceiling cornice
+    addBox(rg, 13.0, 4.2, 0.25, wallCol, 0, 2.1, -1.65, 0.62);
+    addBox(rg, 13.0, 0.95, 0.08, wainscotCol, 0, 0.52, -1.5, 0.55);
+    addBox(rg, 13.0, 0.1, 0.14, '#ca8a04', 0, 1.04, -1.48, 0.28, 0.72);
+    addBox(rg, 13.0, 0.14, 0.22, '#ca8a04', 0, 4.08, -1.48, 0.28, 0.72);
+    for (let px = -5.0; px <= 5.0; px += 2.5) {
+      addBox(rg, 1.85, 0.65, 0.1, wallCol, px, 0.52, -1.47, 0.6);
+    }
+    // Polished marble floor & side walls
+    addBox(rg, 13.0, 0.2, 4.4, '#f8fafc', 0, -0.05, 0.4, 0.28);
     const flPlane = new THREE.Mesh(
       new THREE.PlaneGeometry(12.8, 4.2),
-      new THREE.MeshStandardMaterial({ map: tileTex, color: '#fffbeb', roughness: 0.35 })
+      new THREE.MeshStandardMaterial({ map: tileTex, color: '#fffbeb', roughness: 0.32 })
     );
     flPlane.rotation.x = -Math.PI / 2;
     flPlane.position.set(0, 0.06, 0.4);
     rg.add(flPlane);
-    addBox(rg, 0.3, 4.2, 4.4, wallCol, -6.35, 2.1, 0.4, 0.7);
-    addBox(rg, 0.3, 4.2, 4.4, wallCol, 6.35, 2.1, 0.4, 0.7);
-    // Exit door back to mansion hallway (left at x = -4.6)
+    addBox(rg, 0.3, 4.2, 4.4, wallCol, -6.35, 2.1, 0.4, 0.68);
+    addBox(rg, 0.3, 4.2, 4.4, wallCol, 6.35, 2.1, 0.4, 0.68);
+    // Flanking interior fluted Roman columns with gold bases & capitals
+    [-5.8, 5.8].forEach((cx) => {
+      addCylinder(rg, 0.24, 0.28, 3.9, '#f8fafc', cx, 2.0, -1.25, 0.28, 0.12, 14);
+      addCylinder(rg, 0.34, 0.38, 0.2, '#eab308', cx, 0.15, -1.25, 0.25, 0.75, 14);
+      addCylinder(rg, 0.38, 0.26, 0.22, '#eab308', cx, 3.95, -1.25, 0.25, 0.75, 14);
+    });
+    // Tall arched night French windows with gold arch rings & draped velvet curtains
+    [-2.4, 1.6].forEach((wx) => {
+      addBox(rg, 1.42, 2.0, 0.08, '#ca8a04', wx, 2.25, -1.49, 0.3, 0.65);
+      const arch = new THREE.Mesh(
+        new THREE.TorusGeometry(0.66, 0.08, 8, 16, Math.PI),
+        new THREE.MeshStandardMaterial({ color: '#eab308', metalness: 0.68, roughness: 0.25 })
+      );
+      arch.position.set(wx, 3.22, -1.46);
+      rg.add(arch);
+      const pane = new THREE.Mesh(
+        new THREE.BoxGeometry(1.24, 1.84, 0.05),
+        new THREE.MeshStandardMaterial({ color: '#0f172a', roughness: 0.1, metalness: 0.5 })
+      );
+      pane.position.set(wx, 2.25, -1.45);
+      rg.add(pane);
+      addBox(rg, 0.05, 1.84, 0.07, '#f8fafc', wx, 2.25, -1.41, 0.4);
+      addBox(rg, 1.24, 0.05, 0.07, '#f8fafc', wx, 2.4, -1.41, 0.4);
+      [-0.72, 0.72].forEach((dcx) => {
+        addCylinder(rg, 0.14, 0.2, 2.25, accentCol, wx + dcx, 2.25, -1.36, 0.85, 0, 10);
+      });
+    });
+    // Exit door back to mansion hallway (left at x = -4.6) with gold arch frame
+    addBox(rg, 1.56, 2.48, 0.12, '#ca8a04', -4.6, 1.25, -1.5, 0.3, 0.65);
     const exitDoor = new THREE.Mesh(
       new THREE.PlaneGeometry(1.35, 2.3),
       new THREE.MeshStandardMaterial({ map: createThaiDoorTexture('ออกโถงคฤหาสน์', false), roughness: 0.6 })
     );
-    exitDoor.position.set(-4.6, 1.2, -1.5);
+    exitDoor.position.set(-4.6, 1.2, -1.42);
     rg.add(exitDoor);
-    // Round crystal chandelier + luxury Persian rug inside room
-    addCylinder(rg, 0.42, 0.42, 0.14, '#eab308', 0, 3.65, 0.1, 0.25, 0.75, 14);
-    addBox(rg, 6.2, 0.03, 2.0, accentCol, 0.6, 0.07, 0.1, 0.85);
+    // Multi-tier crystal chandelier + wall sconces + Persian carpet with gold border!
+    [-1.4, 2.0].forEach((lx) => {
+      addCylinder(rg, 0.03, 0.03, 0.38, '#eab308', lx, 3.92, 0.1, 0.25, 0.8, 8);
+      const ring = new THREE.Mesh(
+        new THREE.TorusGeometry(0.45, 0.04, 8, 18),
+        new THREE.MeshStandardMaterial({ color: '#eab308', metalness: 0.78, roughness: 0.22 })
+      );
+      ring.rotation.x = Math.PI / 2;
+      ring.position.set(lx, 3.68, 0.1);
+      const crystal = new THREE.Mesh(
+        new THREE.OctahedronGeometry(0.24, 1),
+        new THREE.MeshBasicMaterial({ color: '#fef9c3' })
+      );
+      crystal.position.set(lx, 3.55, 0.1);
+      rg.add(ring, crystal);
+    });
+    addBox(rg, 7.6, 0.03, 2.4, '#ca8a04', 0.4, 0.07, 0.25, 0.65);
+    addBox(rg, 7.2, 0.035, 2.0, accentCol, 0.4, 0.075, 0.25, 0.88);
     // Evidence table & glowing collectible folder inside room (x = +2.6)
-    addBox(rg, 2.2, 0.82, 0.95, '#451a03', 2.6, 0.41, -0.85, 0.55);
-    addBox(rg, 2.28, 0.08, 1.0, '#ca8a04', 2.6, 0.84, -0.85, 0.3, 0.65);
-    const evMesh = addBox(rg, 0.52, 0.15, 0.36, evCol, 2.6, 0.96, -0.85, 0.3);
+    addBox(rg, 2.25, 0.82, 0.98, '#451a03', 2.6, 0.41, -0.78, 0.52);
+    addBox(rg, 2.34, 0.08, 1.05, '#ca8a04', 2.6, 0.84, -0.78, 0.28, 0.68);
+    const evMesh = addBox(rg, 0.52, 0.15, 0.36, evCol, 2.6, 0.96, -0.78, 0.3);
     const evLight = new THREE.PointLight('#fde047', 3.0, 7.5, 1.0);
-    evLight.position.set(2.6, 1.5, -0.3);
-    const roomLight = new THREE.PointLight('#fff7ed', 4.8, 16, 0.9);
-    roomLight.position.set(0, 3.5, 1.4);
+    evLight.position.set(2.6, 1.5, -0.2);
+    const roomLight = new THREE.PointLight('#fff7ed', 5.0, 18, 0.85);
+    roomLight.position.set(0, 3.5, 1.6);
     rg.add(evLight, roomLight);
     lights.push(roomLight);
     return { rg, evId, evMesh, evLight };
   };
 
-  const r1 = buildSubRoom('#7f1d1d', '#f8f3e8', 'ev1', '#ef4444');
-  // Extra furnishings in Floor 1 Reception Room: Louis sofa & illuminated display case
-  addBox(r1.rg, 2.4, 0.72, 0.95, '#7f1d1d', -1.4, 0.4, -0.9, 0.65);
-  addCylinder(r1.rg, 0.52, 0.52, 0.08, '#e2e8f0', -1.4, 0.48, 0.35, 0.3, 0.1, 14);
+  // Floor 1 Reception Room: Marble Fireplace with warm embers, Tufted Louis Sofa, Round Coffee Table & Trophy Showcase!
+  const r1 = buildSubRoom('#7f1d1d', '#f8f3e8', '#e7decb', 'ev1', '#ef4444');
+  // Marble fireplace at center-left (x = -0.4, z = -1.25)
+  addBox(r1.rg, 1.9, 1.45, 0.55, '#f1f5f9', -0.4, 0.72, -1.28, 0.35);
+  addBox(r1.rg, 2.1, 0.14, 0.68, '#ca8a04', -0.4, 1.48, -1.26, 0.25, 0.7);
+  addBox(r1.rg, 1.1, 0.75, 0.32, '#18181b', -0.4, 0.4, -1.16, 0.9);
+  const fireGlow = new THREE.Mesh(new THREE.SphereGeometry(0.24, 8, 8), new THREE.MeshBasicMaterial({ color: '#fb923c' }));
+  fireGlow.position.set(-0.4, 0.32, -1.1);
+  r1.rg.add(fireGlow);
+  // Tufted sofa, round marble coffee table & gold tea service
+  addBox(r1.rg, 2.5, 0.72, 0.95, '#7f1d1d', -2.6, 0.4, -0.75, 0.65);
+  addBox(r1.rg, 2.5, 0.55, 0.22, '#991b1b', -2.6, 0.88, -1.12, 0.65);
+  [-3.3, -1.9].forEach((px) => addBox(r1.rg, 0.38, 0.32, 0.16, '#eab308', px, 0.78, -0.9, 0.5));
+  addCylinder(r1.rg, 0.56, 0.56, 0.08, '#f1f5f9', -2.6, 0.46, 0.42, 0.25, 0.15, 16);
+  addCylinder(r1.rg, 0.12, 0.12, 0.42, '#ca8a04', -2.6, 0.22, 0.42, 0.25, 0.75, 12);
+  // Illuminated glass liquor/trophy display cabinet at right (x = +4.6)
+  addBox(r1.rg, 1.4, 2.4, 0.62, '#451a03', 4.6, 1.2, -1.22, 0.5);
+  addBox(r1.rg, 1.15, 1.75, 0.1, '#fef3c7', 4.6, 1.38, -0.95, 0.2);
 
-  const r2 = buildSubRoom('#1e3a8a', '#f3ead5', 'ev2', '#38bdf8');
-  // Extra furnishings in Floor 2 Gallery Room: Black Grand Piano & gold oil paintings
-  addBox(r2.rg, 1.9, 0.3, 1.35, '#09090b', -1.2, 0.92, -0.8, 0.15, 0.4);
-  [-1.95, -0.45].forEach((px) => addCylinder(r2.rg, 0.05, 0.05, 0.82, '#09090b', px, 0.41, -0.8, 0.2, 0.2, 8));
-  addBox(r2.rg, 1.8, 1.25, 0.08, '#ca8a04', 0.4, 2.3, -1.5, 0.3, 0.7);
+  // Floor 2 Gallery Room: Curved Black Grand Piano + Bench, Gold-Framed Oil Paintings with Picture Lights & Jewel Display!
+  const r2 = buildSubRoom('#1e3a8a', '#f3ead5', '#e2d2b5', 'ev2', '#38bdf8');
+  // Grand Piano (curved tail body, angled open lid, keyboard & stool) at x = -1.6
+  addBox(r2.rg, 1.95, 0.26, 1.35, '#09090b', -1.6, 0.88, -0.75, 0.12, 0.45);
+  addCylinder(r2.rg, 0.68, 0.68, 0.26, '#09090b', -0.9, 0.88, -0.95, 0.12, 0.45, 14);
+  [-2.35, -0.85, -1.1].forEach((px, pi) => addCylinder(r2.rg, 0.055, 0.04, 0.82, '#09090b', px, 0.41, pi === 2 ? -1.25 : -0.35, 0.2, 0.2, 8));
+  addBox(r2.rg, 1.65, 0.1, 0.34, '#f8fafc', -1.7, 0.76, -0.05, 0.3); // keys
+  addBox(r2.rg, 0.9, 0.45, 0.42, '#451a03', -1.7, 0.24, 0.55, 0.5);   // piano bench
+  // Gold-framed oil paintings with picture lamps + illuminated crystal gem pedestal (x = +4.6)
+  [-0.4, 4.4].forEach((gx, gi) => {
+    addBox(r2.rg, 1.75, 1.28, 0.08, '#ca8a04', gx, 2.35, -1.48, 0.28, 0.72);
+    addBox(r2.rg, 1.42, 0.98, 0.1, gi === 0 ? '#7f1d1d' : '#1e3a8a', gx, 2.35, -1.46, 0.55);
+    addBox(r2.rg, 0.7, 0.06, 0.18, '#fde047', gx, 3.08, -1.38, 0.2); // picture lamp
+  });
+  addCylinder(r2.rg, 0.38, 0.42, 0.95, '#f8fafc', 4.6, 0.48, -0.75, 0.28, 0.15, 14);
+  const gemCase = new THREE.Mesh(
+    new THREE.BoxGeometry(0.65, 0.55, 0.65),
+    new THREE.MeshStandardMaterial({ color: '#bae6fd', transparent: true, opacity: 0.28, roughness: 0.08, depthWrite: false })
+  );
+  gemCase.position.set(4.6, 1.22, -0.75);
+  r2.rg.add(gemCase);
 
-  const r3 = buildSubRoom('#78350f', '#362218', 'ev3', '#facc15');
-  // Extra furnishings in Floor 3 Executive Office: Mahogany bookcase, Steel Safe & Grandfather Clock
-  addBox(r3.rg, 2.4, 2.8, 0.6, '#451a03', -1.4, 1.4, -1.2, 0.65);
-  addBox(r3.rg, 1.2, 1.45, 0.85, '#334155', 0.4, 0.72, -1.1, 0.35, 0.65);
-  addCylinder(r3.rg, 0.16, 0.16, 0.08, '#eab308', 0.4, 0.8, -0.65, 0.25, 0.85, 12);
+  // Floor 3 Executive Office: Mahogany Bookcase with Colorful Books, Grandfather Clock, Steel Vault Safe & Executive Chair!
+  const r3 = buildSubRoom('#78350f', '#362218', '#4d2f20', 'ev3', '#facc15');
+  // Grand Mahogany Bookcase with colorful hardcover books (x = -1.6)
+  addBox(r3.rg, 2.4, 2.95, 0.6, '#451a03', -1.6, 1.48, -1.22, 0.65);
+  [0.7, 1.4, 2.1].forEach((by, bi) => {
+    addBox(r3.rg, 2.2, 0.08, 0.5, '#78350f', -1.6, by, -1.15, 0.55);
+    ['#dc2626', '#2563eb', '#eab308', '#15803d', '#9333ea'].forEach((bc, ci) => {
+      addBox(r3.rg, 0.16, 0.38, 0.32, bc, -2.45 + ci * 0.42 + (bi % 2) * 0.08, by + 0.22, -1.08, 0.7);
+    });
+  });
+  // Antique Grandfather Clock (x = +0.2) & Heavy Steel Vault Safe (x = +4.6)
+  addBox(r3.rg, 0.62, 2.35, 0.48, '#451a03', 0.2, 1.18, -1.25, 0.5);
+  addCylinder(r3.rg, 0.2, 0.2, 0.06, '#fef08a', 0.2, 1.95, -1.0, 0.3, 0.4, 14);
+  addBox(r3.rg, 1.3, 1.5, 0.88, '#334155', 4.6, 0.75, -1.12, 0.35, 0.65);
+  addCylinder(r3.rg, 0.18, 0.18, 0.08, '#eab308', 4.6, 0.85, -0.66, 0.25, 0.85, 14);
+  // Executive leather high-back chair & green banker lamp on Sia's desk (+2.6)
+  addBox(r3.rg, 0.85, 1.35, 0.58, '#18181b', 2.6, 0.88, -1.35, 0.55);
+  addBox(r3.rg, 0.34, 0.42, 0.24, '#15803d', 1.85, 1.05, -0.78, 0.3);
 
   const interiorRooms: Record<MansionSubRoomId, THREE.Group> = {
     sia_study_1: r1.rg,

@@ -410,12 +410,26 @@ export class GameEngine {
         e.preventDefault();
         this.tryInteract();
       } else if (code === 'KeyC' || code === 'ControlLeft' || code === 'ControlRight') {
-        if (this.currentRoom === 'sia_mansion') {
+        if (this.currentRoom === 'sia_study_1' || this.currentRoom === 'sia_gallery_2' || this.currentRoom === 'sia_office_3') {
+          const f = this.state.flags;
+          this.world.syncMansionEvidence({
+            ev1: !!f.gotMansionEv1,
+            ev2: !!f.gotMansionEv2,
+            ev3: !!f.gotMansionEv3,
+          });
+        } else if (this.currentRoom === 'sia_mansion') {
           this.isSneaking = !this.isSneaking;
           this.showToast(this.isSneaking ? 'ย่อตัวเดินย่องเบา (การ์ดมองเห็นยากขึ้น)' : 'ยืนเดินปกติ');
         }
       } else if (code === 'KeyW' || code === 'ArrowUp') {
-        if (this.currentRoom === 'sia_mansion') {
+        if (this.currentRoom === 'sia_study_1' || this.currentRoom === 'sia_gallery_2' || this.currentRoom === 'sia_office_3') {
+          const f = this.state.flags;
+          this.world.syncMansionEvidence({
+            ev1: !!f.gotMansionEv1,
+            ev2: !!f.gotMansionEv2,
+            ev3: !!f.gotMansionEv3,
+          });
+        } else if (this.currentRoom === 'sia_mansion') {
           if (this.state.floor === 0 && Math.abs(this.state.x - 8.5) <= 1.7) {
             this.state.floor = 1;
             this.state.x = 7.6;
@@ -431,7 +445,14 @@ export class GameEngine {
           this.tryChangeFloor(1);
         }
       } else if (code === 'KeyS' || code === 'ArrowDown') {
-        if (this.currentRoom === 'sia_mansion') {
+        if (this.currentRoom === 'sia_study_1' || this.currentRoom === 'sia_gallery_2' || this.currentRoom === 'sia_office_3') {
+          const f = this.state.flags;
+          this.world.syncMansionEvidence({
+            ev1: !!f.gotMansionEv1,
+            ev2: !!f.gotMansionEv2,
+            ev3: !!f.gotMansionEv3,
+          });
+        } else if (this.currentRoom === 'sia_mansion') {
           if (this.state.floor === 1 && Math.abs(this.state.x - 8.5) <= 1.7) {
             this.state.floor = 0;
             this.state.x = 7.6;
@@ -544,7 +565,14 @@ export class GameEngine {
       const startZ = (ev: PointerEvent) => {
         ev.preventDefault();
         this.sound.init();
-        if (this.currentRoom === 'sia_mansion') {
+        if (this.currentRoom === 'sia_study_1' || this.currentRoom === 'sia_gallery_2' || this.currentRoom === 'sia_office_3') {
+          const f = this.state.flags;
+          this.world.syncMansionEvidence({
+            ev1: !!f.gotMansionEv1,
+            ev2: !!f.gotMansionEv2,
+            ev3: !!f.gotMansionEv3,
+          });
+        } else if (this.currentRoom === 'sia_mansion') {
           if (floorDelta === 1 && ((this.state.floor === 0 && Math.abs(this.state.x - 8.5) <= 1.7) || (this.state.floor === 1 && Math.abs(this.state.x + 8.5) <= 1.7))) {
             this.state.floor = (this.state.floor + 1) as FloorIndex;
             this.state.x = this.state.floor === 1 ? 7.6 : -7.6;
@@ -594,7 +622,14 @@ export class GameEngine {
       () => {
         this.sound.init();
         this.sound.playUIClick();
-        if (this.currentRoom === 'sia_mansion') {
+        if (this.currentRoom === 'sia_study_1' || this.currentRoom === 'sia_gallery_2' || this.currentRoom === 'sia_office_3') {
+          const f = this.state.flags;
+          this.world.syncMansionEvidence({
+            ev1: !!f.gotMansionEv1,
+            ev2: !!f.gotMansionEv2,
+            ev3: !!f.gotMansionEv3,
+          });
+        } else if (this.currentRoom === 'sia_mansion') {
           this.isSneaking = !this.isSneaking;
           touchSprintBtn.classList.toggle('active', this.isSneaking);
           touchSprintBtn.textContent = this.isSneaking ? '🥷 ย่อง ✓' : '🥷 ย่อง';
@@ -3902,7 +3937,14 @@ export class GameEngine {
       this.touchDown.classList.toggle('hidden', !showTouchDown);
       const tSprint = document.getElementById('touch-sprint');
       if (tSprint) {
-        if (this.currentRoom === 'sia_mansion') {
+        if (this.currentRoom === 'sia_study_1' || this.currentRoom === 'sia_gallery_2' || this.currentRoom === 'sia_office_3') {
+          const f = this.state.flags;
+          this.world.syncMansionEvidence({
+            ev1: !!f.gotMansionEv1,
+            ev2: !!f.gotMansionEv2,
+            ev3: !!f.gotMansionEv3,
+          });
+        } else if (this.currentRoom === 'sia_mansion') {
           tSprint.textContent = this.isSneaking ? '🥷 ย่อง ✓' : '🥷 ย่อง';
           tSprint.classList.toggle('active', this.isSneaking);
         } else {
