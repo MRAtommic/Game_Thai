@@ -455,9 +455,14 @@ export function buildCampusGroundProps(
   );
   bathDoorR.position.set(69.8, 1.08, -0.21);
   exteriorGroup.add(bathDoorL, bathDoorR);
-  // Handwashing sink counter + mirror between doors
+  // Handwashing sink counter + ceramic basins + chrome faucets + mirror between doors
   addBox(exteriorGroup, 2.4, 0.82, 0.55, '#f8fafc', 67.0, 0.41, 0.05, 0.35);
-  addBox(exteriorGroup, 2.1, 0.72, 0.06, '#94a3b8', 67.0, 1.55, -0.2, 0.15);
+  [-0.58, 0.58].forEach((sx) => {
+    addBox(exteriorGroup, 0.52, 0.06, 0.36, '#94a3b8', 67.0 + sx, 0.84, 0.06, 0.2);
+    addBox(exteriorGroup, 0.06, 0.16, 0.08, '#475569', 67.0 + sx, 0.92, -0.1, 0.25);
+  });
+  addBox(exteriorGroup, 2.1, 0.72, 0.06, '#bae6fd', 67.0, 1.55, -0.2, 0.15);
+  addBox(exteriorGroup, 2.2, 0.8, 0.04, '#475569', 67.0, 1.55, -0.22, 0.4);
   const restLight = new THREE.PointLight('#bae6fd', 4.5, 14, 1.1);
   restLight.position.set(67, 2.9, 1.1);
   exteriorGroup.add(restLight);
