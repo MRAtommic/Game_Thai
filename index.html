@@ -160,47 +160,54 @@
       </header>
 
       <div id="settings-overlay" class="overlay-modal hidden" role="dialog" aria-modal="true" aria-labelledby="settings-title">
-        <div class="settings-panel hud-card">
+        <div class="settings-panel">
           <div class="settings-header">
-            <h3 id="settings-title">ตั้งค่าเกม</h3>
+            <div class="settings-title-wrap">
+              <span class="settings-kicker">REUAN CHAN • MENU</span>
+              <h3 id="settings-title">ตั้งค่า</h3>
+            </div>
             <button id="settings-close" class="settings-close-btn" type="button" aria-label="ปิดเมนูตั้งค่า">✕</button>
           </div>
-          <div class="settings-list">
-            <button id="set-ui-trans" class="settings-item" type="button">
-              <div class="settings-item-info">
-                <strong>ความโปร่งใส UI</strong>
-                <span>ลดความทึบของแถบและปุ่มเพื่อให้เห็นฉากหลังชัดขึ้น</span>
+
+          <div class="settings-body">
+            <div class="settings-group-label">ภาพและหน้าจอ</div>
+            <div class="settings-row">
+              <span class="settings-label">ความโปร่งใส UI</span>
+              <div class="seg-group" id="seg-ui-trans" role="group" aria-label="ความโปร่งใส UI">
+                <button type="button" class="seg-btn" data-val="0">ทึบ</button>
+                <button type="button" class="seg-btn" data-val="1">โปร่งใส</button>
               </div>
-              <span id="set-ui-trans-state" class="settings-badge">เปิด</span>
-            </button>
-            <button id="set-sound" class="settings-item" type="button">
-              <div class="settings-item-info">
-                <strong>เสียงประกอบ &amp; เพลง</strong>
-                <span>เปิดหรือปิดเสียงบรรยากาศและเอฟเฟกต์</span>
+            </div>
+            <div class="settings-row">
+              <span class="settings-label">ระยะมุมกล้อง</span>
+              <div class="seg-group" id="seg-zoom" role="group" aria-label="ระยะมุมกล้อง">
+                <button type="button" class="seg-btn" data-val="ใกล้">ใกล้</button>
+                <button type="button" class="seg-btn" data-val="พอดี">พอดี</button>
+                <button type="button" class="seg-btn" data-val="กว้าง">กว้าง</button>
               </div>
-              <span id="set-sound-state" class="settings-badge">เปิด</span>
-            </button>
-            <button id="set-voice" class="settings-item" type="button">
-              <div class="settings-item-info">
-                <strong>เสียงพากย์ตัวละคร</strong>
-                <span>เปิดหรือปิดเสียงพูดตัวละคร</span>
+            </div>
+
+            <div class="settings-group-label">ระบบเสียง</div>
+            <div class="settings-row">
+              <span class="settings-label">เสียงประกอบ &amp; เพลง</span>
+              <div class="seg-group" id="seg-sound" role="group" aria-label="เสียงประกอบและเพลง">
+                <button type="button" class="seg-btn" data-val="off">ปิด</button>
+                <button type="button" class="seg-btn" data-val="on">เปิด</button>
               </div>
-              <span id="set-voice-state" class="settings-badge">เปิด</span>
-            </button>
-            <button id="set-zoom" class="settings-item" type="button">
-              <div class="settings-item-info">
-                <strong>ระยะกล้อง</strong>
-                <span>สลับมุมมองกล้อง ใกล้ / พอดี / กว้าง</span>
+            </div>
+            <div class="settings-row">
+              <span class="settings-label">เสียงพากย์ตัวละคร</span>
+              <div class="seg-group" id="seg-voice" role="group" aria-label="เสียงพากย์ตัวละคร">
+                <button type="button" class="seg-btn" data-val="off">ปิด</button>
+                <button type="button" class="seg-btn" data-val="on">เปิด</button>
               </div>
-              <span id="set-zoom-state" class="settings-badge">พอดี</span>
-            </button>
-            <button id="set-rules" class="settings-item" type="button">
-              <div class="settings-item-info">
-                <strong>กฎประจำด่าน</strong>
-                <span>เปิดอ่านกติกาและข้อควรระวังของสถานที่</span>
-              </div>
-              <span class="settings-badge">เปิดดู</span>
-            </button>
+            </div>
+
+            <div class="settings-group-label">บันทึกสถานที่</div>
+            <div class="settings-row settings-row-action">
+              <span class="settings-label">กฎประจำด่าน</span>
+              <button id="set-rules" class="settings-link-btn" type="button">เปิดอ่านกติกา ›</button>
+            </div>
           </div>
         </div>
       </div>

@@ -18,9 +18,17 @@ export function setUiTransparent(enabled: boolean): void {
   document.body.classList.toggle('ui-transparent', enabled);
 }
 
+function markSegmented(groupId: string, activeVal: string): void {
+  const grp = document.getElementById(groupId);
+  if (!grp) return;
+  grp.querySelectorAll<HTMLButtonElement>('.seg-btn').forEach((btn) => {
+    btn.classList.toggle('is-active', btn.dataset.val === activeVal);
+  });
+}
+
 /**
- * Binds the #btn-settings modal menu and synchronizes audio, voice, camera zoom,
- * rules, and UI transparency controls with the existing HUD buttons.
+ * Binds the #btn-settings modal menu with tactile segmented controls
+ * synchronized with existing HUD audio, voice, zoom, rules, and transparency state.
  */
 export function bindSettingsMenu(): void {
   setUiTransparent(isUiTransparent());
@@ -33,42 +41,17 @@ export function bindSettingsMenu(): void {
   const btnVoice = document.getElementById('btn-voice');
   const btnZoom = document.getElementById('btn-zoom');
   const btnRules = document.getElementById('btn-rules');
-
-  const setUiTransBtn = document.getElementById('set-ui-trans');
-  const setSoundBtn = document.getElementById('set-sound');
-  const setVoiceBtn = document.getElementById('set-voice');
-  const setZoomBtn = document.getElementById('set-zoom');
   const setRulesBtn = document.getElementById('set-rules');
 
-  const uiTransState = document.getElementById('set-ui-trans-state');
-  const soundState = document.getElementById('set-sound-state');
-  const voiceState = document.getElementById('set-voice-state');
-  const zoomState = document.getElementById('set-zoom-state');
+  const getSoundOn = (): boolean => !(btnSound?.querySelector('span')?.textContent ?? '').includes('ปิด');
+  const getZoomName = (): string =>
+    (btnZoom?.querySelector('span')?.textContent ?? 'ระยะ: พอดี').replace('ระยะ:', '').trim() || 'พอดี';
 
   const syncStates = () => {
-    const transOn = document.body.classList.contains('ui-transparent');
-    if (uiTransState) {
-      uiTransState.textContent = transOn ? 'โปร่งใส' : 'ทึบปกติ';
-      uiTransState.classList.toggle('is-off', !transOn);
-    }
-
-    const soundLabel = btnSound?.querySelector('span')?.textContent ?? '';
-    const soundOff = soundLabel.includes('ปิด');
-    if (soundState) {
-      soundState.textContent = soundOff ? 'ปิด' : 'เปิด';
-      soundState.classList.toggle('is-off', soundOff);
-    }
-
-    const voiceOff = isVoiceMuted();
-    if (voiceState) {
-      voiceState.textContent = voiceOff ? 'ปิด' : 'เปิด';
-      voiceState.classList.toggle('is-off', voiceOff);
-    }
-
-    const zoomLabel = btnZoom?.querySelector('span')?.textContent ?? 'ระยะ: พอดี';
-    if (zoomState) {
-      zoomState.textContent = zoomLabel.replace('ระยะ:', '').trim() || 'พอดี';
-    }
+    markSegmented('seg-ui-trans', document.body.classList.contains('ui-transparent') ? '1' : '0');
+    markSegmented('seg-sound', getSoundOn() ? 'on' : 'off');
+    markSegmented('seg-voice', isVoiceMuted() ? 'off' : 'on');
+    markSegmented('seg-zoom', getZoomName());
   };
 
   const openModal = () => {
@@ -85,28 +68,51 @@ export function bindSettingsMenu(): void {
   overlay?.addEventListener('click', (e) => {
     if (e.target === overlay) closeModal();
   });
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && overlay && !overlay.classList.contains('hidden')) {
+      closeModal();
+    }
+  });
 
-  setUiTransBtn?.addEventListener('click', () => {
-    setUiTransparent(!document.body.classList.contains('ui-transparent'));
+  document.getElementById('seg-ui-trans')?.addEventListener('click', (e) => {
+    const btn = (e.target as HTMLElement).closest<HTMLButtonElement>('.seg-btn');
+    if (!btn) return;
+    setUiTransparent(btn.dataset.val === '1');
     syncStates();
   });
 
-  setSoundBtn?.addEventListener('click', () => {
-    btnSound?.click();
-    setTimeout(syncStates, 0);
-  });
-
-  setVoiceBtn?.addEventListener('click', () => {
-    if (btnVoice) {
-      btnVoice.click();
-    } else {
-      setVoiceMuted(!isVoiceMuted());
+  document.getElementById('seg-sound')?.addEventListener('click', (e) => {
+    const btn = (e.target as HTMLElement).closest<HTMLButtonElement>('.seg-btn');
+    if (!btn) return;
+    const wantOn = btn.dataset.val === 'on';
+    if (getSoundOn() !== wantOn) {
+      btnSound?.click();
+      setTimeout(syncStates, 0);
     }
-    setTimeout(syncStates, 0);
   });
 
-  setZoomBtn?.addEventListener('click', () => {
-    btnZoom?.click();
+  document.getElementById('seg-voice')?.addEventListener('click', (e) => {
+    const btn = (e.target as HTMLElement).closest<HTMLButtonElement>('.seg-btn');
+    if (!btn) return;
+    const wantMute = btn.dataset.val === 'off';
+    if (isVoiceMuted() !== wantMute) {
+      if (btnVoice) {
+        btnVoice.click();
+      } else {
+        setVoiceMuted(wantMute);
+      }
+      setTimeout(syncStates, 0);
+    }
+  });
+
+  document.getElementById('seg-zoom')?.addEventListener('click', (e) => {
+    const btn = (e.target as HTMLElement).closest<HTMLButtonElement>('.seg-btn');
+    const target = btn?.dataset.val;
+    if (!target || !btnZoom) return;
+    for (let i = 0; i < 3; i++) {
+      if (getZoomName() === target) break;
+      btnZoom.click();
+    }
     setTimeout(syncStates, 0);
   });
 
