@@ -3,6 +3,7 @@ import { bindVoiceToggleButton } from './audio/VoiceActor';
 import { Chapter2Engine } from './game/Chapter2Engine';
 import { Chapter3Engine } from './game/Chapter3Engine';
 import { GameEngine } from './game/GameEngine';
+import { bindSettingsMenu } from './ui/SettingsMenu';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt(): Promise<void>;
@@ -185,6 +186,7 @@ btnContinueCh3.addEventListener('click', () => {
 });
 
 bindVoiceToggleButton();
+bindSettingsMenu();
 
 if (sessionStorage.getItem('reuan_chan_active_session') === '1' && localStorage.getItem('reuan_chan_dorm_save_v1')) {
   launchChapter1(true);

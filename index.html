@@ -124,7 +124,7 @@
             </svg>
             <span>แผนผัง</span>
           </button>
-          <button id="btn-zoom" class="icon-btn" title="ปรับระยะกล้อง (ใกล้/พอดี/กว้าง)">
+          <button id="btn-zoom" class="icon-btn mobile-in-settings" title="ปรับระยะกล้อง (ใกล้/พอดี/กว้าง)">
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
               <circle cx="11" cy="11" r="7" />
               <line x1="21" y1="21" x2="16.65" y2="16.65" />
@@ -133,7 +133,7 @@
             </svg>
             <span>ระยะ: พอดี</span>
           </button>
-          <button id="btn-voice" class="icon-btn" title="เปิด/ปิดเสียงพากย์">
+          <button id="btn-voice" class="icon-btn mobile-in-settings" title="เปิด/ปิดเสียงพากย์">
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
               <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
@@ -141,7 +141,7 @@
             </svg>
             <span>พากย์: เปิด</span>
           </button>
-          <button id="btn-sound" class="icon-btn" title="เปิด/ปิดเสียง">
+          <button id="btn-sound" class="icon-btn mobile-in-settings" title="เปิด/ปิดเสียง">
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
               <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
               <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
@@ -149,8 +149,61 @@
             </svg>
             <span>เสียง: เปิด</span>
           </button>
+          <button id="btn-settings" class="icon-btn" title="ตั้งค่าเกม">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="3" />
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+            </svg>
+            <span>ตั้งค่า</span>
+          </button>
         </div>
       </header>
+
+      <div id="settings-overlay" class="overlay-modal hidden" role="dialog" aria-modal="true" aria-labelledby="settings-title">
+        <div class="settings-panel hud-card">
+          <div class="settings-header">
+            <h3 id="settings-title">ตั้งค่าเกม</h3>
+            <button id="settings-close" class="settings-close-btn" type="button" aria-label="ปิดเมนูตั้งค่า">✕</button>
+          </div>
+          <div class="settings-list">
+            <button id="set-ui-trans" class="settings-item" type="button">
+              <div class="settings-item-info">
+                <strong>ความโปร่งใส UI</strong>
+                <span>ลดความทึบของแถบและปุ่มเพื่อให้เห็นฉากหลังชัดขึ้น</span>
+              </div>
+              <span id="set-ui-trans-state" class="settings-badge">เปิด</span>
+            </button>
+            <button id="set-sound" class="settings-item" type="button">
+              <div class="settings-item-info">
+                <strong>เสียงประกอบ &amp; เพลง</strong>
+                <span>เปิดหรือปิดเสียงบรรยากาศและเอฟเฟกต์</span>
+              </div>
+              <span id="set-sound-state" class="settings-badge">เปิด</span>
+            </button>
+            <button id="set-voice" class="settings-item" type="button">
+              <div class="settings-item-info">
+                <strong>เสียงพากย์ตัวละคร</strong>
+                <span>เปิดหรือปิดเสียงพูดตัวละคร</span>
+              </div>
+              <span id="set-voice-state" class="settings-badge">เปิด</span>
+            </button>
+            <button id="set-zoom" class="settings-item" type="button">
+              <div class="settings-item-info">
+                <strong>ระยะกล้อง</strong>
+                <span>สลับมุมมองกล้อง ใกล้ / พอดี / กว้าง</span>
+              </div>
+              <span id="set-zoom-state" class="settings-badge">พอดี</span>
+            </button>
+            <button id="set-rules" class="settings-item" type="button">
+              <div class="settings-item-info">
+                <strong>กฎประจำด่าน</strong>
+                <span>เปิดอ่านกติกาและข้อควรระวังของสถานที่</span>
+              </div>
+              <span class="settings-badge">เปิดดู</span>
+            </button>
+          </div>
+        </div>
+      </div>
 
       <!-- Floating Interaction Prompt -->
       <div id="interact-prompt" class="hidden">

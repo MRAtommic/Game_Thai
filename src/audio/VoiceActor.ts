@@ -74,11 +74,13 @@ function scoreThaiVoice(v: SpeechSynthesisVoice, preferFemale: boolean): number 
   const n = v.name.toLowerCase();
   let score = 0;
   // Strongly prefer modern neural/natural voices over legacy robotic SAPI voices
-  if (n.includes('natural')) score += 50;
+  if (n.includes('natural')) score += 60;
+  if (n.includes('online')) score += 20;
   if (n.includes('google')) score += 45;
   if (n.includes('premwadee') || n.includes('niwat')) score += 40;
   if (n.includes('kanya') || n.includes('narisa')) score += 35;
-  if (!v.localService) score += 15; // cloud neural voices sound much more human
+  if (n.includes('pattara')) score -= 60; // Legacy Windows SAPI5 voice sounds very robotic
+  if (!v.localService) score += 15; // Cloud neural voices sound much more human
 
   const femaleHints = ['premwadee', 'kanya', 'narisa', 'achara', 'female', 'woman'];
   const maleHints = ['niwat', 'male', 'man', 'sarawut'];
@@ -238,8 +240,14 @@ export function speakDialogueLine(
     rate -= 0.05;
   }
 
-  utt.pitch = Math.max(0.88, Math.min(1.12, pitch));
-  utt.rate = Math.max(0.82, Math.min(1.12, rate));
+  // Google ภาษาไทย degrades when pitch deviates from 1.0; keep pitch 1.0 for Google TTS
+  const isGoogleVoice = Boolean(voice && voice.name.toLowerCase().includes('google'));
+  if (isGoogleVoice) {
+    utt.pitch = 1.0;
+  } else {
+    utt.pitch = Math.max(0.88, Math.min(1.12, pitch));
+  }
+  utt.rate = Math.max(0.85, Math.min(1.1, rate));
   utt.volume = spec.volume;
   utt.onerror = () => {
     if (serial === activeSerial) activeSerial++;
