@@ -980,15 +980,20 @@ export class IsaanWorld {
     strawHat.position.set(-14.8, 1.88, -2.7);
     this.scene.add(strawHat);
 
-    // Haystacks & Bamboo Chicken Coops cleanly spaced into distinct yard zones
-    [-12.2, 13.4].forEach((fx) => {
-      this.addBox(this.scene, 0.12, 2.1, 0.12, '#4f311c', fx, 1.05, -2.25);
-      const hay = new THREE.Mesh(
-        new THREE.ConeGeometry(1.15, 1.75, 10),
-        new THREE.MeshStandardMaterial({ color: '#a17a36', roughness: 0.95 })
+    // Haystacks (กองฟาง) cleanly spaced clear of Rice Granary (-11.4) & Bamboo Chicken Coops
+    [-13.85, 13.4].forEach((fx) => {
+      this.addBox(this.scene, 0.1, 2.15, 0.1, '#4f311c', fx, 1.08, -2.35);
+      const hayBase = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.78, 1.02, 0.72, 12),
+        new THREE.MeshStandardMaterial({ color: '#9a732f', roughness: 0.96 })
       );
-      hay.position.set(fx, 0.88, -2.25);
-      this.scene.add(hay);
+      hayBase.position.set(fx, 0.36, -2.35);
+      const hayTop = new THREE.Mesh(
+        new THREE.ConeGeometry(0.84, 1.15, 12),
+        new THREE.MeshStandardMaterial({ color: '#b48a3e', roughness: 0.94 })
+      );
+      hayTop.position.set(fx, 1.18, -2.35);
+      this.scene.add(hayBase, hayTop);
     });
     [8.7, 11.7].forEach((cx) => {
       const coop = new THREE.Mesh(

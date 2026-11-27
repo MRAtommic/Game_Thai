@@ -43,7 +43,10 @@ export function bindSettingsMenu(): void {
   const btnRules = document.getElementById('btn-rules');
   const setRulesBtn = document.getElementById('set-rules');
 
-  const getSoundOn = (): boolean => !(btnSound?.querySelector('span')?.textContent ?? '').includes('ปิด');
+  const getSoundOn = (): boolean => {
+    if (localStorage.getItem('reuan_chan_sound_muted') === '1') return false;
+    return !(btnSound?.querySelector('span')?.textContent ?? '').includes('ปิด');
+  };
   const getZoomName = (): string =>
     (btnZoom?.querySelector('span')?.textContent ?? 'ระยะ: พอดี').replace('ระยะ:', '').trim() || 'พอดี';
 
@@ -86,7 +89,15 @@ export function bindSettingsMenu(): void {
     if (!btn) return;
     const wantOn = btn.dataset.val === 'on';
     if (getSoundOn() !== wantOn) {
+      const before = localStorage.getItem('reuan_chan_sound_muted');
       btnSound?.click();
+      // If on title screen (no engine bound yet), update storage & label directly
+      if (localStorage.getItem('reuan_chan_sound_muted') === before) {
+        localStorage.setItem('reuan_chan_sound_muted', wantOn ? '0' : '1');
+        const span = btnSound?.querySelector('span');
+        if (span) span.textContent = wantOn ? 'เสียง: เปิด' : 'เสียง: ปิด';
+        btnSound?.classList.toggle('muted', !wantOn);
+      }
       setTimeout(syncStates, 0);
     }
   });

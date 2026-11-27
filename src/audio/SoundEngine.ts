@@ -6,7 +6,7 @@ export class SoundEngine {
   private rainGain: GainNode | null = null;
   private windGain: GainNode | null = null;
   private droneGain: GainNode | null = null;
-  private muted = false;
+  private muted = typeof localStorage !== 'undefined' && localStorage.getItem('reuan_chan_sound_muted') === '1';
   private initialized = false;
   private cricketTimer = 0;
   private ruralTimer = 2.5;
@@ -47,6 +47,9 @@ export class SoundEngine {
 
   public setMuted(muted: boolean): void {
     this.muted = muted;
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem('reuan_chan_sound_muted', muted ? '1' : '0');
+    }
     if (this.masterGain && this.ctx) {
       this.masterGain.gain.setTargetAtTime(muted ? 0 : 0.72, this.ctx.currentTime, 0.08);
     }

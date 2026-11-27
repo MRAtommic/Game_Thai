@@ -606,21 +606,17 @@ export function buildTrafficAndParkedVehicles(scene: THREE.Scene): MovingVehicle
         };
 
         const spawnVillagerBike = (x: number, dir: 1 | -1, shirtCol: string, laneZ: number, speed: number) => {
-          const g = new THREE.Group();
-          const wheels: THREE.Group[] = [];
-          [-0.42, 0.42].forEach((wx) => {
-            const w = makeWheel(0.24, 0.06);
-            w.position.set(wx, 0.24, 0);
-            g.add(w);
-            wheels.push(w);
+          const res = buildRealisticMotorcycle({
+            bodyColor: '#0f766e',
+            withRider: true,
+            riderJacket: shirtCol,
+            helmetColor: '#fef08a',
+            facing: 1,
           });
-          addPart(g, 0.72, 0.06, 0.06, '#0f766e', 0, 0.56, 0);
-          addPart(g, 0.26, 0.52, 0.22, shirtCol, -0.05, 0.92, 0);
-          addPart(g, 0.2, 0.2, 0.2, '#cf9970', 0, 1.28, 0);
-          g.position.set(x, 0, laneZ);
-          g.scale.x = dir;
-          scene.add(g);
-          vehicles.push({ group: g, wheels, x, dir, speed, laneZ, minX: -104, maxX: 98 });
+          res.group.position.set(x, 0, laneZ);
+          res.group.scale.x = dir;
+          scene.add(res.group);
+          vehicles.push({ group: res.group, wheels: res.wheels, headlight: res.headlight, x, dir, speed, laneZ, minX: -104, maxX: 98 });
         };
 
         // Moving village highway traffic spaced across clear non-overlapping Z lanes
@@ -1177,9 +1173,9 @@ export function buildTrafficAndParkedVehicles(scene: THREE.Scene): MovingVehicle
         scene.add(bfSign);
 
         // Ornate Bang Fai Saen Rocket Group (striped gold-red-blue Thai fuselage, Naga nose cone, bamboo tail & flame!)
-        const rocketAngle = -0.3;
+        const rocketAngle = 0;
         const rocketGroup = new THREE.Group();
-        rocketGroup.position.set(bfX - 0.1, 2.55, bfZ + 0.05);
+        rocketGroup.position.set(bfX, 2.55, bfZ + 0.12);
         rocketGroup.rotation.z = rocketAngle;
         const rBody = new THREE.Mesh(
           new THREE.CylinderGeometry(0.16, 0.18, 3.2, 12),
@@ -1270,16 +1266,86 @@ export function buildTrafficAndParkedVehicles(scene: THREE.Scene): MovingVehicle
         paSign.position.set(-8.6, 2.2, -1.22);
         scene.add(paSign);
 
-        // 0D) Elevated Isaan Wooden Rice Granary (ยุ้งฉางข้าวอีสาน x = -11.4)
-        [-12.4, -10.4].forEach((gx) => {
-          addPart(scene, 0.2, 2.5, 0.2, '#3b2416', gx, 1.25, -2.0);
-          addPart(scene, 0.2, 2.5, 0.2, '#3b2416', gx, 1.25, -3.1);
+        // 0D) Detailed Elevated Isaan Wooden Rice Granary (ยุ้งฉางข้าว / เล้าข้าวอีสาน x = -11.4)
+        const granaryGrp = new THREE.Group();
+        granaryGrp.position.set(-11.4, 0, -2.55);
+        // 6 heavy hardwood stilts + under-floor crossbeams & timber deck
+        [-1.08, 0, 1.08].forEach((gx) => {
+          [-0.64, 0.64].forEach((gz) => {
+            addPart(granaryGrp, 0.15, 1.55, 0.15, '#3b2416', gx, 0.78, gz, 0.85);
+          });
+          addPart(granaryGrp, 0.12, 0.14, 1.44, '#4b2f1c', gx, 1.42, 0, 0.85);
         });
-        addPart(scene, 2.4, 1.35, 1.4, '#78502e', -11.4, 2.15, -2.55);
-        addPart(scene, 2.8, 0.16, 1.85, '#92400e', -11.4, 3.05, -2.55);
-        const redJar = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.25, 0.68, 12), new THREE.MeshStandardMaterial({ color: '#991b1b', roughness: 0.6 }));
-        redJar.position.set(-9.9, 0.34, -1.75);
-        scene.add(redJar);
+        addPart(granaryGrp, 2.55, 0.12, 1.68, '#5c3a21', 0, 1.52, 0, 0.82); // overhanging floor deck
+
+        // Timber plank walls with vertical battens & raised front loading hatch
+        addPart(granaryGrp, 2.32, 1.24, 1.38, '#784c2a', 0, 2.18, 0, 0.84);
+        [-0.9, -0.45, 0, 0.45, 0.9].forEach((bx) => {
+          addPart(granaryGrp, 0.06, 1.26, 1.42, '#54331b', bx, 2.18, 0, 0.85);
+        });
+        // Granary loading door + wooden latch + brass lock
+        addPart(granaryGrp, 0.68, 0.78, 0.06, '#4a2c18', 0, 2.16, 0.7, 0.78);
+        addPart(granaryGrp, 0.54, 0.64, 0.04, '#8b5a34', 0, 2.16, 0.72, 0.78);
+        addPart(granaryGrp, 0.14, 0.05, 0.05, '#eab308', 0.18, 2.14, 0.75, 0.3, 0.7);
+
+        // Sloped Thai gable roof (หลังคาจั่วอีสาน) with overhang & ridge cap
+        const roofLeft = addPart(granaryGrp, 2.86, 0.08, 1.08, '#7c2d12', 0, 3.04, -0.44, 0.72);
+        roofLeft.rotation.x = 0.44;
+        const roofRight = addPart(granaryGrp, 2.86, 0.08, 1.08, '#7c2d12', 0, 3.04, 0.44, 0.72);
+        roofRight.rotation.x = -0.44;
+        addPart(granaryGrp, 2.9, 0.1, 0.14, '#9a3412', 0, 3.26, 0, 0.65); // ridge cap
+        // Gable triangular end walls
+        [-1.14, 1.14].forEach((gx) => {
+          const gable = new THREE.Mesh(
+            new THREE.ConeGeometry(0.74, 0.56, 4),
+            new THREE.MeshStandardMaterial({ color: '#6b4226', roughness: 0.85 })
+          );
+          gable.rotation.y = Math.PI / 4;
+          gable.scale.set(0.15, 1, 1.32);
+          gable.position.set(gx, 2.95, 0);
+          granaryGrp.add(gable);
+        });
+
+        // Leaning bamboo ladder up to the granary door
+        const ladderGrp = new THREE.Group();
+        ladderGrp.position.set(-0.52, 0, 0.96);
+        ladderGrp.rotation.x = -0.34;
+        [-0.18, 0.18].forEach((lx) => addPart(ladderGrp, 0.05, 1.85, 0.05, '#a16207', lx, 0.92, 0, 0.8));
+        [0.32, 0.66, 1.0, 1.34, 1.66].forEach((ry) => addPart(ladderGrp, 0.4, 0.04, 0.04, '#ca8a04', 0, ry, 0, 0.8));
+        granaryGrp.add(ladderGrp);
+
+        // Woven rice sacks tucked under stilts + traditional glazed clay jar (โอ่งดินเผา)
+        [
+          [0.52, 0.18, 0.1],
+          [0.78, 0.18, -0.08],
+          [0.64, 0.42, 0.02],
+        ].forEach(([sx, sy, sz]) => {
+          addPart(granaryGrp, 0.44, 0.24, 0.34, '#d6b88d', sx, sy, sz, 0.92);
+        });
+        const clayJar = new THREE.Mesh(
+          new THREE.SphereGeometry(0.32, 12, 10),
+          new THREE.MeshStandardMaterial({ color: '#6d3b24', roughness: 0.55 })
+        );
+        clayJar.scale.set(1, 1.18, 1);
+        clayJar.position.set(1.48, 0.34, 0.72);
+        const jarRim = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.22, 0.2, 0.1, 12),
+          new THREE.MeshStandardMaterial({ color: '#542c1a', roughness: 0.6 })
+        );
+        jarRim.position.set(1.48, 0.68, 0.72);
+        granaryGrp.add(clayJar, jarRim);
+
+        // Warm under-eave bulb on the granary
+        const granaryBulb = new THREE.Mesh(
+          new THREE.SphereGeometry(0.06, 8, 8),
+          new THREE.MeshBasicMaterial({ color: '#fef08a' })
+        );
+        granaryBulb.position.set(0, 2.72, 0.82);
+        granaryGrp.add(granaryBulb);
+        const granaryLight = new THREE.PointLight('#fbbf24', 1.5, 5.5, 1.3);
+        granaryLight.position.set(0, 2.6, 1.05);
+        granaryGrp.add(granaryLight);
+        scene.add(granaryGrp);
 
         // 0E) Yellow Golden Shower Blossoms (ดอกคูณเหลืองอีสาน) along village roads
         [-88, -62, -23.5, 12.2, 58.2].forEach((kx) => {
@@ -1822,8 +1888,18 @@ export function buildTrafficAndParkedVehicles(scene: THREE.Scene): MovingVehicle
           const sx = s.baseX + Math.sin(clock * 0.45 * s.speed + s.phase) * s.range;
           const dir = Math.cos(clock * 0.45 * s.speed + s.phase) >= 0 ? 1 : -1;
           s.group.position.x = sx;
-          s.group.scale.x = dir;
-          s.group.position.y = Math.abs(Math.sin(clock * 5.2 + s.phase)) * 0.03;
+          s.group.scale.x = 1;
+          s.group.rotation.y = dir * (Math.PI / 2);
+          const stride = Math.sin(clock * 5.8 * s.speed + s.phase);
+          s.group.position.y = Math.abs(stride) * 0.035;
+          const legL = s.group.getObjectByName('legL');
+          const legR = s.group.getObjectByName('legR');
+          const armL = s.group.getObjectByName('armL');
+          const armR = s.group.getObjectByName('armR');
+          if (legL) legL.rotation.x = stride * 0.42;
+          if (legR) legR.rotation.x = -stride * 0.42;
+          if (armL) armL.rotation.x = -stride * 0.26;
+          if (armR) armR.rotation.x = stride * 0.26;
         });
 
         // 6) Campfire circle & Khaen player active during 'festive', gone when rumors/outbreak strike!
