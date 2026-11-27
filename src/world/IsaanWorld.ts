@@ -1583,14 +1583,13 @@ export class IsaanWorld {
     gateLight.position.set(26.5, 4.1, 1.85);
     this.scene.add(gateLight);
 
-    // Continuous Thai Temple Boundary Wall (กำแพงแก้ววัดไทย: เชื่อมต่อเนื่องรอบเขตวัด ไม่มีช่องขาด!)
-    // Rear perimeter temple wall (z = -3.95, x = 26.5 .. 61.5)
-    this.addBox(this.scene, 35.4, 0.32, 0.42, '#d6d3d1', 44.0, 0.16, -3.95); // stucco base plinth
-    this.addBox(this.scene, 35.4, 1.55, 0.28, '#f5f0e6', 44.0, 1.05, -3.95); // whitewashed wall
-    this.addBox(this.scene, 35.4, 0.24, 0.42, '#7f1d1d', 44.0, 1.92, -3.95); // red tile wall coping
-    this.addBox(this.scene, 35.4, 0.1, 0.32, '#eab308', 44.0, 2.08, -3.95); // gold ridge trim
-    for (let wx = 26.5; wx <= 61.5; wx += 3.5) {
-      // Rear tall lotus-capped pilasters + recessed arched mural panels
+    // Continuous Thai Temple Boundary Wall (กำแพงแก้ววัดไทย: x = 26.5 .. 58.6 เคลียร์ศาลาป้ายรถ 61.4 และมีประตูวัดด้านหน้า!)
+    // Rear perimeter temple wall (z = -3.95, x = 26.5 .. 58.6)
+    this.addBox(this.scene, 32.5, 0.32, 0.42, '#d6d3d1', 42.55, 0.16, -3.95);
+    this.addBox(this.scene, 32.5, 1.55, 0.28, '#f5f0e6', 42.55, 1.05, -3.95);
+    this.addBox(this.scene, 32.5, 0.24, 0.42, '#7f1d1d', 42.55, 1.92, -3.95);
+    this.addBox(this.scene, 32.5, 0.1, 0.32, '#eab308', 42.55, 2.08, -3.95);
+    for (let wx = 26.5; wx <= 58.6; wx += 3.55) {
       this.addBox(this.scene, 0.42, 2.2, 0.44, '#e7e5e4', wx, 1.1, -3.95);
       const lotusRear = new THREE.Mesh(
         new THREE.ConeGeometry(0.18, 0.42, 8),
@@ -1598,11 +1597,11 @@ export class IsaanWorld {
       );
       lotusRear.position.set(wx, 2.42, -3.95);
       this.scene.add(lotusRear);
-      if (wx + 1.75 < 61.0) {
-        this.addBox(this.scene, 2.4, 0.95, 0.06, '#991b1b', wx + 1.75, 1.12, -3.79); // recessed red/gold border panel
+      if (wx + 1.75 < 58.2) {
+        this.addBox(this.scene, 2.4, 0.95, 0.06, '#991b1b', wx + 1.75, 1.12, -3.79);
       }
     }
-    // West Return Wing Walls connecting Rear Wall (-3.95) & Front Wall (2.25) flush into Archway Pillars (x = 26.5, z = -2.2 & +2.65)
+    // West Return Wing Walls connecting Rear Wall (-3.95) & Front Wall (2.25) flush into Archway Pillars (x = 26.5)
     this.addBox(this.scene, 0.36, 0.32, 2.0, '#d6d3d1', 26.5, 0.16, -3.1);
     this.addBox(this.scene, 0.28, 1.55, 2.0, '#f5f0e6', 26.5, 1.05, -3.1);
     this.addBox(this.scene, 0.42, 0.24, 2.05, '#7f1d1d', 26.5, 1.92, -3.1);
@@ -1611,17 +1610,44 @@ export class IsaanWorld {
     this.addBox(this.scene, 0.24, 0.26, 0.8, '#f5f0e6', 26.5, 0.36, 2.45);
     this.addBox(this.scene, 0.3, 0.14, 0.82, '#991b1b', 26.5, 0.56, 2.45);
 
-    // East Side Return Boundary Wall connecting Rear Wall (-3.95) smoothly into Front Balustrade (2.25) at x = 61.5
-    this.addBox(this.scene, 0.36, 0.32, 6.45, '#d6d3d1', 61.5, 0.16, -0.85);
-    this.addBox(this.scene, 0.28, 1.55, 6.45, '#f5f0e6', 61.5, 1.05, -0.85);
-    this.addBox(this.scene, 0.42, 0.24, 6.5, '#7f1d1d', 61.5, 1.92, -0.85);
-    this.addBox(this.scene, 0.32, 0.1, 6.45, '#eab308', 61.5, 2.08, -0.85);
+    // East Side Return Boundary Wall at x = 58.6 (clears Songthaew Shelter at 61.4 completely!)
+    this.addBox(this.scene, 0.36, 0.32, 6.45, '#d6d3d1', 58.6, 0.16, -0.85);
+    this.addBox(this.scene, 0.28, 1.55, 6.45, '#f5f0e6', 58.6, 1.05, -0.85);
+    this.addBox(this.scene, 0.42, 0.24, 6.5, '#7f1d1d', 58.6, 1.92, -0.85);
+    this.addBox(this.scene, 0.32, 0.1, 6.45, '#eab308', 58.6, 2.08, -0.85);
 
-    // Front Kamphaeng Kaew Low Balustrade Wall running flush between Gate Pillar (26.5) and East Pier (61.5)
-    this.addBox(this.scene, 35.0, 0.24, 0.32, '#d6d3d1', 44.0, 0.12, 2.25);
-    this.addBox(this.scene, 35.0, 0.26, 0.24, '#f5f0e6', 44.0, 0.36, 2.25);
-    this.addBox(this.scene, 35.0, 0.14, 0.3, '#991b1b', 44.0, 0.56, 2.25);
-    [26.5, 29.8, 33.3, 36.8, 40.3, 43.8, 47.3, 50.8, 54.3, 57.8, 61.5].forEach((wx) => {
+    // Front Kamphaeng Kaew Low Balustrade Wall split for a Grand Front Temple Entrance Gate (x = 38.8 .. 42.2)!
+    [
+      { cx: 32.65, w: 12.3 }, // Left wing: 26.5 .. 38.8
+      { cx: 50.4, w: 16.4 },  // Right wing: 42.2 .. 58.6
+    ].forEach((seg) => {
+      this.addBox(this.scene, seg.w, 0.24, 0.32, '#d6d3d1', seg.cx, 0.12, 2.25);
+      this.addBox(this.scene, seg.w, 0.26, 0.24, '#f5f0e6', seg.cx, 0.36, 2.25);
+      this.addBox(this.scene, seg.w, 0.14, 0.3, '#991b1b', seg.cx, 0.56, 2.25);
+    });
+    // Front Temple Gate Pillars (x = 38.8 & 42.2) + Swung-Open Gold & Crimson Iron Gate Leaves!
+    [38.8, 42.2].forEach((gx, gi) => {
+      this.addBox(this.scene, 0.48, 1.65, 0.48, '#f5f0e6', gx, 0.82, 2.25);
+      this.addBox(this.scene, 0.56, 0.14, 0.56, '#eab308', gx, 1.7, 2.25);
+      const gateLotus = new THREE.Mesh(
+        new THREE.ConeGeometry(0.18, 0.38, 8),
+        new THREE.MeshStandardMaterial({ color: '#facc15', metalness: 0.65, roughness: 0.28 })
+      );
+      gateLotus.position.set(gx, 1.96, 2.25);
+      this.scene.add(gateLotus);
+      // Open swung temple gate leaf
+      const leaf = new THREE.Group();
+      leaf.position.set(gx, 0.65, 2.2);
+      leaf.rotation.y = gi === 0 ? 1.15 : -1.15;
+      const dir = gi === 0 ? 1 : -1;
+      this.addBox(leaf, 1.35, 0.08, 0.06, '#7f1d1d', dir * 0.68, 0.42, 0);
+      this.addBox(leaf, 1.35, 0.08, 0.06, '#7f1d1d', dir * 0.68, -0.35, 0);
+      for (let b = 0.2; b <= 1.2; b += 0.24) {
+        this.addBox(leaf, 0.05, 0.86, 0.05, '#eab308', dir * b, 0.05, 0);
+      }
+      this.scene.add(leaf);
+    });
+    [26.5, 29.6, 32.7, 35.8, 45.2, 48.5, 51.8, 55.2, 58.6].forEach((wx) => {
       this.addBox(this.scene, 0.36, 0.88, 0.36, '#f5f0e6', wx, 0.44, 2.25);
       this.addBox(this.scene, 0.42, 0.12, 0.42, '#eab308', wx, 0.9, 2.25);
       const lotusFront = new THREE.Mesh(
