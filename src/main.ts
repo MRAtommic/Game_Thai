@@ -1,5 +1,6 @@
 import { SoundEngine } from './audio/SoundEngine';
 import { Chapter2Engine } from './game/Chapter2Engine';
+import { Chapter3Engine } from './game/Chapter3Engine';
 import { GameEngine } from './game/GameEngine';
 
 interface BeforeInstallPromptEvent extends Event {
@@ -10,6 +11,7 @@ interface BeforeInstallPromptEvent extends Event {
 const sharedSound = new SoundEngine();
 let ch1: GameEngine | null = null;
 let ch2: Chapter2Engine | null = null;
+let ch3: Chapter3Engine | null = null;
 let deferredInstallPrompt: BeforeInstallPromptEvent | null = null;
 
 const isCoarseTouch = () =>
@@ -56,6 +58,8 @@ function teardownActiveEngines(): void {
   ch1 = null;
   ch2?.destroy();
   ch2 = null;
+  ch3?.destroy();
+  ch3 = null;
 }
 
 function launchChapter1(continueSave: boolean): void {
@@ -84,10 +88,30 @@ function launchChapter2(continueSave: boolean): void {
   else ch2.startNewGame();
 }
 
+function launchChapter3(continueSave: boolean): void {
+  try {
+    sessionStorage.removeItem('reuan_chan_active_session');
+  } catch {}
+  teardownActiveEngines();
+  const canvas = replaceFreshCanvas();
+  ch3 = new Chapter3Engine(canvas, sharedSound, () => {
+    teardownActiveEngines();
+    document.getElementById('hud-top')?.classList.add('hidden');
+    document.getElementById('inventory-bar')?.classList.add('hidden');
+    document.getElementById('mobile-controls')?.classList.add('hidden');
+    document.getElementById('title-screen')?.classList.remove('hidden');
+    syncTitleButtons();
+  });
+  if (continueSave) ch3.continueGame();
+  else ch3.startNewGame();
+}
+
 const btnStart = document.getElementById('btn-start-game')!;
 const btnContinue = document.getElementById('btn-continue-game')!;
 const btnStartCh2 = document.getElementById('btn-start-ch2')!;
 const btnContinueCh2 = document.getElementById('btn-continue-ch2')!;
+const btnStartCh3 = document.getElementById('btn-start-ch3')!;
+const btnContinueCh3 = document.getElementById('btn-continue-ch3')!;
 const btnInstallApp = document.getElementById('btn-install-app')!;
 const iosInstallHint = document.getElementById('ios-install-hint')!;
 const btnLockLandscape = document.getElementById('btn-lock-landscape');
@@ -95,8 +119,10 @@ const btnLockLandscape = document.getElementById('btn-lock-landscape');
 function syncTitleButtons(): void {
   const hasCh1 = Boolean(localStorage.getItem('reuan_chan_dorm_save_v1'));
   const hasCh2 = Boolean(localStorage.getItem('reuan_chan_ch2_save_v1'));
+  const hasCh3 = Boolean(localStorage.getItem('reuan_chan_ch3_save_v1'));
   btnContinue.classList.toggle('hidden', !hasCh1);
   btnContinueCh2.classList.toggle('hidden', !hasCh2);
+  btnContinueCh3.classList.toggle('hidden', !hasCh3);
 }
 syncTitleButtons();
 
@@ -147,6 +173,14 @@ btnStartCh2.addEventListener('click', () => {
 btnContinueCh2.addEventListener('click', () => {
   void tryEnterLandscapeMode();
   launchChapter2(true);
+});
+btnStartCh3.addEventListener('click', () => {
+  void tryEnterLandscapeMode();
+  launchChapter3(false);
+});
+btnContinueCh3.addEventListener('click', () => {
+  void tryEnterLandscapeMode();
+  launchChapter3(true);
 });
 
 if (sessionStorage.getItem('reuan_chan_active_session') === '1' && localStorage.getItem('reuan_chan_dorm_save_v1')) {

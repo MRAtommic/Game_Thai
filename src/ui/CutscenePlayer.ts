@@ -13,7 +13,13 @@ export type IsaanCutsceneId =
   | 'paddy_shrine_dug'
   | 'monk_blessing'
   | 'saisin_ward'
-  | 'banish_ritual';
+  | 'banish_ritual'
+  | 'school_dare'
+  | 'classroom_lesson'
+  | 'music_room_ranat'
+  | 'locker_hide'
+  | 'dancer_finale'
+  | 'songthaew_ride';
 
 interface CutsceneMeta {
   title: string;
@@ -22,6 +28,60 @@ interface CutsceneMeta {
 }
 
 const CUTSCENE_META: Record<IsaanCutsceneId, CutsceneMeta> = {
+  school_dare: {
+    title: '🎬 คัทซีน — คำท้าสุดหลอนหน้าโรงเรียนมัธยมจันทรารัตน์',
+    durationMs: 4500,
+    captions: [
+      'หน้าซุ้มประตูโรงเรียนยามเย็น ไอ้ก้องกับพวกหัวโจกยืนขวางทางภีมไว้...',
+      '"ถ้ามึงอยากเข้ากลุ่มพวกกูจริง คืนนี้หลังสองทุ่มกล้าขึ้นไปตีระนาดเอกหน้ากระจกห้องดนตรีไทยชั้น 3 ไหมล่ะ?!"',
+      'แสงสีแดงวูบวาบขึ้นตรงหน้าต่างชั้น 3 ราวกับมีเงาใครกำลังร่ายรำรอคอยอยู่ด้านบน...',
+    ],
+  },
+  classroom_lesson: {
+    title: '🎬 คัทซีน — บรรยากาศคาบเรียนห้อง ม.5/2 ยามกลางวัน',
+    durationMs: 4200,
+    captions: [
+      'เสียงออดเข้าเรียนดังกังวาน คุณครูสมชายยืนสอนหน้ากระดานดำท่ามกลางเพื่อนร่วมห้อง...',
+      'ระหว่างจดเลกเชอร์ เพื่อนข้างโต๊ะกระซิบเล่าตำนานนางรำคอหักเมื่อ 15 ปีก่อน...',
+      'แถมยังแอบส่งกระดาษโน้ตปริศนาใต้โต๊ะเกี่ยวกับ "คราบขี้ผึ้งลื่นบนเวทีนาฏศิลป์"!',
+    ],
+  },
+  music_room_ranat: {
+    title: '🎬 คัทซีน — ตีระนาดเอกหน้ากระจก... ผีนางรำปรากฏกาย!!',
+    durationMs: 4900,
+    captions: [
+      'ภีมรวบรวมความกล้ายกไม้ระนาดขึ้นตีลงบนผืนระนาดเอก 3 ครั้งท่ามกลางความมืด...',
+      'แก๊ง! แกร๊ก! กระจกเงาบานใหญ่สั่นสะเทือน พร้อมเงาหญิงสาวสวมชฎาทอง-สไบเปื้อนเลือดลอยขึ้นด้านหลัง!!',
+      'เสียงระนาดรัวเองโดยไร้คนตี ผีนางรำเอียงคอหักจ้องผ่านกระจกแล้วพุ่งออกมาทันที!!',
+    ],
+  },
+  locker_hide: {
+    title: '🎬 คัทซีน — กลั้นหายใจซ่อนตัวในความมืดขณะผีนางรำผ่านไป',
+    durationMs: 4300,
+    captions: [
+      'ภีมรีบมุดเข้าไปซ่อนตัวแนบสนิท ปิดช่องแคบเหลือเพียงรอยแง้มมองทางเดินมืด...',
+      'ติ๊ง... ต่อง... เสียงกำไลข้อเท้าทองและปลายสไบสีเลือดลอยเฉียดผ่านไปช้าๆ!!',
+      'วิญญาณนางรำหยุดชะงักสูดดมกลิ่นครู่หนึ่ง ก่อนลอยลับหายไปปลายระเบียงทางเดิน...',
+    ],
+  },
+  dancer_finale: {
+    title: '🎬 คัทซีนปิดฉาก — คืนชฎาทองโบราณ & พิพากษาความจริง',
+    durationMs: 5400,
+    captions: [
+      'ภีมวาง "ชฎาทองโบราณ" คืนบนแท่นบูชาหน้ากระจก ท่ามกลางแสงไฟสีทองอันเจิดจ้า!',
+      'วิญญาณพี่ดาวประกายสวมชฎา ร่ายรำอย่างสง่างามอ่อนช้อยเป็นครั้งสุดท้ายทั้งน้ำตา...',
+      'รุ่งเช้าตำรวจควบคุมตัวครูวิไล และโรงเรียนมัธยมจันทรารัตน์ก็กลับคืนสู่ความสงบสุขตลอดกาล!',
+    ],
+  },
+  songthaew_ride: {
+    title: '🎬 คัทซีน — นั่งรถสองแถวออกเดินทางข้ามโซน',
+    durationMs: 3600,
+    captions: [
+      'ขึ้นมานั่งท้ายรถสองแถวไม้หลังคาสังกะสี จับราวเหล็กให้แน่น!',
+      'ล้อรถหมุนวิ่งฉิวผ่านทิวต้นไม้ เสาไฟฟ้า และท้องนา/ถนนกว้างใหญ่...',
+      'เอี๊ยด~ คนขับจอดเทียบป้ายปลายทางอย่างปลอดภัยเรียบร้อย!',
+    ],
+  },
   homecoming: {
     title: '🎬 คัทซีน — กลับคืนสู่เรือนไม้บ้านทุ่งอีสาน',
     durationMs: 4400,
@@ -305,6 +365,24 @@ export class CutscenePlayer {
         break;
       case 'banish_ritual':
         this.drawBanishRitual(ctx, w, h, p, t);
+        break;
+      case 'school_dare':
+        this.drawSchoolDare(ctx, w, h, p, t);
+        break;
+      case 'classroom_lesson':
+        this.drawClassroomLesson(ctx, w, h, p, t);
+        break;
+      case 'music_room_ranat':
+        this.drawMusicRoomRanat(ctx, w, h, p, t);
+        break;
+      case 'locker_hide':
+        this.drawLockerHide(ctx, w, h, p, t);
+        break;
+      case 'dancer_finale':
+        this.drawDancerFinale(ctx, w, h, p, t);
+        break;
+      case 'songthaew_ride':
+        this.drawSongthaewRide(ctx, w, h, p, t);
         break;
     }
     // Subtle cinema vignette
@@ -1135,5 +1213,272 @@ export class CutscenePlayer {
         ctx.fill();
       }
     }
+  }
+
+  private drawSchoolDare(ctx: CanvasRenderingContext2D, w: number, h: number, p: number, t: number): void {
+    const sky = ctx.createLinearGradient(0, 0, 0, h * 0.72);
+    sky.addColorStop(0, '#0f172a');
+    sky.addColorStop(0.55, '#581c87');
+    sky.addColorStop(1, '#ea580c');
+    ctx.fillStyle = sky;
+    ctx.fillRect(0, 0, w, h);
+
+    ctx.fillStyle = '#1e293b';
+    ctx.fillRect(0, 290, w, 115);
+
+    // Grand 3-story Thai school silhouette & eerie crimson glowing Floor 3 Music Room window!
+    ctx.fillStyle = '#334155';
+    ctx.fillRect(360, 75, 310, 215);
+    ctx.fillStyle = '#7f1d1d';
+    ctx.beginPath();
+    ctx.moveTo(345, 80);
+    ctx.lineTo(515, 35);
+    ctx.lineTo(685, 80);
+    ctx.closePath();
+    ctx.fill();
+
+    for (let fl = 0; fl < 3; fl++) {
+      for (let wx = 385; wx <= 625; wx += 55) {
+        const isHauntedWin = fl === 0 && wx >= 495;
+        ctx.fillStyle = isHauntedWin
+          ? `rgba(239, 68, 68, ${0.45 + Math.sin(t * 7) * 0.3})`
+          : '#0f172a';
+        ctx.fillRect(wx, 100 + fl * 62, 34, 38);
+      }
+    }
+
+    // Hero Peem & Kong Bully gang facing each other outside gate!
+    this.drawPerson(ctx, 130 + Math.min(1, p * 2) * 35, 325, '#f8fafc', '#1e3a8a', 1.1);
+    this.drawPerson(ctx, 255, 325, '#e2e8f0', '#0f172a', 1.14, -5);
+    this.drawPerson(ctx, 305, 325, '#cbd5e1', '#1e293b', 1.05);
+  }
+
+  private drawClassroomLesson(ctx: CanvasRenderingContext2D, w: number, h: number, _p: number, t: number): void {
+    ctx.fillStyle = '#fef3c7';
+    ctx.fillRect(0, 0, w, h);
+    ctx.fillStyle = '#cbd5e1';
+    ctx.fillRect(0, 285, w, 120);
+
+    // Chalkboard & teacher pointing!
+    ctx.fillStyle = '#14532d';
+    ctx.fillRect(140, 48, 440, 155);
+    ctx.strokeStyle = '#78350f';
+    ctx.lineWidth = 10;
+    ctx.strokeRect(140, 48, 440, 155);
+
+    ctx.fillStyle = '#f8fafc';
+    ctx.font = 'bold 20px "IBM Plex Sans Thai", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('ประวัติชมรมนาฏศิลป์ • ห้ามขึ้นชั้น 3 ยามวิกาล', 360, 118);
+
+    this.drawPerson(ctx, 210, 288, '#a38968', '#57534e', 1.15);
+    [350, 465, 575].forEach((sx, idx) => {
+      ctx.fillStyle = '#92400e';
+      ctx.fillRect(sx - 26, 268, 52, 36);
+      this.drawPerson(ctx, sx, 295 + Math.sin(t * 2 + idx) * 2, '#f8fafc', '#1e3a8a', 0.95, 0, true);
+    });
+  }
+
+  private drawMusicRoomRanat(ctx: CanvasRenderingContext2D, w: number, h: number, p: number, t: number): void {
+    ctx.fillStyle = '#07050a';
+    ctx.fillRect(0, 0, w, h);
+
+    // Crimson stage curtains & Mirror frame
+    ctx.fillStyle = '#7f1d1d';
+    ctx.fillRect(0, 0, 95, h);
+    ctx.fillRect(w - 95, 0, 95, h);
+    ctx.fillStyle = '#451a03';
+    ctx.fillRect(0, 295, w, 110);
+
+    // Antique Silver Mirror revealing Ghost Dancer behind Peem!!
+    ctx.strokeStyle = '#eab308';
+    ctx.lineWidth = 12;
+    ctx.fillStyle = '#0f172a';
+    ctx.fillRect(245, 45, 230, 225);
+    ctx.strokeRect(245, 45, 230, 225);
+
+    if (p > 0.35) {
+      const gp = Math.min(1, (p - 0.35) * 1.9);
+      const gx = 360;
+      const gy = 215 - gp * 45 + Math.sin(t * 5) * 6;
+      const aura = ctx.createRadialGradient(gx, gy - 40, 10, gx, gy - 40, 95);
+      aura.addColorStop(0, `rgba(220, 38, 38, ${0.65 * gp})`);
+      aura.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = aura;
+      ctx.fillRect(245, 45, 230, 225);
+
+      // Thai Chada + Blood-stained gold Sabai ghost silhouette inside mirror
+      ctx.fillStyle = '#facc15';
+      ctx.beginPath();
+      ctx.moveTo(gx - 16, gy - 82);
+      ctx.lineTo(gx + 16, gy - 82);
+      ctx.lineTo(gx, gy - 118);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = '#cbd5e1';
+      ctx.beginPath();
+      ctx.arc(gx, gy - 68, 16, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#b91c1c';
+      ctx.beginPath();
+      ctx.roundRect(gx - 22, gy - 50, 44, 64, 6);
+      ctx.fill();
+      ctx.fillStyle = '#ef4444';
+      ctx.fillRect(gx - 8, gy - 71, 4, 4);
+      ctx.fillRect(gx + 4, gy - 71, 4, 4);
+    }
+
+    // Wooden Ranat Ek foreground + Peem beating 3 strikes
+    ctx.fillStyle = '#78350f';
+    ctx.fillRect(260, 275, 200, 42);
+    ctx.fillStyle = '#fde68a';
+    ctx.fillRect(268, 266, 184, 12);
+    this.drawPerson(ctx, 210, 345, '#f8fafc', '#1e3a8a', 1.15, p < 0.35 ? Math.sin(p * 18) * 10 : -8);
+  }
+
+  private drawLockerHide(ctx: CanvasRenderingContext2D, w: number, h: number, p: number, t: number): void {
+    // POV from narrow dark locker slit!
+    ctx.fillStyle = '#020307';
+    ctx.fillRect(0, 0, w, h);
+
+    // Narrow vertical glowing gap looking out into dark school corridor
+    const slitX = w * 0.36;
+    const slitW = w * 0.28;
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(slitX, 30, slitW, h - 60);
+    ctx.clip();
+
+    ctx.fillStyle = '#0b101d';
+    ctx.fillRect(slitX, 30, slitW, h - 60);
+    // Flickering red emergency corridor light
+    ctx.fillStyle = `rgba(220, 38, 38, ${0.18 + Math.sin(t * 14) * 0.12})`;
+    ctx.fillRect(slitX, 30, slitW, h - 60);
+
+    // Floating Ghost Dancer gliding silently past slit from Left to Right!
+    const gx = slitX - 45 + p * (slitW + 90);
+    const gy = 250 + Math.sin(t * 4) * 8;
+    ctx.fillStyle = '#facc15';
+    ctx.beginPath();
+    ctx.moveTo(gx - 15, gy - 115);
+    ctx.lineTo(gx + 15, gy - 115);
+    ctx.lineTo(gx, gy - 150);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = '#991b1b';
+    ctx.beginPath();
+    ctx.roundRect(gx - 24, gy - 85, 48, 125, 10);
+    ctx.fill();
+    ctx.fillStyle = '#ef4444';
+    ctx.fillRect(gx - 7, gy - 98, 5, 5);
+    ctx.fillRect(gx + 3, gy - 98, 5, 5);
+
+    ctx.restore();
+    // Metal locker vent louvers
+    ctx.fillStyle = '#0f172a';
+    for (let ly = 45; ly < 110; ly += 14) {
+      ctx.fillRect(slitX + 18, ly, slitW - 36, 5);
+    }
+  }
+
+  private drawDancerFinale(ctx: CanvasRenderingContext2D, w: number, h: number, p: number, t: number): void {
+    const golden = Math.min(1, p * 1.2);
+    const sky = ctx.createLinearGradient(0, 0, 0, h);
+    sky.addColorStop(0, '#1e1b4b');
+    sky.addColorStop(0.55, '#b45309');
+    sky.addColorStop(1, '#fef08a');
+    ctx.fillStyle = sky;
+    ctx.fillRect(0, 0, w, h);
+
+    // Radiant purification beam illuminating the Golden Chada crown on the altar!
+    const beam = ctx.createRadialGradient(360, 210, 18, 360, 210, 220 + Math.sin(t * 4) * 14);
+    beam.addColorStop(0, `rgba(254, 240, 138, ${0.88 * golden})`);
+    beam.addColorStop(0.55, 'rgba(217, 119, 6, 0.35)');
+    beam.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = beam;
+    ctx.fillRect(0, 0, w, h);
+
+    ctx.fillStyle = '#78350f';
+    ctx.fillRect(280, 265, 160, 65);
+    // Golden Chada Crown sparkling
+    ctx.fillStyle = '#facc15';
+    ctx.beginPath();
+    ctx.moveTo(335, 265);
+    ctx.lineTo(385, 265);
+    ctx.lineTo(360, 200);
+    ctx.closePath();
+    ctx.fill();
+
+    // Graceful purified P'Dao spirit bowing respectfully before vanishing in golden petals!
+    ctx.save();
+    ctx.globalAlpha = Math.max(0.2, 1 - Math.max(0, p - 0.65) * 2.5);
+    this.drawPerson(ctx, 470, 325, '#facc15', '#7f1d1d', 1.15, Math.sin(p * Math.PI) * 18);
+    ctx.restore();
+
+    for (let i = 0; i < 14; i++) {
+      ctx.fillStyle = '#fef08a';
+      ctx.beginPath();
+      ctx.ellipse(110 + i * 38, (t * 46 + i * 52) % h, 5, 3, t + i, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  private drawSongthaewRide(ctx: CanvasRenderingContext2D, w: number, h: number, p: number, t: number): void {
+    const sky = ctx.createLinearGradient(0, 0, 0, h * 0.65);
+    sky.addColorStop(0, '#0c4a6e');
+    sky.addColorStop(1, '#bae6fd');
+    ctx.fillStyle = sky;
+    ctx.fillRect(0, 0, w, h);
+
+    // Scrolling green rice field + roadside poles & trees!
+    ctx.fillStyle = '#15803d';
+    ctx.fillRect(0, 235, w, 75);
+    ctx.fillStyle = '#334155';
+    ctx.fillRect(0, 300, w, 105);
+    for (let i = 0; i < 6; i++) {
+      const rx = ((720 - ((t * 360 + i * 145) % 820)) + 820) % 820 - 50;
+      ctx.fillStyle = '#475569';
+      ctx.fillRect(rx, 85, 10, 165);
+      ctx.fillStyle = '#166534';
+      ctx.beginPath();
+      ctx.arc(rx + 42, 165, 36, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#facc15';
+      ctx.fillRect(rx, 345, 52, 8); // dashed road lines scrolling fast
+    }
+
+    // Bouncing Iconic Thai Songthaew Truck!
+    const bounce = Math.sin(t * 22) * 3;
+    const tx = 140 + Math.sin(p * Math.PI) * 55;
+    const ty = 195 + bounce;
+    // Cab + Roofed Passenger Bed
+    ctx.fillStyle = '#1d4ed8';
+    ctx.fillRect(tx + 245, ty + 36, 95, 72); // blue pickup cab
+    ctx.fillStyle = '#bae6fd';
+    ctx.fillRect(tx + 275, ty + 44, 52, 32); // cab windshield
+    ctx.fillStyle = '#e2e8f0';
+    ctx.fillRect(tx, ty, 245, 16); // corrugated passenger canopy roof
+    ctx.fillStyle = '#991b1b';
+    ctx.fillRect(tx, ty + 52, 245, 56); // red side rails & wooden benches
+    // Pillars & Standing/Seated Player inside Songthaew!
+    [tx + 8, tx + 118, tx + 236].forEach((px) => {
+      ctx.fillStyle = '#cbd5e1';
+      ctx.fillRect(px, ty + 16, 8, 40);
+    });
+    this.drawPerson(ctx, tx + 85, ty + 96, '#2563eb', '#1e293b', 0.88, -4);
+    this.drawPerson(ctx, tx + 165, ty + 96, '#f59e0b', '#334155', 0.84, 3);
+
+    // Spinning Wheels
+    [tx + 65, tx + 292].forEach((wx) => {
+      ctx.fillStyle = '#0f172a';
+      ctx.beginPath();
+      ctx.arc(wx, ty + 114, 24, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#94a3b8';
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.arc(wx, ty + 114, 12, t * 18, t * 18 + Math.PI * 1.3);
+      ctx.stroke();
+    });
   }
 }

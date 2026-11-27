@@ -15,6 +15,9 @@ export class SoundEngine {
   private marketChatterTimer = 0.5;
   private fairMusicTimer = 0.25;
   private fairStep = 0;
+  private thaiMusicTimer = 0.2;
+  private thaiMusicStep = 0;
+  private schoolCrowdTimer = 0.7;
   private howlTimer = 8;
   private heartbeatTimer = 0;
   private chaseStepTimer = 0;
@@ -1103,5 +1106,176 @@ export class SoundEngine {
     g.connect(this.masterGain);
     osc.start(now);
     osc.stop(now + 0.22);
+  }
+
+  /** Melodic 4-tone Thai School Bell ("ติ๊ง หน่อง ต่อง แต๊ง") */
+  public playSchoolBell(): void {
+    if (!this.ctx || !this.masterGain || !this.initialized || this.muted) return;
+    const now = this.ctx.currentTime;
+    const chimes = [
+      { f: 659.25, t: 0, d: 0.45 },
+      { f: 523.25, t: 0.34, d: 0.45 },
+      { f: 587.33, t: 0.68, d: 0.45 },
+      { f: 392.0, t: 1.04, d: 0.75 },
+    ];
+    chimes.forEach((c) => {
+      if (!this.ctx || !this.masterGain) return;
+      const osc = this.ctx.createOscillator();
+      const g = this.ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(c.f, now + c.t);
+      g.gain.setValueAtTime(0.001, now + c.t);
+      g.gain.linearRampToValueAtTime(0.11, now + c.t + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, now + c.t + c.d);
+      osc.connect(g);
+      g.connect(this.masterGain);
+      osc.start(now + c.t);
+      osc.stop(now + c.t + c.d + 0.03);
+    });
+  }
+
+  /** Wooden Ranat Ek (ระนาดเอก) strike for mini-game & cutscenes */
+  public playRanatNote(noteIdx: number, eerie = false): void {
+    if (!this.ctx || !this.masterGain || !this.initialized || this.muted) return;
+    const now = this.ctx.currentTime;
+    const thaiScale = [392, 440, 493.88, 587.33, 659.25, 783.99];
+    const baseFreq = thaiScale[((noteIdx % thaiScale.length) + thaiScale.length) % thaiScale.length];
+    const osc = this.ctx.createOscillator();
+    const overtone = this.ctx.createOscillator();
+    const flt = this.ctx.createBiquadFilter();
+    const g = this.ctx.createGain();
+
+    osc.type = 'triangle';
+    overtone.type = 'sine';
+    osc.frequency.setValueAtTime(baseFreq, now);
+    overtone.frequency.setValueAtTime(eerie ? baseFreq * 2.13 : baseFreq * 2.75, now);
+
+    flt.type = 'bandpass';
+    flt.frequency.value = baseFreq * 1.6;
+    flt.Q.value = eerie ? 3.5 : 1.8;
+
+    g.gain.setValueAtTime(0.001, now);
+    g.gain.linearRampToValueAtTime(0.16, now + 0.008);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + (eerie ? 0.52 : 0.32));
+
+    osc.connect(flt);
+    overtone.connect(flt);
+    flt.connect(g);
+    g.connect(this.masterGain);
+    osc.start(now);
+    overtone.start(now);
+    osc.stop(now + 0.56);
+    overtone.stop(now + 0.56);
+  }
+
+  /**
+   * Thai Classical Music (เสียงระนาดเอก & ฆ้องวง) — graceful by day, chilling & echoing when haunted/chasing!
+   */
+  public updateThaiClassicalAmbience(
+    dt: number,
+    proximity: number,
+    isHaunted: boolean,
+    isChasing: boolean
+  ): void {
+    if (!this.ctx || !this.masterGain || !this.initialized || this.muted) return;
+    const p = Math.max(0, Math.min(1, proximity));
+    if (p <= 0.03) return;
+
+    this.thaiMusicTimer -= dt;
+    if (this.thaiMusicTimer > 0) return;
+    this.thaiMusicTimer = isChasing ? 0.19 : isHaunted ? 0.34 : 0.38;
+
+    const now = this.ctx.currentTime;
+    const step = this.thaiMusicStep % 12;
+    this.thaiMusicStep++;
+    const vol = p * p * (isChasing ? 1.15 : 0.8);
+
+    // Traditional Thai 5-tone melody (G4, A4, B4, D5, E5, G5) with eerie flat pitch shift if haunted
+    const notes = isHaunted
+      ? [392, 466.16, 392, 587.33, 554.37, 466.16, 392, 311.13, 392, 466.16, 622.25, 440]
+      : [392, 440, 493.88, 587.33, 659.25, 587.33, 493.88, 440, 392, 587.33, 659.25, 783.99];
+    const f = notes[step];
+
+    const ranat = this.ctx.createOscillator();
+    const rGain = this.ctx.createGain();
+    ranat.type = isHaunted ? 'sawtooth' : 'triangle';
+    ranat.frequency.setValueAtTime(f, now);
+    if (isHaunted) ranat.frequency.linearRampToValueAtTime(f * 0.97, now + 0.25);
+
+    const lp = this.ctx.createBiquadFilter();
+    lp.type = 'lowpass';
+    lp.frequency.value = isHaunted ? 1150 : 2100;
+
+    rGain.gain.setValueAtTime(0.001, now);
+    rGain.gain.linearRampToValueAtTime(0.075 * vol, now + 0.01);
+    rGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.28);
+
+    ranat.connect(lp);
+    lp.connect(rGain);
+    rGain.connect(this.masterGain);
+    ranat.start(now);
+    ranat.stop(now + 0.3);
+
+    // Deep bronze Khong Wong (ฆ้องวงใหญ่) pulse on every 4th beat + Ching shimmer
+    if (step % 4 === 0) {
+      const gong = this.ctx.createOscillator();
+      const gg = this.ctx.createGain();
+      gong.type = 'sine';
+      gong.frequency.setValueAtTime(isHaunted ? 155.56 : 196, now);
+      gg.gain.setValueAtTime(0.001, now);
+      gg.gain.linearRampToValueAtTime(0.11 * vol, now + 0.02);
+      gg.gain.exponentialRampToValueAtTime(0.0001, now + 0.72);
+      gong.connect(gg);
+      gg.connect(this.masterGain);
+      gong.start(now);
+      gong.stop(now + 0.75);
+    }
+    if (step % 2 === 1) {
+      const ching = this.ctx.createOscillator();
+      const cg = this.ctx.createGain();
+      ching.type = 'sine';
+      ching.frequency.setValueAtTime(step % 4 === 1 ? 2750 : 2300, now);
+      cg.gain.setValueAtTime(0.026 * vol, now);
+      cg.gain.exponentialRampToValueAtTime(0.0001, now + 0.14);
+      ching.connect(cg);
+      cg.connect(this.masterGain);
+      ching.start(now);
+      ching.stop(now + 0.16);
+    }
+  }
+
+  /** Lively daytime school campus murmur when students & teachers are active */
+  public updateSchoolCrowdAmbience(dt: number, proximity: number, active: boolean): void {
+    if (!this.ctx || !this.masterGain || !this.initialized || !active || this.muted) return;
+    const p = Math.max(0, Math.min(1, proximity));
+    if (p <= 0.03) return;
+
+    this.schoolCrowdTimer -= dt;
+    if (this.schoolCrowdTimer > 0) return;
+    this.schoolCrowdTimer = 0.2 + Math.random() * 0.35;
+
+    const now = this.ctx.currentTime;
+    const dur = 0.16 + Math.random() * 0.24;
+    const len = Math.floor(this.ctx.sampleRate * dur);
+    const buf = this.ctx.createBuffer(1, len, this.ctx.sampleRate);
+    const arr = buf.getChannelData(0);
+    let lp = 0;
+    for (let i = 0; i < len; i++) {
+      const env = Math.sin((i / len) * Math.PI);
+      lp = (lp + 0.2 * (Math.random() * 2 - 1)) / 1.2;
+      arr[i] = lp * env;
+    }
+    const src = this.ctx.createBufferSource();
+    src.buffer = buf;
+    const flt = this.ctx.createBiquadFilter();
+    flt.type = 'bandpass';
+    flt.frequency.value = 390 + Math.random() * 480;
+    flt.Q.value = 2.6;
+    const g = this.ctx.createGain();
+    g.gain.setValueAtTime(0.095 * p * p, now);
+    src.connect(flt);
+    flt.connect(g);
+    g.connect(this.masterGain);
+    src.start(now);
   }
 }

@@ -2104,12 +2104,15 @@ export class Chapter2Engine {
         this.touchBike.textContent = '🚲';
         this.touchBike.classList.remove('active');
         this.renderInventory();
-        this.state.x = dest;
-        this.sound.playVehicleHorn();
         this.closeModal();
-        this.updateHUD();
-        this.saveGame();
-        this.showToast('นั่งรถสองแถวมาถึงจุดหมายเรียบร้อย!');
+        this.sound.playVehicleHorn();
+        this.playCutscene('songthaew_ride', () => {
+          this.state.x = dest;
+          this.sound.playVehicleHorn();
+          this.updateHUD();
+          this.saveGame();
+          this.showToast('นั่งรถสองแถวมาถึงจุดหมายเรียบร้อย!');
+        });
       });
     });
   }
