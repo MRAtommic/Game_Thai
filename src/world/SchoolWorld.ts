@@ -276,12 +276,24 @@ export class SchoolWorld {
     this.addBox(this.exteriorGroup, 30, 1.25, 0.35, '#e2e8f0', -28.5, 0.62, -2.55, 0.85);
     this.addBox(this.exteriorGroup, 30, 0.22, 0.42, '#7f1d1d', -28.5, 1.32, -2.55, 0.75);
 
-    // Solid Brick Campus Perimeter End Walls (-127.0 West & +127.0 East) returning cleanly across Z so neither end cuts into void!
+    // Natural Low Brick-Stucco Campus Fence & See-Through Wrought-Iron Bars + Traffic Cones at ends (-127 & +127)
     [-127.0, 127.0].forEach((endX) => {
-      this.addBox(this.exteriorGroup, 0.55, 4.4, 10.6, '#475569', endX, 2.2, 1.2, 0.88);
-      this.addBox(this.exteriorGroup, 0.72, 0.26, 10.8, '#7f1d1d', endX, 4.45, 1.2, 0.75);
+      this.addBox(this.exteriorGroup, 0.3, 1.05, 9.8, '#e2e8f0', endX, 0.52, 1.2, 0.85);
+      this.addBox(this.exteriorGroup, 0.38, 0.16, 10.0, '#7f1d1d', endX, 1.1, 1.2, 0.7);
+      for (let pz = -2.8; pz <= 5.2; pz += 0.55) {
+        this.addBox(this.exteriorGroup, 0.05, 1.1, 0.05, '#1e293b', endX, 1.72, pz);
+      }
+      this.addBox(this.exteriorGroup, 0.08, 0.08, 9.8, '#1e293b', endX, 2.26, 1.2);
+      [0.2, 1.6, 3.0].forEach((cz) => {
+        const cone = new THREE.Mesh(
+          new THREE.ConeGeometry(0.17, 0.54, 10),
+          new THREE.MeshStandardMaterial({ color: '#f97316', roughness: 0.45 })
+        );
+        cone.position.set(endX + (endX < 0 ? 0.9 : -0.9), 0.27, cz);
+        this.exteriorGroup.add(cone);
+      });
       const endTree = build25DStreetTree({ scale: 1.15 });
-      endTree.position.set(endX + (endX < 0 ? -1.5 : 1.5), 0, -2.5);
+      endTree.position.set(endX + (endX < 0 ? -1.8 : 1.8), 0, -1.8);
       this.exteriorGroup.add(endTree);
     });
 

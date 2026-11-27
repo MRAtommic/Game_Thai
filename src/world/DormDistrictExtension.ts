@@ -256,21 +256,39 @@ export function buildDormDistrictExtension(
   bridgeTree.position.set(-124.2, 0, -1.8);
   exteriorGroup.add(bridgeTree);
 
-  // Far-west perimeter back wall past Canal Bridge (-121 .. -142) + Dead-End Soi Concrete Wall & Barrier (-130.5)
+  // Natural West Soi Road Closure past Canal Bridge (-130.2): Concrete red-white barriers, cones, flashing chevron & open road fade into trees!
   const policeBackWall2 = new THREE.Mesh(
     new THREE.PlaneGeometry(24.0, 4.8),
     new THREE.MeshStandardMaterial({ map: wallTex, roughness: 0.95 })
   );
   policeBackWall2.position.set(-130.0, 2.4, -2.35);
   exteriorGroup.add(policeBackWall2);
-  addBox(exteriorGroup, 0.55, 4.9, 9.6, '#334155', -130.2, 2.45, 2.3, 0.9); // solid West end return wall across road
-  addBox(exteriorGroup, 0.72, 0.28, 9.8, '#475569', -130.2, 4.95, 2.3, 0.75); // concrete wall coping cap
-  for (let bz = -1.2; bz <= 5.2; bz += 1.6) {
-    addBox(exteriorGroup, 0.22, 0.24, 0.78, bz % 3.2 === 0 ? '#dc2626' : '#f8fafc', -129.85, 1.05, bz);
+  // Open low concrete curb + see-through steel fence pickets on far roadside & dense trees beyond
+  addBox(exteriorGroup, 0.28, 1.05, 8.6, '#64748b', -130.6, 0.52, 2.1, 0.85);
+  addBox(exteriorGroup, 0.34, 0.12, 8.8, '#94a3b8', -130.6, 1.08, 2.1, 0.7);
+  for (let bz = -1.6; bz <= 5.6; bz += 0.55) {
+    addBox(exteriorGroup, 0.05, 1.15, 0.05, '#1e293b', -130.6, 1.68, bz);
   }
-  const westDeadTree = build25DStreetTree({ scale: 1.08 });
-  westDeadTree.position.set(-128.4, 0, -1.7);
-  exteriorGroup.add(westDeadTree);
+  addBox(exteriorGroup, 0.08, 0.08, 8.6, '#1e293b', -130.6, 2.25, 2.1);
+  // Realistic Thai red-white concrete Jersey barriers + orange traffic cones + hazard light across road!
+  [0.2, 2.4, 4.6].forEach((bz, bi) => {
+    addBox(exteriorGroup, 0.55, 0.68, 1.65, bi % 2 === 0 ? '#dc2626' : '#f8fafc', -129.6, 0.34, bz, 0.75);
+    addBox(exteriorGroup, 0.58, 0.14, 1.67, bi % 2 === 0 ? '#f8fafc' : '#dc2626', -129.6, 0.52, bz, 0.65);
+    const cone = new THREE.Mesh(
+      new THREE.ConeGeometry(0.18, 0.58, 10),
+      new THREE.MeshStandardMaterial({ color: '#f97316', roughness: 0.45 })
+    );
+    cone.position.set(-128.8, 0.29, bz + 0.6);
+    exteriorGroup.add(cone);
+  });
+  const hazBeacon = new THREE.Mesh(new THREE.SphereGeometry(0.1, 8, 8), new THREE.MeshBasicMaterial({ color: '#f59e0b' }));
+  hazBeacon.position.set(-129.6, 0.92, 2.4);
+  exteriorGroup.add(hazBeacon);
+  [-132.5, -128.4].forEach((tx, ti) => {
+    const t = build25DStreetTree({ scale: 1.12 });
+    t.position.set(tx, 0, -1.6 + ti * 1.1);
+    exteriorGroup.add(t);
+  });
 
   const canalLight = new THREE.PointLight('#67e8f9', 4.5, 15, 1.1);
   canalLight.position.set(-118.5, 4.2, 1.4);
@@ -292,16 +310,34 @@ export function buildDormDistrictExtension(
   eastWall.position.set(35.0, 2.4, -2.35);
   exteriorGroup.add(eastWall);
 
-  // Solid East Soi Concrete Dead-End Perimeter Wall + Red-White Steel Barrier (+45.2) returning cleanly across Z!
-  addBox(exteriorGroup, 0.55, 4.9, 9.6, '#334155', 45.2, 2.45, 2.3, 0.9);
-  addBox(exteriorGroup, 0.72, 0.28, 9.8, '#475569', 45.2, 4.95, 2.3, 0.75);
-  addBox(exteriorGroup, 0.24, 0.22, 6.2, '#dc2626', 44.85, 1.05, 1.6); // steel dead-end barrier rail
-  for (let bz = -1.2; bz <= 4.4; bz += 1.4) {
-    addBox(exteriorGroup, 0.26, 0.26, 0.65, '#f8fafc', 44.84, 1.05, bz);
+  // Natural Dead-End Thai Soi Compound Fence (+45.2): Waist-high plaster wall + see-through iron pickets + traffic cones + trees behind!
+  addBox(exteriorGroup, 0.3, 1.15, 9.2, '#64748b', 45.2, 0.58, 2.0, 0.85);
+  addBox(exteriorGroup, 0.38, 0.14, 9.4, '#94a3b8', 45.2, 1.2, 2.0, 0.7);
+  // Concrete pillars & transparent steel picket fence allowing trees & skyline to show cleanly through!
+  [-2.0, 0.8, 3.6, 6.2].forEach((pz) => {
+    addBox(exteriorGroup, 0.42, 2.55, 0.42, '#475569', 45.2, 1.28, pz, 0.8);
+    addBox(exteriorGroup, 0.5, 0.14, 0.5, '#cbd5e1', 45.2, 2.6, pz, 0.6);
+  });
+  for (let bz = -1.6; bz <= 5.8; bz += 0.45) {
+    addBox(exteriorGroup, 0.04, 1.22, 0.04, '#1e293b', 45.2, 1.85, bz);
   }
-  const eastEndTree = build25DStreetTree({ scale: 1.02 });
-  eastEndTree.position.set(42.2, 0, -1.75);
-  exteriorGroup.add(eastEndTree);
+  addBox(exteriorGroup, 0.08, 0.08, 8.6, '#1e293b', 45.2, 2.42, 2.0);
+  // Red-white dead-end steel sawhorse barricade & orange cones on pavement
+  addBox(exteriorGroup, 0.12, 0.16, 3.2, '#dc2626', 44.3, 0.78, 0.8);
+  [-0.5, 0.8, 2.1].forEach((cz) => {
+    addBox(exteriorGroup, 0.18, 0.18, 0.48, '#f8fafc', 44.28, 0.78, cz);
+    const cone = new THREE.Mesh(
+      new THREE.ConeGeometry(0.17, 0.54, 10),
+      new THREE.MeshStandardMaterial({ color: '#f97316', roughness: 0.45 })
+    );
+    cone.position.set(43.8, 0.27, cz);
+    exteriorGroup.add(cone);
+  });
+  [42.2, 47.0].forEach((tx, ti) => {
+    const t = build25DStreetTree({ scale: 1.05 + ti * 0.12 });
+    t.position.set(tx, 0, -1.6 + ti * 1.8);
+    exteriorGroup.add(t);
+  });
 
   // A) 3D Outdoor Street Basketball Half-Court (x = +19.5) with Backboard Truss, Net, 3-Pt Arc & Natural Shooting Match!
   addBox(exteriorGroup, 7.6, 0.03, 5.4, '#14532d', 19.5, 0.025, 0.7, 0.85);

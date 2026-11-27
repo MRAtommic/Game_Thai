@@ -896,11 +896,19 @@ export class IsaanWorld {
     this.addBox(this.scene, 1.1, 0.1, 0.85, '#784e2e', 17.5, 1.5, -1.35);
     this.addBox(this.scene, 0.8, 0.55, 0.7, '#4a2e1a', 17.5, 1.82, -1.35);
     this.addThaiGableRoof(this.scene, 17.5, 2.1, -1.35, 0.9, 0.8, 0.45, '#7f1d1d');
+    // Natural Village Subdistrict Checkpoint Boom Barrier & Bamboo Fence at highway ends (-120.5 & +138.5)
     [-120.5, 138.5].forEach((endX) => {
-      this.addBox(this.scene, 0.45, 2.6, 9.6, '#57534e', endX, 1.3, 1.2, 0.9);
-      this.addBox(this.scene, 0.62, 0.24, 9.8, '#78350f', endX, 2.65, 1.2, 0.85);
+      // Whitewashed checkpoint pillars + striped wooden boom gate bar across road + roadside bamboo fence
+      [-1.5, 4.8].forEach((pz) => {
+        this.addBox(this.scene, 0.34, 1.45, 0.34, '#e2e8f0', endX, 0.72, pz, 0.8);
+        this.addBox(this.scene, 0.42, 0.14, 0.42, '#b91c1c', endX, 1.48, pz, 0.7);
+      });
+      this.addBox(this.scene, 0.14, 0.14, 6.2, '#dc2626', endX, 1.02, 1.65);
+      for (let bz = -0.8; bz <= 4.2; bz += 1.2) {
+        this.addBox(this.scene, 0.16, 0.16, 0.5, '#f8fafc', endX, 1.02, bz);
+      }
       const endTree = build25DStreetTree({ scale: 1.18 });
-      endTree.position.set(endX + (endX < 0 ? -1.4 : 1.4), 0, -2.2);
+      endTree.position.set(endX + (endX < 0 ? -1.8 : 1.8), 0, -2.1);
       this.scene.add(endTree);
     });
     const shrineCandle = new THREE.PointLight('#ff9a3c', 3.4, 9, 1.2);
