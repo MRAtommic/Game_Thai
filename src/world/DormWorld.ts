@@ -1763,21 +1763,72 @@ export class DormWorld {
     this.addBox(this.room304SealGroup, 0.24, 0.65, 0.04, '#a62121', 3.5, y + 1.45, -1.13);
     this.scene.add(this.room304SealGroup);
 
-    // Detailed chain & padlock gate blocking Floor 3 stairwell
+    // Realistic heavy-duty stairwell security barrier blocking Floor 3 (กั้นทางขึ้นชั้น 3 แบบสมจริง)
     const fy = FLOOR_HEIGHT * 2;
-    this.addBox(this.floor3GateMesh, 1.75, 0.14, 0.08, '#991b1b', 11.4, fy + 1.25, 0.35);
-    this.addBox(this.floor3GateMesh, 0.1, 1.4, 0.1, '#475569', 10.75, fy + 0.7, 0.35);
-    this.addBox(this.floor3GateMesh, 0.1, 1.4, 0.1, '#475569', 12.1, fy + 0.7, 0.35);
-    // Steel chain links & brass padlock
-    for (let cx = 10.85; cx <= 12.0; cx += 0.22) {
+    // Thick square tube steel posts (เหล็กท่อสี่เหลี่ยมด้านขวา-ซ้าย)
+    [10.65, 12.15].forEach((px) => {
+      this.addBox(this.floor3GateMesh, 0.14, 0.14, 0.14, '#1e293b', px, fy + 1.44, 0.35);    // top cap
+      this.addBox(this.floor3GateMesh, 0.12, 1.5, 0.12, '#334155', px, fy + 0.74, 0.35);     // main post tube
+      this.addBox(this.floor3GateMesh, 0.18, 0.1, 0.18, '#1e293b', px, fy + 0.0, 0.35);      // base foot plate
+    });
+    // 3-tier horizontal steel guard rails (สีแดง + เทาเข้ม แบบของจริง)
+    this.addBox(this.floor3GateMesh, 1.52, 0.09, 0.09, '#dc2626', 11.4, fy + 1.32, 0.35);   // top red rail
+    this.addBox(this.floor3GateMesh, 1.52, 0.09, 0.09, '#dc2626', 11.4, fy + 0.72, 0.35);   // mid red rail
+    this.addBox(this.floor3GateMesh, 1.52, 0.07, 0.07, '#374151', 11.4, fy + 0.36, 0.35);   // low grey kickrail
+    // Welded vertical infill bars between rails (เหล็กแนวตั้ง 4 เส้น)
+    [10.88, 11.14, 11.65, 11.91].forEach((bx) => {
+      this.addBox(this.floor3GateMesh, 0.055, 0.98, 0.055, '#4b5563', bx, fy + 0.72, 0.35);
+    });
+    // Warning reflective stripes on top rail (แถบสะท้อนแสง เหลือง-ดำ)
+    [10.76, 10.96, 11.16, 11.36, 11.56, 11.76, 11.96].forEach((rx, ri) => {
+      this.addBox(this.floor3GateMesh, 0.09, 0.07, 0.11, ri % 2 === 0 ? '#facc15' : '#1e293b', rx, fy + 1.32, 0.35);
+    });
+    // Stainless heavy padlock body + shackle + chain loop on mid rail
+    const lockBody = new THREE.Mesh(
+      new THREE.BoxGeometry(0.17, 0.2, 0.09),
+      new THREE.MeshStandardMaterial({ color: '#d4af37', metalness: 0.82, roughness: 0.18 })
+    );
+    lockBody.position.set(11.4, fy + 0.72, 0.42);
+    this.floor3GateMesh.add(lockBody);
+    const shackle = new THREE.Mesh(
+      new THREE.TorusGeometry(0.065, 0.018, 8, 14, Math.PI),
+      new THREE.MeshStandardMaterial({ color: '#b8c8d8', metalness: 0.9, roughness: 0.12 })
+    );
+    shackle.rotation.z = Math.PI;
+    shackle.position.set(11.4, fy + 0.94, 0.42);
+    this.floor3GateMesh.add(shackle);
+    // Heavy steel chain drooping from post to lock (ห่วงโซ่)
+    for (let cx = 10.75; cx <= 11.32; cx += 0.16) {
       const link = new THREE.Mesh(
-        new THREE.TorusGeometry(0.06, 0.02, 6, 10),
-        new THREE.MeshStandardMaterial({ color: '#94a3b8', metalness: 0.75, roughness: 0.3 })
+        new THREE.TorusGeometry(0.055, 0.016, 6, 10),
+        new THREE.MeshStandardMaterial({ color: '#94a3b8', metalness: 0.78, roughness: 0.28 })
       );
-      link.position.set(cx, fy + 0.92, 0.4);
+      link.position.set(cx, fy + 0.72 - Math.sin((cx - 10.75) / 0.57 * Math.PI) * 0.08, 0.41);
+      link.rotation.y = cx % 0.32 < 0.16 ? Math.PI / 2 : 0;
       this.floor3GateMesh.add(link);
     }
-    this.addBox(this.floor3GateMesh, 0.18, 0.22, 0.08, '#d4af37', 11.4, fy + 0.85, 0.44, 0.35);
+    // Warning sign: ห้ามขึ้นชั้น 3 / ไม่ปลอดภัย (ป้ายไม่ให้ขึ้น แบบสมจริง)
+    const warnCanvas = document.createElement('canvas');
+    warnCanvas.width = 192; warnCanvas.height = 88;
+    const warnCtx = warnCanvas.getContext('2d')!;
+    warnCtx.fillStyle = '#dc2626'; warnCtx.fillRect(0, 0, 192, 88);
+    warnCtx.fillStyle = '#facc15'; warnCtx.fillRect(4, 4, 184, 80);
+    warnCtx.fillStyle = '#1e293b';
+    warnCtx.font = 'bold 16px "IBM Plex Sans Thai", sans-serif';
+    warnCtx.textAlign = 'center';
+    warnCtx.fillText('⚠ ห้ามขึ้นชั้น 3', 96, 34);
+    warnCtx.font = '12px "IBM Plex Sans Thai", sans-serif';
+    warnCtx.fillText('โครงสร้างเสียหาย • อันตราย', 96, 60);
+    warnCtx.font = '10px sans-serif';
+    warnCtx.fillText('DANGER — DO NOT ENTER', 96, 76);
+    const warnTex = new THREE.CanvasTexture(warnCanvas);
+    warnTex.colorSpace = THREE.SRGBColorSpace;
+    const warnSign = new THREE.Mesh(
+      new THREE.PlaneGeometry(0.88, 0.4),
+      new THREE.MeshStandardMaterial({ map: warnTex, roughness: 0.45 })
+    );
+    warnSign.position.set(11.4, fy + 1.1, 0.41);
+    this.floor3GateMesh.add(warnSign);
     this.scene.add(this.floor3GateMesh);
 
     this.addCorridorLight(3, -8.0, '#b5d6ff', '160, 200, 255', 0.5, 11.2);

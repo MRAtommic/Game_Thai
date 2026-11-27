@@ -269,21 +269,32 @@ export class SchoolWorld {
     campusYard.receiveShadow = true;
     this.exteriorGroup.add(campusYard);
 
-    // Clean Green Campus Hedge & Brick Perimeter Wall behind East Grounds & Courtyard
-    this.addBox(this.exteriorGroup, 92, 1.55, 0.45, '#14532d', 82, 0.77, -3.6, 0.9);
-    this.addBox(this.exteriorGroup, 92, 0.4, 0.65, '#f8fafc', 82, 0.2, -3.6, 0.8);
-    // Low cream brick campus wall & wrought-iron fence running cleanly AFTER Guard Booth (-43 .. -14)
-    this.addBox(this.exteriorGroup, 30, 1.25, 0.35, '#e2e8f0', -28.5, 0.62, -2.55, 0.85);
-    this.addBox(this.exteriorGroup, 30, 0.22, 0.42, '#7f1d1d', -28.5, 1.32, -2.55, 0.75);
+    // Continuous East Campus Brick & Hedge Perimeter Wall running flush from Main Building East wall (+36) to East boundary (+127)
+    this.addBox(this.exteriorGroup, 91.4, 0.4, 0.65, '#f8fafc', 81.5, 0.2, -3.6, 0.8);
+    this.addBox(this.exteriorGroup, 91.4, 1.55, 0.45, '#14532d', 81.5, 0.77, -3.6, 0.9);
+    this.addBox(this.exteriorGroup, 91.4, 0.16, 0.55, '#7f1d1d', 81.5, 1.62, -3.6, 0.75);
+    for (let ep = 36.2; ep <= 127.0; ep += 7.56) {
+      this.addBox(this.exteriorGroup, 0.36, 1.95, 0.68, '#f1f5f9', ep, 0.98, -3.6, 0.8);
+      this.addBox(this.exteriorGroup, 0.44, 0.14, 0.74, '#b91c1c', ep, 1.98, -3.6, 0.7);
+    }
+    // Continuous West Campus Brick & Iron Wall joining Gate (-52) -> Guard Booth (-46.9..-44.1) -> Main Building (-12.0) seamlessly!
+    this.addBox(this.exteriorGroup, 5.4, 1.25, 0.35, '#e2e8f0', -49.4, 0.62, -2.25, 0.85);
+    this.addBox(this.exteriorGroup, 5.4, 0.22, 0.42, '#7f1d1d', -49.4, 1.32, -2.25, 0.75);
+    this.addBox(this.exteriorGroup, 5.4, 0.08, 0.08, '#1e293b', -49.4, 2.15, -2.25, 0.5);
+    for (let gb = -51.6; gb <= -47.0; gb += 0.45) {
+      this.addBox(this.exteriorGroup, 0.05, 0.85, 0.05, '#1e293b', gb, 1.72, -2.25, 0.5);
+    }
+    this.addBox(this.exteriorGroup, 32.3, 1.25, 0.35, '#e2e8f0', -28.05, 0.62, -2.55, 0.85);
+    this.addBox(this.exteriorGroup, 32.3, 0.22, 0.42, '#7f1d1d', -28.05, 1.32, -2.55, 0.75);
 
     // Natural Low Brick-Stucco Campus Fence & See-Through Wrought-Iron Bars + Traffic Cones at ends (-127 & +127)
     [-127.0, 127.0].forEach((endX) => {
-      this.addBox(this.exteriorGroup, 0.3, 1.05, 9.8, '#e2e8f0', endX, 0.52, 1.2, 0.85);
-      this.addBox(this.exteriorGroup, 0.38, 0.16, 10.0, '#7f1d1d', endX, 1.1, 1.2, 0.7);
-      for (let pz = -2.8; pz <= 5.2; pz += 0.55) {
+      this.addBox(this.exteriorGroup, 0.3, 1.05, 10.6, '#e2e8f0', endX, 0.52, 0.8, 0.85);
+      this.addBox(this.exteriorGroup, 0.38, 0.16, 10.8, '#7f1d1d', endX, 1.1, 0.8, 0.7);
+      for (let pz = -3.6; pz <= 5.2; pz += 0.55) {
         this.addBox(this.exteriorGroup, 0.05, 1.1, 0.05, '#1e293b', endX, 1.72, pz);
       }
-      this.addBox(this.exteriorGroup, 0.08, 0.08, 9.8, '#1e293b', endX, 2.26, 1.2);
+      this.addBox(this.exteriorGroup, 0.08, 0.08, 10.6, '#1e293b', endX, 2.26, 0.8);
       [0.2, 1.6, 3.0].forEach((cz) => {
         const cone = new THREE.Mesh(
           new THREE.ConeGeometry(0.17, 0.54, 10),
@@ -444,15 +455,13 @@ export class SchoolWorld {
       }
     });
 
-    // Fence pillars + iron fence starting AFTER Guard Booth (-43 .. -14) so nothing sticks behind Gate/Booth
-    for (let fx = -42.5; fx <= -14; fx += 6.5) {
+    // Continuous fence pillars + wrought-iron bars spanning Guard Booth (-44.0) flush into Main Building (-12.0)
+    for (let fx = -44.0; fx < -12.1; fx += 6.4) {
       this.addBox(this.exteriorGroup, 0.36, 2.25, 0.36, '#f8fafc', fx, 1.12, -2.55);
-      if (fx + 6.5 <= -13) {
-        const spanW = Math.min(6.5, -13 - fx);
-        this.addBox(this.exteriorGroup, spanW, 0.08, 0.08, '#1e293b', fx + spanW / 2, 2.15, -2.55, 0.5);
-        for (let bar = 0.5; bar < spanW; bar += 0.45) {
-          this.addBox(this.exteriorGroup, 0.05, 0.85, 0.05, '#1e293b', fx + bar, 1.72, -2.55, 0.5);
-        }
+      const spanW = Math.min(6.4, -12.0 - fx);
+      this.addBox(this.exteriorGroup, spanW, 0.08, 0.08, '#1e293b', fx + spanW / 2, 2.15, -2.55, 0.5);
+      for (let bar = 0.45; bar < spanW - 0.15; bar += 0.45) {
+        this.addBox(this.exteriorGroup, 0.05, 0.85, 0.05, '#1e293b', fx + bar, 1.72, -2.55, 0.5);
       }
     }
     // See-through Wrought-Iron Sliding Gate at x = -52 (replaces solid red blocking wall at night!)

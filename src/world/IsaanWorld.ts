@@ -59,6 +59,113 @@ function paintSignTex(bg: string, border: string, textCol: string, line1: string
   return tex;
 }
 
+function paintDeceasedPortraitTex(
+  name: string,
+  years: string,
+  gender: 'male' | 'female' | 'elder',
+  isTargetSpirit = false
+): THREE.CanvasTexture {
+  const c = document.createElement('canvas');
+  c.width = 160;
+  c.height = 210;
+  const ctx = c.getContext('2d')!;
+  // Ornate dark walnut & gold Thai memorial photo frame
+  ctx.fillStyle = '#1c120c';
+  ctx.fillRect(0, 0, 160, 210);
+  ctx.strokeStyle = isTargetSpirit ? '#a3e635' : '#eab308';
+  ctx.lineWidth = 4;
+  ctx.strokeRect(5, 5, 150, 200);
+  ctx.strokeStyle = '#ca8a04';
+  ctx.lineWidth = 1.5;
+  ctx.strokeRect(11, 11, 138, 188);
+
+  // Inner archival cream-grey photo mat & oval sepia/B&W portrait background
+  ctx.fillStyle = '#e7e5e4';
+  ctx.fillRect(16, 16, 128, 136);
+  const ovalCx = 80;
+  const ovalCy = 84;
+  ctx.save();
+  ctx.beginPath();
+  ctx.ellipse(ovalCx, ovalCy, 48, 58, 0, 0, Math.PI * 2);
+  ctx.clip();
+  const bgGrad = ctx.createRadialGradient(ovalCx, ovalCy - 12, 8, ovalCx, ovalCy, 66);
+  bgGrad.addColorStop(0, isTargetSpirit ? '#cbd5c0' : '#d6d3cd');
+  bgGrad.addColorStop(1, '#3f3f46');
+  ctx.fillStyle = bgGrad;
+  ctx.fillRect(28, 22, 104, 124);
+
+  // Formal portrait shoulders & Thai collar / sabai
+  ctx.fillStyle = gender === 'female' ? '#44403c' : '#27272a';
+  ctx.beginPath();
+  ctx.ellipse(ovalCx, 134, 44, 30, 0, Math.PI, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#e5e7eb';
+  ctx.beginPath();
+  ctx.moveTo(69, 108);
+  ctx.lineTo(80, 124);
+  ctx.lineTo(91, 108);
+  ctx.closePath();
+  ctx.fill();
+
+  // Neck & vintage monochrome head portrait
+  ctx.fillStyle = '#9ca3af';
+  ctx.fillRect(72, 95, 16, 16);
+  ctx.fillStyle = '#a1a1aa';
+  ctx.beginPath();
+  ctx.ellipse(ovalCx, 76, 20, 25, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Hair / elder bun / combed parting
+  ctx.fillStyle = gender === 'elder' ? '#d4d4d8' : '#18181b';
+  ctx.beginPath();
+  ctx.ellipse(ovalCx, 58, 22, 13, 0, Math.PI, Math.PI * 2);
+  ctx.fill();
+  if (gender === 'female') {
+    ctx.beginPath();
+    ctx.arc(ovalCx, 46, 9, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Facial features (brows, calm eyes, nose shadow, composed lips)
+  ctx.fillStyle = '#27272a';
+  ctx.fillRect(68, 69, 8, 2);
+  ctx.fillRect(84, 69, 8, 2);
+  ctx.beginPath();
+  ctx.arc(72, 75, 2.2, 0, Math.PI * 2);
+  ctx.arc(88, 75, 2.2, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = 'rgba(24,24,27,0.35)';
+  ctx.fillRect(79, 77, 2.5, 8);
+  ctx.fillStyle = '#52525b';
+  ctx.fillRect(75, 89, 10, 2);
+  ctx.restore();
+
+  // Glass bevel around oval portrait
+  ctx.strokeStyle = isTargetSpirit ? '#bef264' : '#b45309';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.ellipse(ovalCx, ovalCy, 48, 58, 0, 0, Math.PI * 2);
+  ctx.stroke();
+
+  // Name & lifespan plaque at bottom of frame
+  ctx.fillStyle = '#09090b';
+  ctx.fillRect(16, 156, 128, 38);
+  ctx.strokeStyle = '#ca8a04';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(16, 156, 128, 38);
+  ctx.fillStyle = '#fef08a';
+  ctx.font = 'bold 13px "IBM Plex Sans Thai", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(name, 80, 173, 120);
+  ctx.fillStyle = '#d4d4d8';
+  ctx.font = '10px "IBM Plex Sans Thai", sans-serif';
+  ctx.fillText(years, 80, 188, 120);
+
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  return tex;
+}
+
 function paintTempleWallMuralTex(): THREE.CanvasTexture {
   const c = document.createElement('canvas');
   c.width = 512;
@@ -1183,12 +1290,12 @@ export class IsaanWorld {
     this.addBox(this.scene, 5.1, 0.26, 2.75, '#4f311c', -52.5, 0.13, -1.95, 0.88); // wooden veranda deck
     this.addBox(this.scene, 1.35, 0.14, 0.42, '#6b4226', -53.35, 0.08, -0.45, 0.85); // wooden front step
     this.addBox(this.scene, 4.75, 2.9, 1.75, '#422a1b', -52.5, 1.7, -2.55, 0.88); // warm aged teak cabin
-    // Horizontal teak clapboard siding ribs & vertical corner frame beams for rich architectural depth
+    // Recessed horizontal teak clapboard planks (strictly BEHIND door & window plane!) & vertical frame beams
     [0.65, 1.05, 1.45, 1.85, 2.25, 2.65].forEach((py) => {
-      this.addBox(this.scene, 4.82, 0.07, 0.06, '#5c3a22', -52.5, py, -1.66, 0.82);
+      this.addBox(this.scene, 4.78, 0.05, 0.02, '#5c3a22', -52.5, py, -1.665, 0.82);
     });
     [-54.82, -52.5, -50.18].forEach((px) => {
-      this.addBox(this.scene, 0.16, 2.9, 0.16, '#2b190e', px, 1.7, -1.66, 0.85);
+      this.addBox(this.scene, 0.16, 2.9, 0.14, '#2b190e', px, 1.7, -1.65, 0.85);
       if (px !== -52.5) this.addBox(this.scene, 0.14, 2.55, 0.14, '#3b2416', px, 1.4, -0.82, 0.85); // front porch pillars
     });
     // Sloped porch tin awning + symmetrical Thai Gable Roof above!
@@ -1197,17 +1304,24 @@ export class IsaanWorld {
     yaiPorchRoof.rotation.x = 0.22;
     this.scene.add(yaiPorchRoof);
     this.addThaiGableRoof(this.scene, -52.5, 3.18, -2.55, 5.2, 2.35, 1.45, '#592c1b', '#78350f', '#2b180d');
-    // Detailed weathered wooden door + warm amber glowing louvered shutter window + bamboo porch bench + hanging lantern!
+    // Detailed weathered wooden door + framed 2.5D wooden shuttered window cleanly IN FRONT of siding ribs!
+    this.addBox(this.scene, 1.24, 2.14, 0.04, '#2b190e', -53.35, 1.29, -1.64);
     const yaiDoor = new THREE.Mesh(
       new THREE.PlaneGeometry(1.12, 2.05),
       new THREE.MeshStandardMaterial({ map: createThaiDoorTexture('เรือนยายสาย', true), roughness: 0.78 })
     );
-    yaiDoor.position.set(-53.35, 1.28, -1.65);
+    yaiDoor.position.set(-53.35, 1.28, -1.615);
+    this.addBox(this.scene, 1.5, 1.2, 0.04, '#2b190e', -51.45, 1.72, -1.64);
+    this.addBox(this.scene, 1.62, 0.08, 0.12, '#4f311c', -51.45, 1.14, -1.6);
     const yaiWin = new THREE.Mesh(
       new THREE.PlaneGeometry(1.38, 1.08),
       new THREE.MeshStandardMaterial({ map: createThaiWindowTexture(true), emissive: '#522c08', emissiveIntensity: 0.65 })
     );
-    yaiWin.position.set(-51.45, 1.72, -1.65);
+    yaiWin.position.set(-51.45, 1.72, -1.612);
+    [-1, 1].forEach((side) => {
+      const shutter = this.addBox(this.scene, 0.28, 1.08, 0.04, '#59351c', -51.45 + side * 0.78, 1.72, -1.58);
+      shutter.rotation.y = side * -0.4;
+    });
     this.scene.add(yaiDoor, yaiWin);
     this.addBox(this.scene, 1.2, 0.08, 0.42, '#854d0e', -51.4, 0.62, -1.12, 0.8); // porch bamboo bench
     const yaiBulb = new THREE.Mesh(new THREE.SphereGeometry(0.1, 8, 8), new THREE.MeshBasicMaterial({ color: '#fde68a' }));
@@ -1469,13 +1583,13 @@ export class IsaanWorld {
     gateLight.position.set(26.5, 4.1, 1.85);
     this.scene.add(gateLight);
 
-    // Authentic Thai Temple Boundary Wall (กำแพงแก้ววัดไทย: ฐานบัว + เสาหัวเม็ดทรงมัณฑ์ + สันหลังคาแดงทอง + ช่องซุ้มลายไทย!)
-    // Rear perimeter temple wall (z = -3.95)
-    this.addBox(this.scene, 35.0, 0.32, 0.42, '#d6d3d1', 44.0, 0.16, -3.95); // stucco base plinth
-    this.addBox(this.scene, 35.0, 1.55, 0.28, '#f5f0e6', 44.0, 1.05, -3.95); // whitewashed wall
-    this.addBox(this.scene, 35.0, 0.24, 0.42, '#7f1d1d', 44.0, 1.92, -3.95); // red tile wall coping
-    this.addBox(this.scene, 35.0, 0.1, 0.32, '#eab308', 44.0, 2.08, -3.95); // gold ridge trim
-    for (let wx = 29.0; wx <= 60.0; wx += 3.5) {
+    // Continuous Thai Temple Boundary Wall (กำแพงแก้ววัดไทย: เชื่อมต่อเนื่องรอบเขตวัด ไม่มีช่องขาด!)
+    // Rear perimeter temple wall (z = -3.95, x = 26.5 .. 61.5)
+    this.addBox(this.scene, 35.4, 0.32, 0.42, '#d6d3d1', 44.0, 0.16, -3.95); // stucco base plinth
+    this.addBox(this.scene, 35.4, 1.55, 0.28, '#f5f0e6', 44.0, 1.05, -3.95); // whitewashed wall
+    this.addBox(this.scene, 35.4, 0.24, 0.42, '#7f1d1d', 44.0, 1.92, -3.95); // red tile wall coping
+    this.addBox(this.scene, 35.4, 0.1, 0.32, '#eab308', 44.0, 2.08, -3.95); // gold ridge trim
+    for (let wx = 26.5; wx <= 61.5; wx += 3.5) {
       // Rear tall lotus-capped pilasters + recessed arched mural panels
       this.addBox(this.scene, 0.42, 2.2, 0.44, '#e7e5e4', wx, 1.1, -3.95);
       const lotusRear = new THREE.Mesh(
@@ -1484,15 +1598,30 @@ export class IsaanWorld {
       );
       lotusRear.position.set(wx, 2.42, -3.95);
       this.scene.add(lotusRear);
-      if (wx + 1.75 < 60.5) {
+      if (wx + 1.75 < 61.0) {
         this.addBox(this.scene, 2.4, 0.95, 0.06, '#991b1b', wx + 1.75, 1.12, -3.79); // recessed red/gold border panel
       }
     }
-    // Front Kamphaeng Kaew Low Balustrade Wall (กำแพงแก้วด้านหน้า z = 2.25 — เคลียร์ถนนรถวิ่งด้านหน้า!)
-    this.addBox(this.scene, 34.4, 0.24, 0.32, '#d6d3d1', 44.0, 0.12, 2.25);
-    this.addBox(this.scene, 34.4, 0.26, 0.24, '#f5f0e6', 44.0, 0.36, 2.25);
-    this.addBox(this.scene, 34.4, 0.14, 0.3, '#991b1b', 44.0, 0.56, 2.25);
-    [29.5, 33.0, 36.5, 40.0, 43.5, 47.0, 50.5, 54.0, 57.5].forEach((wx) => {
+    // West Return Wing Walls connecting Rear Wall (-3.95) & Front Wall (2.25) flush into Archway Pillars (x = 26.5, z = -2.2 & +2.65)
+    this.addBox(this.scene, 0.36, 0.32, 2.0, '#d6d3d1', 26.5, 0.16, -3.1);
+    this.addBox(this.scene, 0.28, 1.55, 2.0, '#f5f0e6', 26.5, 1.05, -3.1);
+    this.addBox(this.scene, 0.42, 0.24, 2.05, '#7f1d1d', 26.5, 1.92, -3.1);
+    this.addBox(this.scene, 0.32, 0.1, 2.0, '#eab308', 26.5, 2.08, -3.1);
+    this.addBox(this.scene, 0.32, 0.24, 0.8, '#d6d3d1', 26.5, 0.12, 2.45);
+    this.addBox(this.scene, 0.24, 0.26, 0.8, '#f5f0e6', 26.5, 0.36, 2.45);
+    this.addBox(this.scene, 0.3, 0.14, 0.82, '#991b1b', 26.5, 0.56, 2.45);
+
+    // East Side Return Boundary Wall connecting Rear Wall (-3.95) smoothly into Front Balustrade (2.25) at x = 61.5
+    this.addBox(this.scene, 0.36, 0.32, 6.45, '#d6d3d1', 61.5, 0.16, -0.85);
+    this.addBox(this.scene, 0.28, 1.55, 6.45, '#f5f0e6', 61.5, 1.05, -0.85);
+    this.addBox(this.scene, 0.42, 0.24, 6.5, '#7f1d1d', 61.5, 1.92, -0.85);
+    this.addBox(this.scene, 0.32, 0.1, 6.45, '#eab308', 61.5, 2.08, -0.85);
+
+    // Front Kamphaeng Kaew Low Balustrade Wall running flush between Gate Pillar (26.5) and East Pier (61.5)
+    this.addBox(this.scene, 35.0, 0.24, 0.32, '#d6d3d1', 44.0, 0.12, 2.25);
+    this.addBox(this.scene, 35.0, 0.26, 0.24, '#f5f0e6', 44.0, 0.36, 2.25);
+    this.addBox(this.scene, 35.0, 0.14, 0.3, '#991b1b', 44.0, 0.56, 2.25);
+    [26.5, 29.8, 33.3, 36.8, 40.3, 43.8, 47.3, 50.8, 54.3, 57.8, 61.5].forEach((wx) => {
       this.addBox(this.scene, 0.36, 0.88, 0.36, '#f5f0e6', wx, 0.44, 2.25);
       this.addBox(this.scene, 0.42, 0.12, 0.42, '#eab308', wx, 0.9, 2.25);
       const lotusFront = new THREE.Mesh(
@@ -1582,23 +1711,136 @@ export class IsaanWorld {
     bell.position.set(47.8, 3.85, -2.55);
     this.scene.add(bell);
 
-    // 3) Senior Monk's Wooden Kuti (กุฏิหลวงพี่ at x = +54.5, cleanly back at z = -2.35!)
+    // 3) Senior Monk's Wooden Kuti (กุฏิหลวงพี่ at x = +54.5, detailed 2.5D wooden windows, clapboard walls & veranda)
     this.addBox(this.scene, 6.2, 0.45, 2.5, '#3f2c1d', 54.5, 0.88, -2.35);
     this.addBox(this.scene, 5.4, 2.5, 2.2, '#573a24', 54.5, 2.35, -2.45);
-    [-2.4, 0, 2.4].forEach((kx) => this.addBox(this.scene, 0.24, 0.9, 0.24, '#332215', 54.5 + kx, 0.45, -1.25));
-    // Symmetrical Kuti Gable Roof + Side Entry Steps (player never clips platform!)
-    this.addThaiGableRoof(this.scene, 54.5, 3.6, -2.45, 5.8, 2.6, 1.45, '#452214', '#78350f', '#382012');
-    for (let ks = 0; ks < 4; ks++) {
-      this.addBox(this.scene, 0.95, 0.22, 0.24, '#593722', 54.5, 0.11 + ks * 0.22, -0.45 - ks * 0.22);
+    // Horizontal teak clapboard planks (recessed behind door/windows at z = -1.345 so ribs never cross openings)
+    for (let py = 1.28; py <= 3.45; py += 0.28) {
+      this.addBox(this.scene, 5.32, 0.045, 0.02, '#3d2412', 54.5, py, -1.345);
     }
+    // Vertical timber pilasters dividing the front wall cleanly into 3 bays
+    [51.85, 53.55, 55.45, 57.15].forEach((px) => {
+      this.addBox(this.scene, 0.14, 2.52, 0.08, '#382012', px, 2.35, -1.32);
+    });
+    // Support stilts (เสาเรือนกุฏิใต้ถุน) + perimeter foundation shoes
+    [-2.4, -0.95, 0.95, 2.4].forEach((kx) => {
+      this.addBox(this.scene, 0.24, 0.9, 0.24, '#332215', 54.5 + kx, 0.45, -1.25);
+      this.addBox(this.scene, 0.32, 0.14, 0.32, '#78716c', 54.5 + kx, 0.07, -1.25);
+    });
+    // Symmetrical Kuti Gable Roof + protruding front porch eave awning & carved fascia
+    this.addThaiGableRoof(this.scene, 54.5, 3.6, -2.45, 5.9, 2.65, 1.48, '#452214', '#78350f', '#382012');
+    const porchEave = new THREE.Mesh(
+      new THREE.BoxGeometry(6.0, 0.07, 0.92),
+      new THREE.MeshStandardMaterial({ color: '#452214', roughness: 0.88 })
+    );
+    porchEave.position.set(54.5, 3.36, -0.95);
+    porchEave.rotation.x = 0.22;
+    this.scene.add(porchEave);
+    this.addBox(this.scene, 6.06, 0.08, 0.05, '#78350f', 54.5, 3.25, -0.51);
+    // Front entry stairs + side wooden handrails
+    for (let ks = 0; ks < 4; ks++) {
+      this.addBox(this.scene, 1.05, 0.22, 0.24, '#593722', 54.5, 0.11 + ks * 0.22, -0.45 - ks * 0.22);
+    }
+    [53.95, 55.05].forEach((hx) => {
+      this.addBox(this.scene, 0.07, 0.72, 0.07, '#382012', hx, 0.36, -0.44);
+      this.addBox(this.scene, 0.07, 0.78, 0.07, '#382012', hx, 1.44, -1.14);
+      const stairRail = new THREE.Mesh(
+        new THREE.BoxGeometry(0.06, 0.06, 1.32),
+        new THREE.MeshStandardMaterial({ color: '#6b4426', roughness: 0.85 })
+      );
+      stairRail.position.set(hx, 1.18, -0.79);
+      stairRail.rotation.x = 0.72;
+      this.scene.add(stairRail);
+    });
+    // Front veranda wooden balustrade railing (ระเบียงไม้ฉลุซ้าย-ขวา)
+    [
+      [51.55, 53.95],
+      [55.05, 57.45]
+    ].forEach(([rx1, rx2]) => {
+      const rw = rx2 - rx1;
+      const rcx = (rx1 + rx2) * 0.5;
+      this.addBox(this.scene, rw, 0.07, 0.09, '#4f311c', rcx, 1.66, -1.14);
+      this.addBox(this.scene, rw, 0.06, 0.08, '#382012', rcx, 1.18, -1.14);
+      for (let bx = rx1 + 0.18; bx <= rx2 - 0.18; bx += 0.34) {
+        this.addBox(this.scene, 0.055, 0.44, 0.055, '#6b4426', bx, 1.42, -1.14);
+      }
+    });
+    [51.55, 57.45].forEach((nx) => {
+      this.addBox(this.scene, 0.11, 0.75, 0.11, '#382012', nx, 1.46, -1.14);
+      this.addBox(this.scene, 0.14, 0.08, 0.14, '#b45309', nx, 1.86, -1.14);
+    });
+    // Recessed Door Frame + 'กุฏิ' Door
+    this.addBox(this.scene, 1.48, 2.3, 0.06, '#331c0d', 54.5, 2.22, -1.325);
     const kDoor = new THREE.Mesh(
-      new THREE.PlaneGeometry(1.35, 2.2),
+      new THREE.PlaneGeometry(1.32, 2.18),
       new THREE.MeshStandardMaterial({ map: createThaiDoorTexture('กุฏิ') })
     );
-    kDoor.position.set(54.5, 2.2, -1.32);
+    kDoor.position.set(54.5, 2.2, -1.292);
     this.scene.add(kDoor);
-    const kutiLight = new THREE.PointLight('#ffbe6b', 5.2, 12, 1.1);
-    kutiLight.position.set(54.5, 2.9, 0.3);
+    // Twin 2.5D Thai Wooden Shuttered Windows (หน้าต่างไม้สักบานเปิดคู่ซ้าย-ขวา)
+    const kutiWinTex = createThaiWindowTexture(true);
+    [52.7, 56.3].forEach((wx) => {
+      // Frame, protruding wooden sill & rain-hood lintel
+      this.addBox(this.scene, 1.06, 1.04, 0.06, '#331c0d', wx, 2.35, -1.32);
+      this.addBox(this.scene, 1.18, 0.08, 0.15, '#4a2810', wx, 1.81, -1.27);
+      this.addBox(this.scene, 1.2, 0.09, 0.16, '#382012', wx, 2.9, -1.26);
+      const winPane = new THREE.Mesh(
+        new THREE.PlaneGeometry(0.92, 0.9),
+        new THREE.MeshStandardMaterial({ map: kutiWinTex, emissive: '#3b2408', emissiveIntensity: 0.65 })
+      );
+      winPane.position.set(wx, 2.35, -1.288);
+      this.scene.add(winPane);
+      // Hinged 3D wooden shutter panels swung slightly open on both sides
+      [-1, 1].forEach((side) => {
+        const shutterGroup = new THREE.Group();
+        shutterGroup.position.set(wx + side * 0.52, 2.35, -1.28);
+        shutterGroup.rotation.y = side * -0.45;
+        const leaf = new THREE.Mesh(
+          new THREE.BoxGeometry(0.32, 0.9, 0.04),
+          new THREE.MeshStandardMaterial({ color: '#59351c', roughness: 0.85 })
+        );
+        leaf.position.x = side * 0.15;
+        shutterGroup.add(leaf);
+        const panelTrim = new THREE.Mesh(
+          new THREE.BoxGeometry(0.22, 0.72, 0.055),
+          new THREE.MeshStandardMaterial({ color: '#6e4427', roughness: 0.82 })
+        );
+        panelTrim.position.x = side * 0.15;
+        shutterGroup.add(panelTrim);
+        const latch = new THREE.Mesh(
+          new THREE.BoxGeometry(0.04, 0.07, 0.07),
+          new THREE.MeshStandardMaterial({ color: '#eab308', metalness: 0.65, roughness: 0.3 })
+        );
+        latch.position.set(side * 0.25, -0.08, 0.01);
+        shutterGroup.add(latch);
+        this.scene.add(shutterGroup);
+      });
+    });
+    // Hanging warm brass/glass porch lantern over door + Under-kuti living props
+    this.addBox(this.scene, 0.04, 0.28, 0.04, '#1e293b', 54.5, 3.16, -0.78);
+    const porchBulb = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.08, 0.1, 0.16, 8),
+      new THREE.MeshStandardMaterial({ color: '#fde68a', emissive: '#fbbf24', emissiveIntensity: 1.8 })
+    );
+    porchBulb.position.set(54.5, 2.98, -0.78);
+    this.scene.add(porchBulb);
+    // Under-stilt wooden meditation bench, woven mat & ceramic tea kettle
+    this.addBox(this.scene, 1.5, 0.12, 0.9, '#6b4426', 52.85, 0.34, -1.85);
+    [-0.62, 0.62].forEach((bx) => this.addBox(this.scene, 0.1, 0.32, 0.75, '#452214', 52.85 + bx, 0.16, -1.85));
+    this.addBox(this.scene, 1.25, 0.03, 0.75, '#b45309', 52.85, 0.41, -1.85);
+    this.addBox(this.scene, 0.18, 0.16, 0.18, '#e2e8f0', 53.25, 0.49, -1.78);
+    // Glazed clay water jar beside right stair post + palm broom & monk sandals
+    const waterJar = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.18, 0.15, 0.46, 12),
+      new THREE.MeshStandardMaterial({ color: '#7c2d12', roughness: 0.6 })
+    );
+    waterJar.position.set(55.65, 0.23, -1.45);
+    this.scene.add(waterJar);
+    this.addBox(this.scene, 0.34, 0.04, 0.34, '#382012', 55.65, 0.47, -1.45);
+    this.addBox(this.scene, 0.1, 0.03, 0.2, '#d97706', 53.68, 0.015, -0.52);
+    this.addBox(this.scene, 0.1, 0.03, 0.2, '#d97706', 53.84, 0.015, -0.5);
+    const kutiLight = new THREE.PointLight('#ffbe6b', 6.2, 16, 1.0);
+    kutiLight.position.set(54.5, 3.0, 1.55);
     this.scene.add(kutiLight);
 
     // Cemetery Archway Exit Gate past Clinic (+103.5) & Bone Urn #4 at +120.5!
@@ -1608,35 +1850,126 @@ export class IsaanWorld {
     this.addBox(this.scene, 0.68, 0.5, 5.4, '#475569', 103.5, 3.85, 0.22);
 
     // 4) Thai Bone-Urn Cemetery (สุสานไทย & โกศบรรจุอัฐิ at +107 .. +125, Urn #4 at +120.5!)
+    // Grounded Twin Steel Signposts + Concrete Footings + Framed Backing Board for 'เขตป่าช้า โกศอัฐิ' (NEVER floating!)
+    [104.72, 106.88].forEach((px) => {
+      this.addBox(this.scene, 0.24, 0.2, 0.24, '#94a3b8', px, 0.1, -1.24);
+      this.addBox(this.scene, 0.1, 2.52, 0.1, '#334155', px, 1.26, -1.24);
+      this.addBox(this.scene, 0.14, 0.08, 0.14, '#64748b', px, 2.54, -1.24);
+    });
+    this.addBox(this.scene, 2.48, 0.83, 0.06, '#334155', 105.8, 2.08, -1.24);
     const cSign = new THREE.Mesh(
       new THREE.PlaneGeometry(2.4, 0.75),
       new THREE.MeshStandardMaterial({ map: paintSignTex('#1e293b', '#94a3b8', '#f1f5f9', 'เขตป่าช้า โกศอัฐิ') })
     );
-    cSign.position.set(105.8, 2.1, -1.2);
+    cSign.position.set(105.8, 2.08, -1.205);
     this.scene.add(cSign);
 
+    const urnProfiles: Array<{ name: string; years: string; gender: 'male' | 'female' | 'elder' }> = [
+      { name: 'นายทองสุข ศรีวิไล', years: 'พ.ศ. 2475 – 2542', gender: 'elder' },
+      { name: 'นางคำปัน บุญมา', years: 'พ.ศ. 2480 – 2548', gender: 'female' },
+      { name: 'นายบุญมี แก้วกล้า', years: 'พ.ศ. 2484 – 2551', gender: 'male' },
+      { name: 'นายสมชาย ใจดี', years: 'พ.ศ. 2485 – 2549', gender: 'male' },
+      { name: 'ยายบัวผัน โพธิ์งาม', years: 'พ.ศ. 2472 – 2544', gender: 'female' },
+    ];
     [110.0, 113.5, 117.0, 120.5, 124.0].forEach((ux, idx) => {
-      const hScale = idx === 3 ? 1.35 : 0.95 + (idx % 2) * 0.2;
-      const tone = idx === 3 ? '#9ca3af' : '#d6d3d1';
-      this.addBox(this.scene, 1.3 * hScale, 0.45, 1.3 * hScale, '#64748b', ux, 0.22, -1.65);
-      this.addBox(this.scene, 0.95 * hScale, 1.15 * hScale, 0.95 * hScale, tone, ux, 0.95 * hScale, -1.65);
+      const hScale = idx === 3 ? 1.35 : 0.98 + (idx % 2) * 0.18;
+      const isUrn4 = idx === 3;
+      const tone = isUrn4 ? '#b8bec7' : '#e2dfd9';
+      const trimCol = isUrn4 ? '#475569' : '#ca8a04';
+      const prof = urnProfiles[idx];
+
+      // 2-tier stepped stucco concrete base plinth (ฐานบัว 2 ชั้น มีมิติชัดลึก)
+      this.addBox(this.scene, 1.48 * hScale, 0.24, 1.48 * hScale, '#475569', ux, 0.12, -1.65);
+      this.addBox(this.scene, 1.24 * hScale, 0.24, 1.24 * hScale, '#64748b', ux, 0.36, -1.65);
+      this.addBox(this.scene, 1.06 * hScale, 0.08, 1.06 * hScale, trimCol, ux, 0.52, -1.65);
+
+      // Deep recessed shrine body: inner back core + protruding side pilasters + crown cornice (ซุ้มโกศมีมิติซ้อนชั้น)
+      const bodyH = 1.18 * hScale;
+      const bodyY = 0.56 + bodyH * 0.5;
+      this.addBox(this.scene, 0.94 * hScale, bodyH, 0.72 * hScale, tone, ux, bodyY, -1.78);
+      // Side corner pilasters & top architrave framing the deep central portrait alcove
+      [-0.4 * hScale, 0.4 * hScale].forEach((px) => {
+        this.addBox(this.scene, 0.18 * hScale, bodyH + 0.06, 0.28 * hScale, tone, ux + px, bodyY, -1.32);
+        this.addBox(this.scene, 0.22 * hScale, 0.08, 0.32 * hScale, trimCol, ux + px, bodyY + bodyH * 0.48, -1.32);
+      });
+      this.addBox(this.scene, 1.04 * hScale, 0.16 * hScale, 0.34 * hScale, tone, ux, bodyY + bodyH * 0.48, -1.31);
+      // Gilded triangular pediment gable over niche (หน้าบันซุ้มโกศ)
+      const gable = new THREE.Mesh(
+        new THREE.ConeGeometry(0.46 * hScale, 0.32 * hScale, 4),
+        new THREE.MeshStandardMaterial({ color: trimCol, metalness: 0.45, roughness: 0.35 })
+      );
+      gable.rotation.y = Math.PI / 4;
+      gable.position.set(ux, bodyY + bodyH * 0.62, -1.26);
+      this.scene.add(gable);
+
+      // Protruding front offering altar ledge shelf (แท่นวางธูปเทียนยื่นหน้า)
+      this.addBox(this.scene, 0.92 * hScale, 0.1, 0.32 * hScale, '#94a3b8', ux, 0.62 * hScale + 0.08, -1.22);
+
+      // Multi-tier Thai Chedi dome (ฐานปัทม์ + องค์ระฆัง + บัลลังก์ + ปล้องไฉน + ยอดทอง)
+      const topBaseY = 0.56 + bodyH;
+      this.addBox(this.scene, 0.88 * hScale, 0.12 * hScale, 0.88 * hScale, '#94a3b8', ux, topBaseY + 0.06 * hScale, -1.65);
       const bellUrn = new THREE.Mesh(
-        new THREE.ConeGeometry(0.55 * hScale, 1.2 * hScale, 8),
-        new THREE.MeshStandardMaterial({ color: tone, roughness: 0.7 })
+        new THREE.CylinderGeometry(0.28 * hScale, 0.44 * hScale, 0.72 * hScale, 12),
+        new THREE.MeshStandardMaterial({ color: tone, roughness: 0.68 })
       );
-      bellUrn.position.set(ux, 2.0 * hScale, -1.65);
+      bellUrn.position.set(ux, topBaseY + 0.48 * hScale, -1.65);
       this.scene.add(bellUrn);
-      const finial = new THREE.Mesh(
-        new THREE.ConeGeometry(0.14 * hScale, 0.55 * hScale, 8),
-        new THREE.MeshStandardMaterial({ color: '#ca8a04', metalness: 0.6 })
+      this.addBox(this.scene, 0.44 * hScale, 0.14 * hScale, 0.44 * hScale, trimCol, ux, topBaseY + 0.9 * hScale, -1.65);
+      const spireCone = new THREE.Mesh(
+        new THREE.ConeGeometry(0.24 * hScale, 0.72 * hScale, 10),
+        new THREE.MeshStandardMaterial({ color: tone, roughness: 0.65 })
       );
-      finial.position.set(ux, 2.75 * hScale, -1.65);
+      spireCone.position.set(ux, topBaseY + 1.32 * hScale, -1.65);
+      this.scene.add(spireCone);
+      const finial = new THREE.Mesh(
+        new THREE.ConeGeometry(0.09 * hScale, 0.45 * hScale, 10),
+        new THREE.MeshStandardMaterial({ color: isUrn4 ? '#a3e635' : '#ca8a04', metalness: 0.65, roughness: 0.28 })
+      );
+      finial.position.set(ux, topBaseY + 1.84 * hScale, -1.65);
       this.scene.add(finial);
-      this.addBox(this.scene, 0.42, 0.52, 0.08, '#1e293b', ux, 0.85, -1.14);
+
+      // Deep Niche Dark Backdrop + Framed Deceased B&W Portrait Photo Plaque + Glass Glint
+      const nicheY = 0.62 * hScale + 0.44 * hScale;
+      this.addBox(this.scene, 0.58 * hScale, 0.74 * hScale, 0.06, '#0f172a', ux, nicheY, -1.4);
+      const portraitFrame = new THREE.Mesh(
+        new THREE.PlaneGeometry(0.48 * hScale, 0.64 * hScale),
+        new THREE.MeshStandardMaterial({
+          map: paintDeceasedPortraitTex(prof.name, prof.years, prof.gender, isUrn4),
+          roughness: 0.35,
+          emissive: isUrn4 ? '#1a2e05' : '#292014',
+          emissiveIntensity: isUrn4 ? 0.45 : 0.25,
+        })
+      );
+      portraitFrame.position.set(ux, nicheY, -1.365);
+      this.scene.add(portraitFrame);
+      // Hanging yellow marigold garland above portrait frame (พวงมาลัยดอกดาวเรือง)
+      this.addBox(this.scene, 0.22 * hScale, 0.055, 0.04, '#facc15', ux, nicheY + 0.32 * hScale, -1.34);
+
+      // Protruding brass incense bowl, 3 incense sticks & 2 glowing memorial candles on altar ledge
+      const incensePot = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.075 * hScale, 0.055 * hScale, 0.1 * hScale, 10),
+        new THREE.MeshStandardMaterial({ color: '#eab308', metalness: 0.7, roughness: 0.25 })
+      );
+      incensePot.position.set(ux, 0.62 * hScale + 0.17, -1.16);
+      this.scene.add(incensePot);
+      [-0.025, 0, 0.025].forEach((ix) => {
+        this.addBox(this.scene, 0.012, 0.14, 0.012, '#dc2626', ux + ix, 0.62 * hScale + 0.25, -1.16);
+      });
+      [-0.2 * hScale, 0.2 * hScale].forEach((cx) => {
+        this.addBox(this.scene, 0.032, 0.12, 0.032, '#fef3c7', ux + cx, 0.62 * hScale + 0.18, -1.16);
+        const flame = new THREE.Mesh(
+          new THREE.SphereGeometry(0.022, 6, 6),
+          new THREE.MeshBasicMaterial({ color: isUrn4 ? '#bef264' : '#fbbf24' })
+        );
+        flame.position.set(ux + cx, 0.62 * hScale + 0.26, -1.16);
+        this.scene.add(flame);
+      });
     });
-    const cemLight = new THREE.PointLight('#84cc16', 2.8, 16, 1.3);
-    cemLight.position.set(120.5, 2.4, 0.4);
-    this.scene.add(cemLight);
+    const cemLight = new THREE.PointLight('#84cc16', 3.4, 18, 1.15);
+    cemLight.position.set(120.5, 2.2, 0.65);
+    const cemWarmLight = new THREE.PointLight('#ffd280', 3.2, 16, 1.2);
+    cemWarmLight.position.set(112.0, 2.0, 0.65);
+    this.scene.add(cemLight, cemWarmLight);
   }
 
   private buildSaiSinCircle(): void {
