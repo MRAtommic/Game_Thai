@@ -1294,33 +1294,33 @@ export class DormWorld {
       this.addHangingWire(new THREE.Vector3(x1, 4.25, -1.73), new THREE.Vector3(x2, 4.22, -1.73), 0.62, 0.018);
     }
 
-    // 1) Parking Shed (โรงจอดรถยนต์ & มอเตอร์ไซค์ at x = -17.6, completely clear of Win-Moto Stand at -22.2!)
+    // 1) Parking Shed (โรงจอดรถยนต์ & มอเตอร์ไซค์ at x = -17.5, generous bay spacing with Win Stand at -22.2!)
     const zincMat = new THREE.MeshStandardMaterial({
       map: createZincRoofTexture(),
       roughness: 0.65,
       metalness: 0.35,
     });
-    const shedRoof = new THREE.Mesh(new THREE.BoxGeometry(4.6, 0.12, 3.4), zincMat);
-    shedRoof.position.set(-17.6, 2.75, -0.5);
+    const shedRoof = new THREE.Mesh(new THREE.BoxGeometry(5.2, 0.12, 3.4), zincMat);
+    shedRoof.position.set(-17.5, 2.75, -0.5);
     shedRoof.rotation.x = 0.12;
     this.scene.add(shedRoof);
-    [-19.8, -15.4].forEach((sx) => {
+    [-20.0, -15.0].forEach((sx) => {
       this.addBox(this.scene, 0.1, 2.75, 0.1, '#4b5563', sx, 1.37, 0.85);
       this.addBox(this.scene, 0.1, 2.75, 0.1, '#4b5563', sx, 1.37, -1.65);
     });
     const shedLight = new THREE.PointLight('#ffe0a8', 4.5, 14, 0.95);
-    shedLight.position.set(-17.6, 2.5, 0.9);
+    shedLight.position.set(-17.5, 2.5, 0.9);
     this.scene.add(shedLight);
 
-    // Realistic Parked Sedan + Realistic Parked Scooter cleanly spaced inside shed
+    // Realistic Parked Sedan + Realistic Parked Scooter with >0.6m clear bay gap between them
     const shedSedan = buildRealisticCar({ bodyColor: '#2b3b4e', roofColor: '#233142', variant: 'sedan', facing: 1 }).group;
-    shedSedan.scale.multiplyScalar(0.84);
-    shedSedan.position.set(-18.2, 0, -0.62);
+    shedSedan.scale.multiplyScalar(0.8);
+    shedSedan.position.set(-18.35, 0, -0.72);
     this.scene.add(shedSedan);
 
     const shedBike = buildRealisticMotorcycle({ bodyColor: '#8c2222', withRider: false, facing: -1 }).group;
-    shedBike.position.set(-16.1, 0, -0.35);
-    shedBike.rotation.y = 0.15;
+    shedBike.position.set(-15.65, 0, -0.35);
+    shedBike.rotation.y = 0.25;
     this.scene.add(shedBike);
 
     // 2) Thai Bus Stop (ป้ายรถเมล์ at x = -34.5)

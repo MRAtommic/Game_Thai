@@ -353,12 +353,12 @@ export function buildTrafficAndParkedVehicles(scene: THREE.Scene): MovingVehicle
     vehicles.push({ group: g, wheels, x, dir, speed, laneZ, minX: -104, maxX: 98 });
   };
 
-  // Moving village highway traffic (far lane z=3.45 going right, near lane z=4.55 going left)
-  spawnCar(-85, 1, '#94a3b8', 3.45, 5.4, true); // silver pickup
-  spawnCar(48, -1, '#0284c7', 4.65, 5.8, false); // blue sedan
-  spawnMotorbike(-45, 1, '#dc2626', '#1e293b', 3.15, 6.6);
-  spawnMotorbike(18, -1, '#16a34a', '#92400e', 4.35, 6.2);
-  spawnMotorbike(72, -1, '#2563eb', '#be185d', 4.5, 6.8);
+  // Moving village highway traffic spaced across clear non-overlapping Z lanes
+  spawnCar(-85, 1, '#94a3b8', 3.55, 5.4, true); // silver pickup
+  spawnCar(48, -1, '#0284c7', 4.85, 5.8, false); // blue sedan
+  spawnMotorbike(-45, 1, '#dc2626', '#1e293b', 2.45, 6.6);
+  spawnMotorbike(18, -1, '#16a34a', '#92400e', 4.2, 6.2);
+  spawnMotorbike(72, -1, '#2563eb', '#be185d', 4.25, 6.8);
   spawnVillagerBike(-30, 1, '#f59e0b', 2.85, 3.2);
   spawnVillagerBike(60, -1, '#10b981', 2.9, 3.0);
 

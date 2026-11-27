@@ -882,37 +882,39 @@ export function createGraffitiWallTexture(): THREE.CanvasTexture {
   return toTex(c);
 }/** Thai Street Noodle Cart Sign ("บะหมี่เกี๊ยวหมูแดง") */
 export function createNoodleCartSignTexture(): THREE.CanvasTexture {
-  const [c, ctx] = makeCanvas(224, 72);
+  const [c, ctx] = makeCanvas(240, 72);
   ctx.fillStyle = '#fde047';
-  ctx.fillRect(0, 0, 224, 72);
+  ctx.fillRect(0, 0, 240, 72);
   ctx.strokeStyle = '#b91c1c';
   ctx.lineWidth = 5;
-  ctx.strokeRect(3, 3, 218, 66);
+  ctx.strokeRect(4, 4, 232, 64);
   ctx.fillStyle = '#991b1b';
-  ctx.font = 'bold 23px "IBM Plex Sans Thai", sans-serif';
+  ctx.font = 'bold 21px "IBM Plex Sans Thai", sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillText('บะหมี่เกี๊ยวหมูแดง', 112, 26);
+  ctx.fillText('บะหมี่เกี๊ยวหมูแดง', 120, 26, 210);
   ctx.fillStyle = '#1e293b';
   ctx.font = 'bold 13px "IBM Plex Sans Thai", sans-serif';
-  ctx.fillText('พิเศษ 50 บ. • 17:00–02:00 น.', 112, 52);
+  ctx.fillText('พิเศษ 50 บ. • 17:00–02:00 น.', 120, 52, 210);
   return toTex(c);
-}/** Thai Isaan Food & Drink Restaurant Sign ("ลาบ-ส้มตำ แซ่บซอย 9") */
+}
+
+/** Thai Isaan Food & Drink Restaurant Sign ("ลาบ-ส้มตำ แซ่บซอย 9") */
 export function createIsaanSignTexture(): THREE.CanvasTexture {
-  const [c, ctx] = makeCanvas(256, 80);
+  const [c, ctx] = makeCanvas(272, 80);
   ctx.fillStyle = '#14532d';
-  ctx.fillRect(0, 0, 256, 80);
+  ctx.fillRect(0, 0, 272, 80);
   ctx.strokeStyle = '#facc15';
   ctx.lineWidth = 4;
-  ctx.strokeRect(3, 3, 250, 74);
+  ctx.strokeRect(4, 4, 264, 72);
   ctx.fillStyle = '#fde047';
-  ctx.font = 'bold 24px "IBM Plex Sans Thai", sans-serif';
+  ctx.font = 'bold 21px "IBM Plex Sans Thai", sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillText('ร้านลาบ-ส้มตำ อีสานแท้', 128, 28);
+  ctx.fillText('ร้านลาบ-ส้มตำ อีสานแท้', 136, 28, 240);
   ctx.fillStyle = '#ffffff';
   ctx.font = '13px "IBM Plex Sans Thai", sans-serif';
-  ctx.fillText('จิ้มจุ่ม • คอหมูย่าง • เครื่องดื่มเย็น', 128, 56);
+  ctx.fillText('จิ้มจุ่ม • คอหมูย่าง • เครื่องดื่มเย็น', 136, 56, 240);
   return toTex(c);
 }/** Lush Thai street shade tree (ต้นหูกวาง / ต้นไม้ริมทาง) */
 export function createStreetTreeTexture(): THREE.CanvasTexture {
@@ -973,64 +975,65 @@ export function createAbandonedSignTexture(): THREE.CanvasTexture {
 
 /** Royal Thai Police Kiosk sign ("ป้อมตำรวจซอย 9") */
 export function createPoliceBoxSignTexture(): THREE.CanvasTexture {
-  const [c, ctx] = makeCanvas(280, 90);
+  const [c, ctx] = makeCanvas(300, 92);
   ctx.fillStyle = '#7f1d1d';
-  ctx.fillRect(0, 0, 280, 90);
+  ctx.fillRect(0, 0, 300, 92);
   ctx.strokeStyle = '#facc15';
   ctx.lineWidth = 4;
-  ctx.strokeRect(4, 4, 272, 82);
+  ctx.strokeRect(6, 6, 288, 80);
   ctx.fillStyle = '#f8fafc';
-  ctx.font = 'bold 26px "IBM Plex Sans Thai", sans-serif';
+  ctx.font = 'bold 23px "IBM Plex Sans Thai", sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillText('ที่พักสายตรวจ ซอย 9', 140, 34);
+  ctx.fillText('ที่พักสายตรวจ ซอย 9', 150, 34, 260);
   ctx.fillStyle = '#fde68a';
-  ctx.font = 'bold 15px "IBM Plex Sans Thai", sans-serif';
-  ctx.fillText('สน.คลองสามวา • แจ้งเหตุด่วน 191', 140, 66);
+  ctx.font = 'bold 14px "IBM Plex Sans Thai", sans-serif';
+  ctx.fillText('สน.คลองสามวา • แจ้งเหตุด่วน 191', 150, 66, 260);
   return toTex(c);
 }
 
 /** 24-Hour Coin Laundry neon sign ("ซักสะอาด ซอย 9 • 24 ชม.") */
 export function createLaundrySignTexture(): THREE.CanvasTexture {
-  const [c, ctx] = makeCanvas(300, 96);
-  const g = ctx.createLinearGradient(0, 0, 300, 96);
+  const [c, ctx] = makeCanvas(340, 96);
+  const g = ctx.createLinearGradient(0, 0, 340, 96);
   g.addColorStop(0, '#0284c7');
   g.addColorStop(1, '#38bdf8');
   ctx.fillStyle = g;
-  ctx.fillRect(0, 0, 300, 96);
+  ctx.fillRect(0, 0, 340, 96);
   ctx.strokeStyle = '#f8fafc';
   ctx.lineWidth = 4;
-  ctx.strokeRect(4, 4, 292, 88);
+  ctx.strokeRect(6, 6, 328, 84);
   ctx.fillStyle = '#ffffff';
-  ctx.font = 'bold 26px "IBM Plex Sans Thai", sans-serif';
+  ctx.font = 'bold 22px "IBM Plex Sans Thai", sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillText('ซักสะอาด ซอย 9 • 24 ชม.', 150, 35);
+  ctx.fillText('ซักสะอาด ซอย 9 • 24 ชม.', 170, 35, 296);
   ctx.fillStyle = '#fef08a';
-  ctx.font = 'bold 16px "IBM Plex Sans Thai", sans-serif';
-  ctx.fillText('บริการซัก-อบผ้าหยอดเหรียญ ป้าสมร', 150, 68);
+  ctx.font = 'bold 15px "IBM Plex Sans Thai", sans-serif';
+  ctx.fillText('บริการซัก-อบผ้าหยอดเหรียญ ป้าสมร', 170, 67, 296);
   return toTex(c);
 }
 
 /** Generator / Utility Workshop warning sign */
 export function createGeneratorSignTexture(): THREE.CanvasTexture {
-  const [c, ctx] = makeCanvas(260, 88);
+  const [c, ctx] = makeCanvas(290, 90);
   ctx.fillStyle = '#eab308';
-  ctx.fillRect(0, 0, 260, 88);
+  ctx.fillRect(0, 0, 290, 90);
   ctx.fillStyle = '#111827';
-  for (let i = -20; i < 280; i += 28) {
+  for (let i = -20; i < 310; i += 28) {
     ctx.beginPath();
-    ctx.moveTo(i, 88);
-    ctx.lineTo(i + 14, 88);
-    ctx.lineTo(i + 26, 68);
-    ctx.lineTo(i + 12, 68);
+    ctx.moveTo(i, 90);
+    ctx.lineTo(i + 14, 90);
+    ctx.lineTo(i + 26, 70);
+    ctx.lineTo(i + 12, 70);
     ctx.fill();
   }
   ctx.fillStyle = '#111827';
-  ctx.font = 'bold 23px "IBM Plex Sans Thai", sans-serif';
+  ctx.font = 'bold 20px "IBM Plex Sans Thai", sans-serif';
   ctx.textAlign = 'center';
-  ctx.fillText('⚡ ห้องเครื่องปั่นไฟหอพัก', 130, 34);
-  ctx.font = 'bold 14px "IBM Plex Sans Thai", sans-serif';
-  ctx.fillText('ช่างตง ประจำซอย 9 • อันตรายไฟแรงสูง', 130, 56);
+  ctx.textBaseline = 'middle';
+  ctx.fillText('⚡ ห้องเครื่องปั่นไฟหอพัก', 145, 30, 260);
+  ctx.font = 'bold 13px "IBM Plex Sans Thai", sans-serif';
+  ctx.fillText('ช่างตง ประจำซอย 9 • อันตรายไฟแรงสูง', 145, 55, 260);
   return toTex(c);
 }

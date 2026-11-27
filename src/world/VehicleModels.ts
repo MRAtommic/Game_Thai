@@ -93,19 +93,10 @@ export function buildRealisticMotorcycle(opts: MotorcycleOptions): MotorcycleBui
     wheels.push(w);
   });
 
-  // Curved front & rear fenders above wheels
-  const fFender = addMesh(
-    grp,
-    new THREE.CylinderGeometry(0.28, 0.28, 0.14, 12, 1, false, -0.7, 1.4),
-    opts.bodyColor,
-    0.5,
-    0.26,
-    0,
-    0.35,
-    0.2
-  );
-  fFender.rotation.x = Math.PI / 2;
-  const rFender = addMesh(grp, new THREE.BoxGeometry(0.32, 0.08, 0.14), '#1f2937', -0.56, 0.52, 0, 0.7);
+  // Curved front mudguard hugging cleanly OVER top of front tire & sporty rear fender
+  const fFender = addMesh(grp, new THREE.BoxGeometry(0.32, 0.06, 0.13), opts.bodyColor, 0.48, 0.48, 0, 0.35, 0.2);
+  fFender.rotation.z = -0.24;
+  const rFender = addMesh(grp, new THREE.BoxGeometry(0.32, 0.07, 0.14), '#1f2937', -0.56, 0.52, 0, 0.7);
   rFender.rotation.z = -0.35;
 
   // Tilted telescopic front forks + triple clamp (x = +0.37)

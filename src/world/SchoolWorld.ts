@@ -866,8 +866,8 @@ export class SchoolWorld {
     const targetX = isInside
       ? THREE.MathUtils.clamp(px, -3.5, 3.5)
       : pFloor === 0
-      ? THREE.MathUtils.clamp(px, -118, 118)
-      : THREE.MathUtils.clamp(px, -7, 30);
+        ? THREE.MathUtils.clamp(px, -118, 118)
+        : THREE.MathUtils.clamp(px, -7, 30);
     const targetY = (isInside ? 0 : pFloor * CH3_FLOOR_H) + 2.15;
     this.camera.position.x = THREE.MathUtils.lerp(this.camera.position.x, targetX, Math.min(1, dt * 6));
     this.camera.position.y = THREE.MathUtils.lerp(this.camera.position.y, targetY, Math.min(1, dt * 6));
