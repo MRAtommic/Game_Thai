@@ -758,13 +758,14 @@ export class IsaanWorld {
       this.addBox(this.scene, 2.4, 0.05, 0.1, '#facc15', lx, 0.022, 4.0, 0.6);
     }
 
-    // Distant Phuphan mountain silhouettes across expanded horizon
-    for (let mx = -125; mx <= 145; mx += 20) {
+    // Smooth organic Phuphan mountain silhouettes across expanded horizon (layered rounded ridges, no pointy cones!)
+    for (let mx = -125; mx <= 145; mx += 18) {
       const hill = new THREE.Mesh(
-        new THREE.ConeGeometry(16, 10 + (Math.abs(mx) % 5), 5),
-        new THREE.MeshBasicMaterial({ color: '#101826' })
+        new THREE.SphereGeometry(14, 14, 10, 0, Math.PI * 2, 0, Math.PI * 0.55),
+        new THREE.MeshBasicMaterial({ color: mx % 36 === 0 ? '#0d1522' : '#121d2e' })
       );
-      hill.position.set(mx, 4.0, -18);
+      hill.scale.set(1.35, 0.62 + (Math.abs(mx) % 4) * 0.1, 0.55);
+      hill.position.set(mx, 0, mx % 36 === 0 ? -21 : -17);
       this.scene.add(hill);
     }
 

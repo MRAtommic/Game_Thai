@@ -482,10 +482,13 @@ export function buildTempleFairZone(scene: THREE.Scene): TempleFairController {
     sign.position.set(st.x, 2.26, -0.62);
     scene.add(sign);
 
-    // Friendly booth vendor behind counter
+    // Friendly booth vendor behind counter + warm incandescent stall string light
     const boothVendor = makeVillagerFigure(st.shirt, '#1e293b');
     boothVendor.position.set(st.x + 0.55, 0, -1.65);
     scene.add(boothVendor);
+    const boothBulb = new THREE.PointLight('#fde68a', 2.8, 8.5, 1.1);
+    boothBulb.position.set(st.x, 2.35, 0.85);
+    scene.add(boothBulb);
 
     if (idx === 0) {
       // Wall of colorful balloons on Balloon Dart booth!
@@ -508,8 +511,14 @@ export function buildTempleFairZone(scene: THREE.Scene): TempleFairController {
         addPart(scene, 0.16, 0.16, 0.04, si % 2 === 0 ? '#facc15' : '#f472b6', st.x + ox, 1.38 + (si % 2) * 0.1, -1.68);
       });
     } else {
-      // Warm grill + colorful pink/blue cotton candy cones on counter!
+      // Warm grill + colorful pink/blue cotton candy cones inside crystal-clear showcase glass on counter!
       addPart(scene, 0.85, 0.16, 0.45, '#334155', st.x - 0.55, 0.86, -1.1);
+      const candyGlass = new THREE.Mesh(
+        new THREE.BoxGeometry(1.15, 0.46, 0.44),
+        new THREE.MeshStandardMaterial({ color: '#bae6fd', transparent: true, opacity: 0.24, roughness: 0.08, depthWrite: false })
+      );
+      candyGlass.position.set(st.x + 0.46, 1.04, -1.08);
+      scene.add(candyGlass);
       ['#f472b6', '#38bdf8', '#fde047'].forEach((cc, ci) => {
         const puff = new THREE.Mesh(new THREE.SphereGeometry(0.14, 8, 8), new THREE.MeshStandardMaterial({ color: cc }));
         puff.position.set(st.x + 0.15 + ci * 0.32, 1.0, -1.08);

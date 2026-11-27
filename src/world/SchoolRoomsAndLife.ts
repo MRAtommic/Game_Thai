@@ -124,6 +124,7 @@ export function buildSchoolRooms(
       })
     );
     m.position.set(x, y + 0.96, z);
+    m.receiveShadow = false;
     setSpriteFacing(m, facing);
     parent.add(m);
     const sh = new THREE.Mesh(
@@ -321,6 +322,7 @@ export function buildCampusGroundProps(
       })
     );
     m.position.set(x, y + 0.96, z);
+    m.receiveShadow = false;
     setSpriteFacing(m, facing);
     exteriorGroup.add(m);
     const sh = new THREE.Mesh(
@@ -432,18 +434,31 @@ export function buildCampusGroundProps(
   archSignWest.rotation.y = -Math.PI / 2;
   archSignWest.position.set(-52.6, 5.22, 0.15);
   exteriorGroup.add(archSignWest);
-  const archLight = new THREE.PointLight('#fde68a', 5.8, 15, 1.0);
-  archLight.position.set(-52.8, 4.4, 0.2);
+  const archLight = new THREE.PointLight('#fde68a', 5.8, 16, 1.0);
+  archLight.position.set(-52.4, 4.4, 1.55);
   exteriorGroup.add(archLight);
 
-  // Detailed School Guard Booth (ป้อมยามโรงเรียน -45.5) with sliding glass window, service ledge, door & barrier post
-  addBox(exteriorGroup, 2.9, 2.75, 2.0, '#f1f5f9', -45.5, 1.38, -1.35, 0.8);
+  // Detailed School Guard Booth (ป้อมยามโรงเรียน -45.5) with recessed see-through sliding glass, inner guard light & counter!
+  addBox(exteriorGroup, 2.9, 2.75, 0.2, '#f1f5f9', -45.5, 1.38, -2.25, 0.8); // interior back wall
+  addBox(exteriorGroup, 2.9, 1.12, 1.85, '#f1f5f9', -45.5, 0.56, -1.35, 0.8); // lower wall
+  addBox(exteriorGroup, 0.55, 2.75, 1.85, '#f1f5f9', -46.65, 1.38, -1.35, 0.8);
+  addBox(exteriorGroup, 0.55, 2.75, 1.85, '#f1f5f9', -44.35, 1.38, -1.35, 0.8);
+  addBox(exteriorGroup, 2.9, 0.65, 1.85, '#f1f5f9', -45.5, 2.42, -1.35, 0.8); // header
   addBox(exteriorGroup, 2.94, 0.72, 2.04, '#1e3a8a', -45.5, 0.36, -1.35, 0.65); // navy base skirt
   addBox(exteriorGroup, 3.35, 0.26, 2.45, '#1e3a8a', -45.5, 2.86, -1.32, 0.55); // sloped eaves roof
   addBox(exteriorGroup, 3.4, 0.1, 2.5, '#facc15', -45.5, 2.72, -1.32, 0.45);
-  // Sliding glass guard window (z = -0.34), dark frame, inner glowing guard room & counter ledge
+  addBox(exteriorGroup, 1.5, 0.72, 0.45, '#78350f', -45.25, 1.25, -1.15); // interior desk visible through glass!
+  const inGuardLight = new THREE.PointLight('#fef08a', 2.6, 5.5, 1.1);
+  inGuardLight.position.set(-45.25, 2.1, -1.25);
+  exteriorGroup.add(inGuardLight);
+  // Transparent sliding glass guard window (z = -0.34), frame, inner glowing guard room & counter ledge
   addBox(exteriorGroup, 1.72, 1.08, 0.08, '#0f172a', -45.25, 1.68, -0.35, 0.35);
-  addBox(exteriorGroup, 1.54, 0.9, 0.06, '#7dd3fc', -45.25, 1.68, -0.32, 0.15);
+  const boothGlass = new THREE.Mesh(
+    new THREE.BoxGeometry(1.54, 0.9, 0.04),
+    new THREE.MeshStandardMaterial({ color: '#bae6fd', transparent: true, opacity: 0.24, roughness: 0.08, depthWrite: false })
+  );
+  boothGlass.position.set(-45.25, 1.68, -0.32);
+  exteriorGroup.add(boothGlass);
   addBox(exteriorGroup, 0.06, 0.9, 0.08, '#334155', -45.25, 1.68, -0.29, 0.35); // middle sliding mullion
   addBox(exteriorGroup, 1.88, 0.1, 0.34, '#cbd5e1', -45.25, 1.12, -0.22, 0.5); // outer ledge shelf
   const boothDoor = new THREE.Mesh(
@@ -457,8 +472,8 @@ export function buildCampusGroundProps(
   );
   boothSign.position.set(-45.25, 2.44, -0.31);
   exteriorGroup.add(boothDoor, boothSign);
-  const guardLight = new THREE.PointLight('#fef08a', 4.2, 11, 1.1);
-  guardLight.position.set(-45.25, 2.1, 0.35);
+  const guardLight = new THREE.PointLight('#fef08a', 4.4, 12, 1.05);
+  guardLight.position.set(-45.25, 2.15, 1.55);
   exteriorGroup.add(guardLight);
   const janitorMesh = makeNpc('janitor_man', -44.0, 0, -0.15, -1);
 
@@ -602,8 +617,8 @@ export function buildCampusGroundProps(
   });
   addBox(exteriorGroup, 2.1, 0.72, 0.06, '#bae6fd', 67.0, 1.55, -0.2, 0.15);
   addBox(exteriorGroup, 2.2, 0.8, 0.04, '#475569', 67.0, 1.55, -0.22, 0.4);
-  const restLight = new THREE.PointLight('#bae6fd', 4.5, 14, 1.1);
-  restLight.position.set(67, 2.9, 1.1);
+  const restLight = new THREE.PointLight('#bae6fd', 4.6, 15, 1.05);
+  restLight.position.set(67, 2.9, 1.65);
   exteriorGroup.add(restLight);
 
   // ================= FULL STANDARD BASKETBALL COURT WITH BOTH HOOPS & PLAYERS (+77 .. +99, center +88) =================
@@ -777,8 +792,8 @@ export function buildCampusGroundProps(
   [-0.58, 0, 0.58].forEach((gx) => addBox(shrineGrp, 0.18, 0.26, 0.1, '#facc15', gx, 2.02, 0.54, 0.45));
   exteriorGroup.add(shrineGrp);
 
-  const shrineLight = new THREE.PointLight('#fbbf24', 5.5, 16, 1.0);
-  shrineLight.position.set(112.6, 2.75, 0.6);
+  const shrineLight = new THREE.PointLight('#fbbf24', 5.6, 16, 1.0);
+  shrineLight.position.set(112.6, 2.75, 1.65);
   exteriorGroup.add(shrineLight);
   const shrineIncenseParticles: THREE.Mesh[] = [];
   for (let i = 0; i < 6; i++) {
