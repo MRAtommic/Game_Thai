@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { buildRealisticCar, buildRealisticMotorcycle } from './VehicleModels';
+import { buildRealisticCar, buildRealisticMotorcycle, createVehicleWheel } from './VehicleModels';
 
 function addPart(
   parent: THREE.Object3D,
@@ -35,13 +35,13 @@ function makeBannerTex(bg: string, border: string, textCol: string, line1: strin
   ctx.lineWidth = 5;
   ctx.strokeRect(4, 4, 248, 72);
   ctx.fillStyle = textCol;
-  ctx.font = 'bold 21px "IBM Plex Sans Thai", sans-serif';
+  ctx.font = 'bold 20px "IBM Plex Sans Thai", sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillText(line1, 128, line2 ? 27 : 40);
+  ctx.fillText(line1, 128, line2 ? 27 : 40, 224);
   if (line2) {
     ctx.font = '14px "IBM Plex Sans Thai", sans-serif';
-    ctx.fillText(line2, 128, 56);
+    ctx.fillText(line2, 128, 56, 224);
   }
   const tex = new THREE.CanvasTexture(c);
   tex.colorSpace = THREE.SRGBColorSpace;
@@ -165,18 +165,23 @@ export function buildRotHaeSystem(scene: THREE.Scene): RotHaeController {
   const group = new THREE.Group();
   const wheels: THREE.Group[] = [];
 
-  // Pickup chassis & cab facing +X
-  addPart(group, 4.4, 0.34, 1.55, '#1e293b', 0, 0.42, 0, 0.5, 0.4); // bed floor
-  addPart(group, 1.55, 0.85, 1.5, '#b91c1c', 1.35, 0.96, 0, 0.4, 0.35); // red pickup hood + cab lower
-  addPart(group, 1.05, 0.62, 1.44, '#dc2626', 1.12, 1.58, 0, 0.4, 0.3); // cab roof
-  addPart(group, 0.14, 0.48, 1.32, '#93c5fd', 1.65, 1.5, 0, 0.2, 0.5); // windshield
-  addPart(group, 2.75, 0.52, 1.55, '#991b1b', -0.78, 0.84, 0, 0.45, 0.3); // pickup cargo sides
+  // Realistic Sculpted Red Pickup Cab + Hood + Grille + Bumper + Windshield + Spoked Wheels!
+  addPart(group, 4.5, 0.24, 1.56, '#1e293b', 0, 0.36, 0, 0.5, 0.4); // chassis & bumpers
+  addPart(group, 1.75, 0.62, 1.52, '#b91c1c', 1.4, 0.72, 0, 0.35, 0.3); // sculpted hood + fenders
+  addPart(group, 1.05, 0.56, 1.42, '#dc2626', 1.02, 1.28, 0, 0.32, 0.25); // pickup cab roof
+  addPart(group, 0.85, 0.4, 1.45, '#0f172a', 1.02, 1.26, 0, 0.12, 0.5); // side door window
+  const rhWind = addPart(group, 0.38, 0.48, 1.38, '#1e293b', 1.58, 1.22, 0, 0.12, 0.5);
+  rhWind.rotation.z = -0.62;
+  addPart(group, 0.12, 0.32, 1.15, '#cbd5e1', 2.26, 0.72, 0, 0.25, 0.7); // chrome grille
+  addPart(group, 2.75, 0.52, 1.55, '#991b1b', -0.78, 0.76, 0, 0.45, 0.3); // cargo bed sides
 
   [-1.35, 1.35].forEach((wx) => {
-    const w = makeWheel(0.32, 0.2);
-    w.position.set(wx, 0.32, 0.78);
-    group.add(w);
-    wheels.push(w);
+    [-0.76, 0.76].forEach((wz) => {
+      const w = createVehicleWheel(0.32, 0.2);
+      w.position.set(wx, 0.32, wz);
+      group.add(w);
+      wheels.push(w);
+    });
   });
 
   // Giant stacked concert speakers on truck bed! (ตู้ลำโพงรถแห่)
@@ -250,40 +255,80 @@ export function buildSongthaewSystem(scene: THREE.Scene): SongthaewController {
   const group = new THREE.Group();
   const wheels: THREE.Group[] = [];
 
-  // Two-tone blue-cream Thai Songthaew
-  addPart(group, 1.35, 0.85, 1.48, '#1d4ed8', 1.35, 0.92, 0, 0.45, 0.25); // front cab
-  addPart(group, 1.0, 0.58, 1.42, '#1e40af', 1.1, 1.54, 0, 0.45, 0.2); // cab roof
-  addPart(group, 0.14, 0.45, 1.3, '#bae6fd', 1.62, 1.48, 0, 0.2, 0.4); // windshield
-  addPart(group, 2.85, 0.48, 1.52, '#1e3a8a', -0.72, 0.72, 0, 0.55); // rear passenger bed lower
-  addPart(group, 2.9, 0.12, 1.56, '#fef3c7', -0.74, 1.95, 0, 0.5); // cream canopy roof
-  addPart(group, 2.92, 0.12, 1.58, '#eab308', -0.74, 1.84, 0, 0.5); // yellow route stripe
-  [-2.05, 0.45].forEach((px) => {
-    addPart(group, 0.1, 1.05, 0.1, '#cbd5e1', px, 1.42, 0.72);
-    addPart(group, 0.1, 1.05, 0.1, '#cbd5e1', px, 1.42, -0.72);
+  // Realistic Sculpted Two-Tone Thai Pickup Songthaew (hood, chrome grille, sloped windshield, side glass, mirrors & canopy!)
+  addPart(group, 4.75, 0.18, 1.56, '#1e293b', -0.05, 0.28, 0, 0.55, 0.4); // steel chassis + front/rear bumpers
+  addPart(group, 1.72, 0.58, 1.5, '#1d4ed8', 1.45, 0.64, 0, 0.35, 0.25); // lower blue pickup hood & doors
+  addPart(group, 0.14, 0.28, 1.12, '#cbd5e1', 2.28, 0.64, 0, 0.25, 0.72); // chrome front grille
+  [-0.5, 0.5].forEach((lz) => {
+    const fLamp = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.14, 0.22), new THREE.MeshBasicMaterial({ color: '#fef9c3' }));
+    fLamp.position.set(2.3, 0.68, lz);
+    const tLamp = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.14, 0.22), new THREE.MeshBasicMaterial({ color: '#ef4444' }));
+    tLamp.position.set(-2.36, 0.68, lz);
+    group.add(fLamp, tLamp);
   });
-  addPart(group, 0.35, 0.1, 1.35, '#94a3b8', -2.25, 0.45, 0); // rear boarding step
+  // Sloped front pickup cabin with smoked side window & visible driver head + side mirrors!
+  addPart(group, 1.05, 0.56, 1.4, '#1e40af', 1.05, 1.2, 0, 0.32, 0.25);
+  addPart(group, 0.85, 0.38, 1.43, '#0f172a', 1.05, 1.18, 0, 0.12, 0.5);
+  const stWind = addPart(group, 0.36, 0.48, 1.36, '#1e293b', 1.62, 1.14, 0, 0.12, 0.5);
+  stWind.rotation.z = -0.64;
+  [-0.76, 0.76].forEach((mz) => addPart(group, 0.12, 0.14, 0.1, '#1e293b', 1.45, 1.04, mz, 0.4)); // side wing mirrors
+  // Royal navy Songthaew passenger truck bed with gold route pin-stripe, wooden floor, bench slats & rear steel bumper step
+  addPart(group, 2.9, 0.5, 1.52, '#1e3a8a', -0.82, 0.64, 0, 0.42, 0.2);
+  addPart(group, 2.94, 0.07, 1.55, '#eab308', -0.82, 0.84, 0, 0.3);
+  addPart(group, 2.75, 0.08, 0.38, '#92400e', -0.82, 0.72, -0.5, 0.75); // inner wooden passenger bench
+  addPart(group, 0.38, 0.08, 1.38, '#cbd5e1', -2.42, 0.38, 0, 0.35, 0.65); // rear boarding step
+  // Slanted stainless steel canopy poles, roof grab bar & arched cream-navy Songthaew roof!
+  [-2.2, -0.82, 0.52].forEach((px, pi) => {
+    [-0.71, 0.71].forEach((pz) => {
+      const post = addPart(group, 0.06, 1.14, 0.06, '#cbd5e1', px, 1.44, pz, 0.25, 0.75);
+      if (pi === 0) post.rotation.z = -0.06;
+    });
+  });
+  addPart(group, 2.78, 0.04, 0.04, '#cbd5e1', -0.84, 1.88, 0.25, 0.25, 0.75); // hanging hand-rail
+  addPart(group, 2.98, 0.14, 1.56, '#fef3c7', -0.82, 2.02, 0, 0.45); // curved cream canopy roof
+  addPart(group, 3.0, 0.08, 1.58, '#1e3a8a', -0.82, 1.92, 0, 0.45);
+  addPart(group, 3.0, 0.06, 1.58, '#eab308', -0.82, 1.86, 0, 0.45);
+  const cabLight = new THREE.PointLight('#fde68a', 2.2, 4.8, 1.1);
+  cabLight.position.set(-0.82, 1.82, 0.1);
+  group.add(cabLight);
 
-  // Two passengers visibly seated inside on wooden benches
-  [-1.25, -0.35].forEach((px, pi) => {
-    addPart(group, 0.26, 0.46, 0.22, pi === 0 ? '#f472b6' : '#f59e0b', px, 1.12, 0.25);
-    addPart(group, 0.2, 0.2, 0.2, '#d9a47c', px, 1.46, 0.25);
+  // Two realistic articulated passengers seated on wooden bench inside Songthaew!
+  [-1.35, -0.35].forEach((px, pi) => {
+    const pCol = pi === 0 ? '#f472b6' : '#f59e0b';
+    addPart(group, 0.24, 0.42, 0.22, pCol, px, 1.06, -0.35);
+    addPart(group, 0.16, 0.22, 0.16, '#1e293b', px, 0.84, -0.15); // seated legs
+    const head = new THREE.Mesh(
+      new THREE.SphereGeometry(0.11, 10, 8),
+      new THREE.MeshStandardMaterial({ color: '#d9a47c', roughness: 0.75 })
+    );
+    head.position.set(px, 1.39, -0.35);
+    const hair = new THREE.Mesh(
+      new THREE.SphereGeometry(0.115, 8, 8, 0, Math.PI * 2, 0, Math.PI * 0.55),
+      new THREE.MeshStandardMaterial({ color: '#111827', roughness: 0.85 })
+    );
+    hair.position.set(px, 1.41, -0.35);
+    const arm = addPart(group, 0.08, 0.34, 0.08, pCol, px + 0.1, 1.32, -0.16);
+    arm.rotation.x = 0.65; // hand holding overhead rail!
+    group.add(head, hair);
   });
 
   const signPlane = new THREE.Mesh(
-    new THREE.PlaneGeometry(1.9, 0.42),
+    new THREE.PlaneGeometry(2.15, 0.44),
     new THREE.MeshBasicMaterial({
       map: makeBannerTex('#1e3a8a', '#facc15', '#ffffff', 'สองแถว บ้านทุ่ง - ตลาด - วัด'),
       side: THREE.DoubleSide,
     })
   );
-  signPlane.position.set(-0.75, 1.98, 0.8);
+  signPlane.position.set(-0.82, 2.02, 0.82);
   group.add(signPlane);
 
-  [-1.3, 1.3].forEach((wx) => {
-    const w = makeWheel(0.3, 0.18);
-    w.position.set(wx, 0.3, 0.76);
-    group.add(w);
-    wheels.push(w);
+  [-1.38, 1.48].forEach((wx) => {
+    [-0.75, 0.75].forEach((wz) => {
+      const w = createVehicleWheel(0.3, 0.18);
+      w.position.set(wx, 0.3, wz);
+      group.add(w);
+      wheels.push(w);
+    });
   });
 
   const hl = new THREE.PointLight('#fef08a', 4.0, 10, 1.4);
