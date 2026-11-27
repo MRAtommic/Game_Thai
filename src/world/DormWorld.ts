@@ -118,6 +118,17 @@ export class DormWorld {
     dayOnly: boolean;
     nightOnly: boolean;
   }[] = [];
+  private alleyPedestrians: {
+    mesh: THREE.Mesh;
+    shadow: THREE.Mesh;
+    kind: 'student' | 'worker' | 'worker_yellow' | 'office_lady' | 'uncle_local';
+    x: number;
+    z: number;
+    speed: number;
+    minZ: number;
+    maxZ: number;
+    dir: 1 | -1;
+  }[] = [];
   private primMesh: THREE.Mesh;
   private primAuraLight: THREE.PointLight;
   private zombieMeshes: THREE.Mesh[] = [];
@@ -638,14 +649,62 @@ export class DormWorld {
     road.receiveShadow = true;
     this.scene.add(road);
 
-    // Open Side-Street T-Junction (ซอยแยกเข้าซอย 9) at x = -30.2 .. -24.2 stretching deep to horizon (-30m)!
-    const crossRoad = new THREE.Mesh(new THREE.BoxGeometry(6.2, 0.39, 32.0), roadMat);
-    crossRoad.position.set(-27.2, -0.202, -15.4);
+    // Raised Thai Sidewalk / Footpath (ฟุตบาทริมถนนหน้าซอย) left & right of the Side-Alley (-31.2 .. -23.0) with Red-White Curbs!
+    [
+      { cx: -73.1, w: 83.8 }, // -115.0 .. -31.2
+      { cx: -19.1, w: 7.8 },  // -23.0 .. -15.2
+    ].forEach((seg) => {
+      this.addBox(this.scene, seg.w, 0.07, 2.65, '#64748b', seg.cx, 0.015, -1.05, 0.85);
+      // Red & white painted Thai sidewalk curb stones along z = +0.28
+      const startX = seg.cx - seg.w / 2;
+      const endX = seg.cx + seg.w / 2;
+      for (let kx = startX + 0.6; kx < endX - 0.3; kx += 1.2) {
+        const isRed = Math.abs(Math.floor(kx / 1.2)) % 2 === 0;
+        this.addBox(this.scene, 1.18, 0.09, 0.16, isRed ? '#dc2626' : '#f1f5f9', kx, 0.025, 0.28, 0.6);
+      }
+    });
+
+    // Crisp Flush Asphalt Road Markings on Main Road (เส้นเหลืองประกลางถนน + เส้นขอบขาว + ทางม้าลายหน้าเซเว่น & ป้ายรถเมล์!)
+    const addMainRoadMark = (w: number, d: number, col: string, x: number, z: number) => {
+      const m = new THREE.Mesh(
+        new THREE.PlaneGeometry(w, d),
+        new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: 0.9, depthWrite: false })
+      );
+      m.rotation.x = -Math.PI / 2;
+      m.position.set(x, 0.014, z);
+      this.scene.add(m);
+    };
+    addMainRoadMark(83.8, 0.12, '#e2e8f0', -73.1, 0.55); // near curb white line (left of alley)
+    addMainRoadMark(7.8, 0.12, '#e2e8f0', -19.1, 0.55);  // near curb white line (right of alley)
+    addMainRoadMark(99.8, 0.12, '#e2e8f0', -65.2, 4.95); // far edge white line
+    for (let rx = -114.0; rx <= -16.5; rx += 4.4) {
+      if (rx > -31.8 && rx < -22.5) continue; // clear T-junction box
+      addMainRoadMark(2.2, 0.14, '#facc15', rx, 2.75); // crisp yellow highway dashed centerline!
+    }
+    [-55.5, -34.5].forEach((zx) => {
+      for (let zBar = 0.85; zBar <= 4.55; zBar += 0.72) {
+        addMainRoadMark(2.1, 0.36, '#f8fafc', zx, zBar); // Zebra crosswalks at 24-Seven & Bus Stop
+      }
+    });
+
+    // Open Side-Street T-Junction (ซอยแยกถนนคนเดิน & เลนรถวิ่ง x = -31.2 .. -23.0) stretching deep to horizon (-30m)!
+    const crossRoad = new THREE.Mesh(new THREE.BoxGeometry(8.4, 0.39, 32.0), roadMat);
+    crossRoad.position.set(-27.1, -0.202, -15.4);
     crossRoad.receiveShadow = true;
     this.scene.add(crossRoad);
-    // Raised concrete corner curbs flanking the side-street opening & dashed center road line
-    [-30.35, -24.05].forEach((cx) => {
-      this.addBox(this.scene, 0.3, 0.2, 28.0, '#646c78', cx, 0.1, -16.2);
+    // Dedicated Pedestrian Sidewalk Lanes (ช่องถนนคนเดินขนาบซ้าย-ขวา) + Protective Bollard Posts!
+    this.addBox(this.scene, 2.25, 0.08, 28.0, '#64748b', -30.05, 0.02, -16.2, 0.85);
+    this.addBox(this.scene, 2.35, 0.08, 28.0, '#64748b', -24.22, 0.02, -16.2, 0.85);
+    [-28.92, -25.4].forEach((bx) => {
+      for (let bz = -2.6; bz >= -26.5; bz -= 3.2) {
+        this.addBox(this.scene, 0.14, 0.1, 1.4, Math.abs(Math.floor(bz)) % 2 === 0 ? '#facc15' : '#e2e8f0', bx, 0.03, bz);
+        this.addBox(this.scene, 0.09, 0.62, 0.09, '#f97316', bx, 0.31, bz);
+        this.addBox(this.scene, 0.11, 0.1, 0.11, '#f8fafc', bx, 0.56, bz);
+      }
+    });
+    // Raised outer concrete building curbs flanking the alley walls (-31.35 & -22.85)
+    [-31.35, -22.85].forEach((cx) => {
+      this.addBox(this.scene, 0.3, 0.2, 28.0, '#475569', cx, 0.1, -16.2);
     });
     for (let dz = -2.0; dz >= -28.5; dz -= 2.4) {
       this.addBox(this.scene, 0.12, 0.02, 1.15, '#eab308', -27.2, 0.005, dz);
@@ -1167,13 +1226,13 @@ export class DormWorld {
     const wallTex = createThaiWallTexture(false);
     const graffitiTex = createGraffitiWallTexture();
 
-    // Main outer soi back walls cleanly split around the open Side-Street T-Junction (-30.2 .. -24.0)!
-    this.addTexturedPlane(10.0, 4.8, wallTex, -19.0, 2.4, -2.35, 0.95);
-    this.addTexturedPlane(25.8, 4.8, wallTex, -43.1, 2.4, -2.35, 0.95);
+    // Main outer soi back walls cleanly split around the wide Pedestrian & Traffic Side-Alley (-31.2 .. -23.0)!
+    this.addTexturedPlane(9.0, 4.8, wallTex, -18.5, 2.4, -2.35, 0.95);
+    this.addTexturedPlane(24.8, 4.8, wallTex, -43.6, 2.4, -2.35, 0.95);
     this.addTexturedPlane(46, 4.8, wallTex, -79, 2.4, -2.35, 0.95);
 
-    // Side-alley left & right shophouse return walls going deep back into -Z (-30.2 and -24.0) — OPEN ROAD ALL THE WAY THROUGH!
-    [-30.2, -24.0].forEach((sideX, idx) => {
+    // Side-alley left & right shophouse return walls going deep back into -Z (-31.2 and -23.0) — OPEN ROAD & WALKABLE SIDEWALKS!
+    [-31.2, -23.0].forEach((sideX, idx) => {
       const sideWall = new THREE.Mesh(
         new THREE.PlaneGeometry(26.5, 4.8),
         new THREE.MeshStandardMaterial({ map: wallTex, roughness: 0.95 })
@@ -1182,7 +1241,7 @@ export class DormWorld {
       sideWall.rotation.y = idx === 0 ? Math.PI / 2 : -Math.PI / 2;
       this.scene.add(sideWall);
     });
-    // Deep Side-Alley Shophouse Depth: sloped striped awnings, wall-mounted AC condensers, bracketed signs & lamps along BOTH sides (road lane stays 100% open!)
+    // Deep Side-Alley Pedestrian Market Details: awnings, wall-mounted AC, bracketed signs, string festoon lights & sidewalk stalls!
     const alleyWinLit = createThaiWindowTexture(true);
     const alleyWinDark = createThaiWindowTexture(false);
     const alleyAwningMat = new THREE.MeshStandardMaterial({
@@ -1191,49 +1250,95 @@ export class DormWorld {
       side: THREE.DoubleSide,
     });
     [-5.4, -10.4, -15.4, -20.6].forEach((az, idx) => {
-      // Left shophouse: glowing upper window, wall-mounted AC unit (flush on wall), sloped awning + steel brackets
+      // Left shophouse (-31.2): glowing upper window, wall-mounted AC unit, sloped striped awning & ground shutter
       const lWin = new THREE.Mesh(
         new THREE.PlaneGeometry(1.45, 1.15),
         new THREE.MeshBasicMaterial({ map: idx % 2 === 0 ? alleyWinLit : alleyWinDark })
       );
       lWin.rotation.y = Math.PI / 2;
-      lWin.position.set(-30.16, 3.45, az);
+      lWin.position.set(-31.16, 3.45, az);
       this.scene.add(lWin);
-      this.addBox(this.scene, 0.34, 0.48, 0.62, '#cbd5e1', -30.01, 3.05, az + 1.25); // flush wall AC unit
-      this.addBox(this.scene, 0.04, 0.34, 0.34, '#334155', -29.83, 3.05, az + 1.25); // AC fan grille
-      const lAwning = new THREE.Mesh(new THREE.PlaneGeometry(1.05, 2.65), alleyAwningMat);
-      lAwning.position.set(-29.7, 2.42, az);
+      this.addBox(this.scene, 0.34, 0.48, 0.62, '#cbd5e1', -31.01, 3.05, az + 1.25);
+      this.addBox(this.scene, 0.04, 0.34, 0.34, '#334155', -30.83, 3.05, az + 1.25);
+      const lAwning = new THREE.Mesh(new THREE.PlaneGeometry(1.45, 2.75), alleyAwningMat);
+      lAwning.position.set(-30.52, 2.42, az);
       lAwning.rotation.x = -Math.PI / 2;
       lAwning.rotation.y = 0.28;
       this.scene.add(lAwning);
-      this.addBox(this.scene, 0.72, 0.06, 0.06, '#475569', -29.84, 2.34, az - 1.15);
-      this.addBox(this.scene, 0.72, 0.06, 0.06, '#475569', -29.84, 2.34, az + 1.15);
-      this.addBox(this.scene, 0.08, 2.05, 1.85, '#3b424c', -30.14, 1.02, az);
+      this.addBox(this.scene, 0.95, 0.06, 0.06, '#475569', -30.72, 2.3, az - 1.2);
+      this.addBox(this.scene, 0.95, 0.06, 0.06, '#475569', -30.72, 2.3, az + 1.2);
+      this.addBox(this.scene, 0.08, 2.05, 1.85, '#3b424c', -31.14, 1.02, az);
 
-      // Right shophouse: glowing window, sloped awning, wall-bracketed shop signboard & ground shutter
+      // Right shophouse (-23.0): glowing window, sloped awning, wall-bracketed shop signboard & ground shutter
       const rWin = new THREE.Mesh(
         new THREE.PlaneGeometry(1.45, 1.15),
         new THREE.MeshBasicMaterial({ map: idx === 1 ? alleyWinDark : alleyWinLit })
       );
       rWin.rotation.y = -Math.PI / 2;
-      rWin.position.set(-24.04, 3.45, az - 0.3);
+      rWin.position.set(-23.04, 3.45, az - 0.3);
       this.scene.add(rWin);
-      const rAwning = new THREE.Mesh(new THREE.PlaneGeometry(1.05, 2.65), alleyAwningMat);
-      rAwning.position.set(-24.5, 2.42, az - 0.3);
+      const rAwning = new THREE.Mesh(new THREE.PlaneGeometry(1.45, 2.75), alleyAwningMat);
+      rAwning.position.set(-23.68, 2.42, az - 0.3);
       rAwning.rotation.x = -Math.PI / 2;
       rAwning.rotation.y = -0.28;
       this.scene.add(rAwning);
-      this.addBox(this.scene, 0.72, 0.06, 0.06, '#475569', -24.36, 2.34, az - 1.45);
-      this.addBox(this.scene, 0.72, 0.06, 0.06, '#475569', -24.36, 2.34, az + 0.85);
-      this.addBox(this.scene, 0.08, 2.05, 1.85, '#3b424c', -24.06, 1.02, az - 0.3);
-      // Wall-bracketed vertical signboard (mounted to right wall by steel arms)
-      this.addBox(this.scene, 0.65, 0.05, 0.05, '#334155', -24.34, 3.05, az + 1.15);
-      this.addBox(this.scene, 0.65, 0.05, 0.05, '#334155', -24.34, 2.55, az + 1.15);
-      this.addBox(this.scene, 0.14, 0.78, 0.48, idx % 2 === 0 ? '#1e3a8a' : '#7f1d1d', -24.62, 2.8, az + 1.15);
+      this.addBox(this.scene, 0.95, 0.06, 0.06, '#475569', -23.48, 2.3, az - 1.5);
+      this.addBox(this.scene, 0.95, 0.06, 0.06, '#475569', -23.48, 2.3, az + 0.9);
+      this.addBox(this.scene, 0.08, 2.05, 1.85, '#3b424c', -23.06, 1.02, az - 0.3);
+      this.addBox(this.scene, 0.65, 0.05, 0.05, '#334155', -23.34, 3.05, az + 1.15);
+      this.addBox(this.scene, 0.65, 0.05, 0.05, '#334155', -23.34, 2.55, az + 1.15);
+      this.addBox(this.scene, 0.14, 0.78, 0.48, idx % 2 === 0 ? '#1e3a8a' : '#7f1d1d', -23.62, 2.8, az + 1.15);
+
+      // Warm festoon string lights draped overhead across the walking street!
+      this.addHangingWire(new THREE.Vector3(-31.1, 4.15, az), new THREE.Vector3(-23.1, 4.15, az), 0.45, 0.015);
+      for (let lx = -30.0; lx <= -24.0; lx += 1.5) {
+        const sag = 0.45 * (1 - Math.pow((lx + 27.1) / 4.0, 2));
+        const festoonBulb = new THREE.Mesh(
+          new THREE.SphereGeometry(0.065, 6, 6),
+          new THREE.MeshBasicMaterial({ color: Math.abs(Math.floor(lx + az)) % 2 === 0 ? '#fde68a' : '#fb923c' })
+        );
+        festoonBulb.position.set(lx, 4.15 - sag - 0.05, az);
+        this.scene.add(festoonBulb);
+      }
     });
-    // Grounded alley utility poles tucked cleanly at curb edges (-29.85 / -24.35) with lamp arms (clear of vehicles!)
+    // Sidewalk Market Stalls & Props tucked cleanly onto the left & right pedestrian walkways (zero road obstruction!)
+    // Left walkway (-30.65): glowing coin water dispenser + grilled pork/snack cart + potted plants
+    this.addBox(this.scene, 0.56, 1.55, 0.65, '#f8fafc', -30.78, 0.82, -4.1);
+    this.addBox(this.scene, 0.06, 0.65, 0.45, '#38bdf8', -30.48, 1.05, -4.1);
+    this.addBox(this.scene, 0.75, 0.84, 1.85, '#991b1b', -30.65, 0.46, -8.8);
+    this.addBox(this.scene, 0.78, 0.06, 1.9, '#cbd5e1', -30.65, 0.9, -8.8);
+    const leftStallSign = new THREE.Mesh(
+      new THREE.PlaneGeometry(1.45, 0.48),
+      new THREE.MeshBasicMaterial({ map: createMarketSignTexture() })
+    );
+    leftStallSign.rotation.y = Math.PI / 2;
+    leftStallSign.position.set(-30.24, 1.95, -8.8);
+    this.scene.add(leftStallSign);
+    // Right walkway (-23.55): night-noodle / fruit cart + folding table + red stools + parked scooter
+    this.addBox(this.scene, 0.75, 0.84, 1.9, '#b45309', -23.55, 0.46, -11.4);
+    this.addBox(this.scene, 0.78, 0.06, 1.95, '#cbd5e1', -23.55, 0.9, -11.4);
+    const rightStallSign = new THREE.Mesh(
+      new THREE.PlaneGeometry(1.55, 0.48),
+      new THREE.MeshBasicMaterial({ map: createNoodleCartSignTexture() })
+    );
+    rightStallSign.rotation.y = -Math.PI / 2;
+    rightStallSign.position.set(-23.96, 1.95, -11.4);
+    this.scene.add(rightStallSign);
+    [-4.8, -14.0, -18.5].forEach((pz) => {
+      const pot = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.14, 0.34, 8), new THREE.MeshStandardMaterial({ color: '#9a3412' }));
+      pot.position.set(-23.42, 0.21, pz);
+      const bush = new THREE.Mesh(new THREE.SphereGeometry(0.28, 7, 7), new THREE.MeshStandardMaterial({ color: '#15803d' }));
+      bush.position.set(-23.42, 0.48, pz);
+      this.scene.add(pot, bush);
+    });
+    const alleyParkedBike = buildRealisticMotorcycle({ bodyColor: '#2563eb', withRider: false, facing: 1 }).group;
+    alleyParkedBike.scale.multiplyScalar(0.84);
+    alleyParkedBike.rotation.y = Math.PI / 2;
+    alleyParkedBike.position.set(-23.62, 0.04, -6.5);
+    this.scene.add(alleyParkedBike);
+    // Grounded alley utility poles tucked cleanly at outer curb edges (-30.85 / -23.35) with lamp arms
     [-6.8, -14.2, -21.8].forEach((lz, li) => {
-      const px = li % 2 === 0 ? -29.85 : -24.35;
+      const px = li % 2 === 0 ? -30.85 : -23.35;
       const dir = li % 2 === 0 ? 1 : -1;
       this.addBox(this.scene, 0.16, 4.6, 0.16, '#475569', px, 2.3, lz);
       this.addBox(this.scene, 0.75, 0.07, 0.07, '#64748b', px + dir * 0.38, 4.45, lz);
@@ -1241,12 +1346,11 @@ export class DormWorld {
       const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.1, 8, 8), new THREE.MeshBasicMaterial({ color: '#fde68a' }));
       bulb.position.set(px + dir * 0.72, 4.3, lz);
       this.scene.add(bulb);
-      const aLight = new THREE.PointLight('#ffbf69', 3.4, 12, 1.1);
+      const aLight = new THREE.PointLight('#ffbf69', 3.6, 13, 1.05);
       aLight.position.set(-27.1, 3.9, lz);
       this.scene.add(aLight);
     });
-    // Distant warm cross-street ambient glow at deep end of open alley (z = -26.5, NO blocking wall!)
-    const farAlleyLight = new THREE.PointLight('#fb923c', 4.0, 14, 1.05);
+    const farAlleyLight = new THREE.PointLight('#fb923c', 4.2, 15, 1.05);
     farAlleyLight.position.set(-27.1, 3.2, -26.2);
     this.scene.add(farAlleyLight);
 
@@ -1778,6 +1882,22 @@ export class DormWorld {
       shadow.position.set(pd.x, 0.025, pd.z);
       this.exteriorGroup.add(mesh, shadow);
       this.pedestrians.push({ ...pd, mesh, shadow });
+    });
+
+    // 4) Alley Walking-Street Pedestrians strolling in & out of the pedestrian walkways (-29.7 / -24.5)
+    const alleyPDefs: { kind: 'student' | 'worker' | 'worker_yellow' | 'office_lady' | 'uncle_local'; x: number; z: number; speed: number; minZ: number; maxZ: number; dir: 1 | -1 }[] = [
+      { kind: 'student', x: -29.65, z: -4.2, speed: 1.25, minZ: -22.5, maxZ: -1.5, dir: -1 },
+      { kind: 'office_lady', x: -30.0, z: -16.8, speed: 1.1, minZ: -23.0, maxZ: -1.8, dir: 1 },
+      { kind: 'uncle_local', x: -24.55, z: -8.5, speed: 1.05, minZ: -22.0, maxZ: -1.6, dir: -1 },
+      { kind: 'worker', x: -24.25, z: -19.2, speed: 1.3, minZ: -23.5, maxZ: -1.8, dir: 1 },
+    ];
+    alleyPDefs.forEach((ap) => {
+      const mesh = this.makeLitCharacter(this.charFrames[ap.kind][0], 1.4, 2.1);
+      mesh.position.set(ap.x, 0.92, ap.z);
+      const shadow = this.makeFloorShadow(shadowTex, 0.46);
+      shadow.position.set(ap.x, 0.068, ap.z);
+      this.exteriorGroup.add(mesh, shadow);
+      this.alleyPedestrians.push({ ...ap, mesh, shadow });
     });
   }
 
@@ -2514,6 +2634,17 @@ export class DormWorld {
         const pf = Math.floor(this.animClock * 6.5) % 4;
         (p.mesh.material as THREE.MeshStandardMaterial).map = this.charFrames[p.kind][pf];
         this.setMeshFacing(p.mesh, p.dir);
+      }
+
+      for (const ap of this.alleyPedestrians) {
+        ap.z += ap.dir * ap.speed * dt;
+        if (ap.z >= ap.maxZ) ap.dir = -1;
+        if (ap.z <= ap.minZ) ap.dir = 1;
+        ap.mesh.position.set(ap.x, 0.92, ap.z);
+        ap.shadow.position.set(ap.x, 0.068, ap.z);
+        const pf = Math.floor(this.animClock * 6.0) % 4;
+        (ap.mesh.material as THREE.MeshStandardMaterial).map = this.charFrames[ap.kind][pf];
+        this.setMeshFacing(ap.mesh, ap.x < -27 ? 1 : -1);
       }
     }
 
