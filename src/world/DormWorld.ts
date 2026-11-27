@@ -684,18 +684,34 @@ export class DormWorld {
       this.addBox(this.scene, 0.17, 0.18, 0.17, '#111827', bx, 0.52, bz);
     });
 
-    // Reflective puddles on wet Thai alley asphalt & courtyard
+    // Soft feathered shimmering rainwater puddles (never pitch-black metallic holes!)
+    const pudCanv = document.createElement('canvas');
+    pudCanv.width = 128;
+    pudCanv.height = 128;
+    const pudCtx = pudCanv.getContext('2d')!;
+    const pg = pudCtx.createRadialGradient(64, 64, 12, 64, 64, 60);
+    pg.addColorStop(0, 'rgba(72, 102, 138, 0.48)');
+    pg.addColorStop(0.55, 'rgba(48, 72, 102, 0.28)');
+    pg.addColorStop(1, 'rgba(48, 72, 102, 0)');
+    pudCtx.fillStyle = pg;
+    pudCtx.fillRect(0, 0, 128, 128);
+    const pudTex = new THREE.CanvasTexture(pudCanv);
+    pudTex.colorSpace = THREE.SRGBColorSpace;
     const puddleMat = new THREE.MeshStandardMaterial({
-      color: '#1b283b',
-      roughness: 0.06,
-      metalness: 0.78,
+      map: pudTex,
+      transparent: true,
+      opacity: 0.72,
+      roughness: 0.14,
+      metalness: 0.18,
+      depthWrite: false,
     });
     [-77.0, -68.0, -56.0, -47.0, -38.0, -29.0, -22.5, -16.8, -7.5, -1.2, 4.8, 9.6].forEach((pxPos, i) => {
       const puddle = new THREE.Mesh(
-        new THREE.CircleGeometry(1.1 + (i % 2) * 0.4, 24),
+        new THREE.PlaneGeometry(2.3 + (i % 2) * 0.7, 1.45 + (i % 3) * 0.25),
         puddleMat
       );
       puddle.rotation.x = -Math.PI / 2;
+      puddle.rotation.z = (i % 2 === 0 ? 1 : -1) * 0.18;
       puddle.position.set(pxPos, pxPos < -15.2 ? 0.015 : 0.024, pxPos < -15.2 ? 2.4 + (i % 2) * 0.6 : 1.15);
       this.scene.add(puddle);
     });
@@ -762,13 +778,21 @@ export class DormWorld {
       }
     }
 
-    // Right exterior wall: weathered Thai plaster + stairwell windows on Floors 1-3
-    const extWallH = FLOOR_HEIGHT * 4 + 0.1;
-    const rightExtWall = this.addBox(this.scene, 0.55, extWallH, 4.5, '#3b403c', 14.55, extWallH / 2 - 0.05, 0.35);
+    // Right exterior wall: Floors 1-3 weathered plaster; Floor 0 has an OPEN Side Doorway out to the Basketball Court!
+    const upperWallH = FLOOR_HEIGHT * 3 + 0.1;
+    const rightExtWall = this.addBox(
+      this.scene,
+      0.55,
+      upperWallH,
+      4.5,
+      '#3b403c',
+      14.55,
+      FLOOR_HEIGHT + upperWallH / 2 - 0.05,
+      0.35
+    );
     rightExtWall.material = new THREE.MeshStandardMaterial({ map: wallTex12, roughness: 0.92 });
 
     // Left exterior wall: weathered plaster on Floors 1-3, with an OPEN Dorm Side Gate / Archway on Floor 0!
-    const upperWallH = FLOOR_HEIGHT * 3 + 0.1;
     const leftExtWall = this.addBox(
       this.scene,
       0.55,
@@ -836,6 +860,26 @@ export class DormWorld {
     const gateLight = new THREE.PointLight('#ffd080', 1.6, 7.5, 1.5);
     gateLight.position.set(-14.55, 3.0, 0.9);
     this.scene.add(gateLight);
+
+    // Floor 0 Right Exit Doorway out to Basketball Court (+14.55): pillars, lintel, propped-open wooden exit door & lamp!
+    this.addBox(this.scene, 0.55, FLOOR_HEIGHT, 1.15, '#2b3033', 14.55, FLOOR_HEIGHT / 2, -1.32);
+    this.addBox(this.scene, 0.55, FLOOR_HEIGHT, 0.55, '#2b3033', 14.55, FLOOR_HEIGHT / 2, 2.32);
+    this.addBox(this.scene, 0.58, 1.15, 4.5, '#262b2e', 14.55, FLOOR_HEIGHT - 0.55, 0.35);
+    // Open steel-and-wood side exit door leaf swung open against back jamb + door frame + warm lamp
+    this.addBox(this.scene, 0.14, 2.55, 0.14, '#5a3a22', 14.55, 1.28, -0.72);
+    this.addBox(this.scene, 0.14, 2.55, 0.14, '#5a3a22', 14.55, 1.28, 1.98);
+    this.addBox(this.scene, 0.18, 0.14, 2.85, '#5a3a22', 14.55, 2.6, 0.63);
+    const rightOpenDoor = this.addBox(this.scene, 0.95, 2.48, 0.08, '#6e4526', 14.98, 1.24, -0.34, 0.72);
+    rightOpenDoor.rotation.y = 0.28;
+    const exitBulb = new THREE.Mesh(
+      new THREE.SphereGeometry(0.11, 8, 8),
+      new THREE.MeshBasicMaterial({ color: '#ffd996' })
+    );
+    exitBulb.position.set(14.55, 3.0, 0.65);
+    this.scene.add(exitBulb);
+    const exitLight = new THREE.PointLight('#ffd080', 1.8, 8.5, 1.4);
+    exitLight.position.set(14.55, 2.85, 0.65);
+    this.scene.add(exitLight);
 
     // Real diagonal Thai concrete staircases connecting Floors 0->1, 1->2, 2->3
     for (let f = 0 as FloorIndex; f <= 2; f = (f + 1) as FloorIndex) {

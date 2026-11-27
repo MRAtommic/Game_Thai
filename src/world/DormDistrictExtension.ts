@@ -19,7 +19,7 @@ export interface DormExtensionAnimRefs {
   policeRedLight: THREE.PointLight;
   policeBeaconBlue: THREE.Mesh;
   policeBeaconRed: THREE.Mesh;
-  laundryDrums: THREE.Mesh[];
+  laundryDrums: THREE.Object3D[];
   acFans: THREE.Mesh[];
   canalRipples: THREE.Mesh[];
   winMotoMesh: THREE.Mesh;
@@ -312,43 +312,82 @@ export function buildDormDistrictExtension(
     makeNpc('worker_yellow', 21.4, 0, -0.35, -1),
   ];
 
-  // B) 24-Hour Coin Laundry Shop (x = +27.5)
-  addBox(exteriorGroup, 6.2, 3.85, 2.1, '#e0f2fe', 27.5, 1.92, -1.25, 0.55);
+  // B) 24-Hour Coin Laundry Shop with True 3D Recessed Room & Deep Front-Load Washers (x = +27.5)
+  // Recessed interior back tile wall, left & right side walls, tiled shop floor & protruding lit canopy
+  addBox(exteriorGroup, 6.4, 0.14, 2.5, '#cbd5e1', 27.5, 0.07, -0.95, 0.45); // raised tiled interior apron
+  addBox(exteriorGroup, 6.4, 3.6, 0.24, '#e0f2fe', 27.5, 1.85, -2.18, 0.5);   // bright interior back wall
+  addBox(exteriorGroup, 0.24, 3.6, 2.5, '#bae6fd', 24.42, 1.85, -0.95, 0.6); // left depth side wall
+  addBox(exteriorGroup, 0.24, 3.6, 2.5, '#bae6fd', 30.58, 1.85, -0.95, 0.6); // right depth side wall
+  addBox(exteriorGroup, 6.6, 0.35, 2.75, '#0284c7', 27.5, 3.72, -0.9, 0.45); // overhanging marquee ceiling
+  addBox(exteriorGroup, 6.7, 0.16, 2.8, '#0369a1', 27.5, 3.92, -0.9, 0.45);
+
   const laundrySign = new THREE.Mesh(
-    new THREE.PlaneGeometry(5.6, 1.0),
+    new THREE.PlaneGeometry(5.6, 0.96),
     new THREE.MeshBasicMaterial({ map: createLaundrySignTexture() })
   );
-  laundrySign.position.set(27.5, 3.22, -0.17);
+  laundrySign.position.set(27.5, 3.55, 0.5);
   exteriorGroup.add(laundrySign);
 
-  const laundryDrums: THREE.Mesh[] = [];
+  // Stainless machine platform plinth + detergent vending dispenser on left side wall
+  addBox(exteriorGroup, 5.2, 0.14, 1.05, '#64748b', 27.5, 0.14, -1.45, 0.4);
+  addBox(exteriorGroup, 0.5, 1.15, 0.35, '#f8fafc', 24.75, 1.4, -1.65, 0.35);
+
+  const laundryDrums: THREE.Object3D[] = [];
   for (let i = 0; i < 4; i++) {
     const mx = 25.6 + i * 1.25;
-    addBox(exteriorGroup, 0.95, 1.28, 0.65, '#f8fafc', mx, 0.66, -0.45, 0.4);
-    const ring = new THREE.Mesh(
-      new THREE.TorusGeometry(0.28, 0.05, 8, 16),
-      new THREE.MeshStandardMaterial({ color: '#0284c7', metalness: 0.6 })
+    const mz = -1.45; // deep cabinet sits back on raised tiled platform
+    // Deep cabinet housing + top recessed silver/cyan control fascia + coin slot
+    addBox(exteriorGroup, 0.98, 1.32, 0.92, '#f8fafc', mx, 0.85, mz, 0.32);
+    addBox(exteriorGroup, 0.96, 0.22, 0.95, '#0284c7', mx, 1.4, mz + 0.01, 0.35);
+    addBox(exteriorGroup, 0.22, 0.08, 0.04, '#22d3ee', mx - 0.25, 1.4, mz + 0.49, 0.2); // LED timer readout
+
+    // 3D Recessed Steel Drum Tunnel Cavity + Chrome Bezel Door Ring + Side Handle
+    const recessWall = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.28, 0.28, 0.38, 16, 1, true),
+      new THREE.MeshStandardMaterial({ color: '#1e293b', side: THREE.BackSide, roughness: 0.45, metalness: 0.5 })
     );
-    ring.position.set(mx, 0.72, -0.11);
-    exteriorGroup.add(ring);
-    const inner = new THREE.Mesh(
-      new THREE.CircleGeometry(0.24, 14),
-      new THREE.MeshBasicMaterial({ color: i % 2 === 0 ? '#bae6fd' : '#fbcfe8' })
+    recessWall.rotation.x = Math.PI / 2;
+    recessWall.position.set(mx, 0.78, mz + 0.28);
+    const backDrumCap = new THREE.Mesh(
+      new THREE.CircleGeometry(0.27, 16),
+      new THREE.MeshStandardMaterial({ color: '#0f172a', roughness: 0.4, metalness: 0.65 })
     );
-    inner.position.set(mx, 0.72, -0.115);
-    exteriorGroup.add(inner);
-    const bar = new THREE.Mesh(
-      new THREE.BoxGeometry(0.4, 0.07, 0.03),
-      new THREE.MeshBasicMaterial({ color: '#0369a1' })
+    backDrumCap.position.set(mx, 0.78, mz + 0.1);
+    const doorBezel = new THREE.Mesh(
+      new THREE.TorusGeometry(0.3, 0.055, 10, 18),
+      new THREE.MeshStandardMaterial({ color: '#cbd5e1', metalness: 0.75, roughness: 0.22 })
     );
-    bar.position.set(mx, 0.72, -0.09);
-    exteriorGroup.add(bar);
-    laundryDrums.push(bar);
+    doorBezel.position.set(mx, 0.78, mz + 0.48);
+    addBox(exteriorGroup, 0.05, 0.16, 0.06, '#0369a1', mx + 0.31, 0.78, mz + 0.51, 0.3); // door latch
+
+    // 3D Rotating Inner Drum Assembly recessed inside cabinet (clothes + soapy foam paddles!)
+    const drumGrp = new THREE.Group();
+    drumGrp.position.set(mx, 0.78, mz + 0.24);
+    const soapWater = new THREE.Mesh(
+      new THREE.CircleGeometry(0.25, 14),
+      new THREE.MeshBasicMaterial({ color: i % 2 === 0 ? '#7dd3fc' : '#bae6fd', transparent: true, opacity: 0.55 })
+    );
+    drumGrp.add(soapWater);
+    ['#f43f5e', '#facc15', '#f8fafc', '#38bdf8'].forEach((clCol, ci) => {
+      const ang = (ci / 4) * Math.PI * 2;
+      const cloth = new THREE.Mesh(
+        new THREE.BoxGeometry(0.14, 0.12, 0.2),
+        new THREE.MeshStandardMaterial({ color: clCol, roughness: 0.75 })
+      );
+      cloth.position.set(Math.cos(ang) * 0.12, Math.sin(ang) * 0.12, 0.02);
+      cloth.rotation.z = ang;
+      drumGrp.add(cloth);
+    });
+    exteriorGroup.add(recessWall, backDrumCap, doorBezel, drumGrp);
+    laundryDrums.push(drumGrp);
   }
-  const laundryLight = new THREE.PointLight('#bae6fd', 4.5, 13, 1.1);
-  laundryLight.position.set(27.5, 2.6, 1.2);
+  // Wooden laundry folding bench & colorful clothes baskets in foreground aisle
+  addBox(exteriorGroup, 1.5, 0.44, 0.45, '#92400e', 29.55, 0.28, -0.35, 0.75);
+  addBox(exteriorGroup, 0.48, 0.32, 0.38, '#f43f5e', 29.4, 0.66, -0.35, 0.6);
+  const laundryLight = new THREE.PointLight('#bae6fd', 5.5, 13, 1.0);
+  laundryLight.position.set(27.5, 3.1, -0.35);
   exteriorGroup.add(laundryLight);
-  const laundryMesh = makeNpc('laundry_lady', 26.0, 0, 0.1, 1);
+  const laundryMesh = makeNpc('laundry_lady', 24.9, 0.08, 0.15, 1);
 
   // C) Generator Shed & Electrician Chang Tong Workshop (x = +35.8)
   addBox(exteriorGroup, 5.2, 3.1, 2.2, '#334155', 35.8, 1.55, -1.2, 0.75);
