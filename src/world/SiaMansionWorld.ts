@@ -269,13 +269,27 @@ export function buildSiaMansionWorld(
   makeMansionDoor(1.5, 1, 'ห้องนิรภัยชั้น 2');
   makeMansionDoor(8.5, 2, 'ห้องทำงานเสี่ย');
 
-  // Staircases with brass handrails (Floor 1 -> 2 at +8.5, Floor 2 -> 3 at -8.5)
+  // Staircases with diagonal stringers, brass balusters, angled mahogany handrails & newel posts!
+  const stairSlopeAngle = Math.atan2(0.56 * 6, 0.45 * 6);
+  const stairLen = Math.hypot(0.45 * 6, 0.56 * 6) + 0.45;
   for (let s = 0; s < 7; s++) {
     addBox(group, 0.62, 0.22, 1.5, '#92400e', 7.3 + s * 0.45, 0.12 + s * 0.56, -1.55, 0.45);
-    addCylinder(group, 0.035, 0.035, 0.78, '#eab308', 7.3 + s * 0.45, 0.6 + s * 0.56, -0.85, 0.25, 0.75, 8);
+    addCylinder(group, 0.035, 0.035, 0.82, '#eab308', 7.3 + s * 0.45, 0.6 + s * 0.56, -0.85, 0.25, 0.75, 8);
     addBox(group, 0.62, 0.22, 1.5, '#92400e', -7.2 - s * 0.45, MANSION_FLOOR_H + 0.12 + s * 0.56, -1.55, 0.45);
-    addCylinder(group, 0.035, 0.035, 0.78, '#eab308', -7.2 - s * 0.45, MANSION_FLOOR_H + 0.6 + s * 0.56, -0.85, 0.25, 0.75, 8);
+    addCylinder(group, 0.035, 0.035, 0.82, '#eab308', -7.2 - s * 0.45, MANSION_FLOOR_H + 0.6 + s * 0.56, -0.85, 0.25, 0.75, 8);
   }
+  // Angled handrails & under-stair stringers for Floor 1->2 (Right +8.65) and Floor 2->3 (Left -8.55)
+  const rRail = addBox(group, stairLen, 0.09, 0.12, '#451a03', 8.65, 2.68, -0.85, 0.45);
+  rRail.rotation.z = stairSlopeAngle;
+  const rStringer = addBox(group, stairLen, 0.22, 1.48, '#5c2808', 8.65, 1.72, -1.55, 0.55);
+  rStringer.rotation.z = stairSlopeAngle;
+  addCylinder(group, 0.08, 0.09, 1.05, '#eab308', 7.22, 0.52, -0.85, 0.25, 0.75, 10);
+
+  const lRail = addBox(group, stairLen, 0.09, 0.12, '#451a03', -8.55, MANSION_FLOOR_H + 2.68, -0.85, 0.45);
+  lRail.rotation.z = -stairSlopeAngle;
+  const lStringer = addBox(group, stairLen, 0.22, 1.48, '#5c2808', -8.55, MANSION_FLOOR_H + 1.72, -1.55, 0.55);
+  lStringer.rotation.z = -stairSlopeAngle;
+  addCylinder(group, 0.08, 0.09, 1.05, '#eab308', -7.12, MANSION_FLOOR_H + 0.52, -0.85, 0.25, 0.75, 10);
 
   // --- HIDING SPOTS (Round Fluted Roman Columns, Topiary Bushes, Velvet Drapes) ---
   const hidingSpots: MansionHidingSpot[] = [
