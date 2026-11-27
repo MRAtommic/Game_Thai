@@ -1,5 +1,6 @@
 import { drawCh3CharacterCanvas, drawCh3ItemIconDataUrl } from '../art/Chapter3Sprites';
 import { SoundEngine } from '../audio/SoundEngine';
+import { speakDialogueLine, stopVoiceActing } from '../audio/VoiceActor';
 import {
   CH3_CLUES,
   CH3_ITEMS,
@@ -2070,6 +2071,7 @@ export class Chapter3Engine {
     this.dialogueSpeaker.textContent = line.speaker;
     this.dialogueRole.textContent = line.role;
     this.dialogueText.textContent = line.text;
+    speakDialogueLine(line.speaker, line.role, line.text, line.portrait, this.sound.isMuted());
     const ctx = this.dialoguePortrait.getContext('2d')!;
     ctx.clearRect(0, 0, 96, 96);
     const kindMap = {
@@ -2093,6 +2095,7 @@ export class Chapter3Engine {
         b.textContent = ch.label;
         b.addEventListener('click', () => {
           this.sound.playUIClick();
+          stopVoiceActing();
           this.dialogueBox.classList.add('hidden');
           this.activeDialogue = [];
           ch.action?.();

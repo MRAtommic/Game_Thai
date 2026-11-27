@@ -1,5 +1,6 @@
 import { drawCh2CharacterCanvas, drawCh2ItemIconDataUrl } from '../art/Chapter2Sprites';
 import { SoundEngine } from '../audio/SoundEngine';
+import { speakDialogueLine, stopVoiceActing } from '../audio/VoiceActor';
 import { CH2_CLUES, CH2_ITEMS, CH2_RULES, CH2_ZONE_NAMES } from '../data/chapter2Data';
 import { DialogueLine, EndingType, FloorIndex, TimePeriod, WeatherType } from '../types';
 import { CutscenePlayer, IsaanCutsceneId } from '../ui/CutscenePlayer';
@@ -1940,6 +1941,7 @@ export class Chapter2Engine {
     this.dialogueSpeaker.textContent = line.speaker;
     this.dialogueRole.textContent = line.role;
     this.dialogueText.textContent = line.text;
+    speakDialogueLine(line.speaker, line.role, line.text, line.portrait, this.sound.isMuted());
     const ctx = this.dialoguePortrait.getContext('2d')!;
     ctx.clearRect(0, 0, 96, 96);
     const kindMap: Record<string, Parameters<typeof drawCh2CharacterCanvas>[0]> = {
@@ -1967,6 +1969,7 @@ export class Chapter2Engine {
         b.textContent = ch.label;
         b.addEventListener('click', () => {
           this.sound.playUIClick();
+          stopVoiceActing();
           this.dialogueBox.classList.add('hidden');
           this.activeDialogue = [];
           ch.action?.();

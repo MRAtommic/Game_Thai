@@ -1,6 +1,7 @@
 import { drawCharacterCanvas, CharacterKind } from '../art/SpriteFactory';
 import { drawItemIconDataUrl } from '../art/TextureFactory';
 import { SoundEngine } from '../audio/SoundEngine';
+import { speakDialogueLine, stopVoiceActing } from '../audio/VoiceActor';
 import { CLUES, DORM_RULES, FLOOR_NAMES, ITEMS } from '../data/storyData';
 import { renderSharedInventoryBar } from '../ui/InventoryBar';
 import { CutscenePlayer, IsaanCutsceneId } from '../ui/CutscenePlayer';
@@ -3130,6 +3131,7 @@ export class GameEngine {
     this.dialogueSpeaker.textContent = line.speaker;
     this.dialogueRole.textContent = line.role;
     this.dialogueText.textContent = line.text;
+    speakDialogueLine(line.speaker, line.role, line.text, line.portrait, this.sound.isMuted());
 
     const ctx = this.dialoguePortrait.getContext('2d')!;
     ctx.clearRect(0, 0, 96, 96);
@@ -3186,6 +3188,7 @@ export class GameEngine {
   }
 
   private closeDialogue(): void {
+    stopVoiceActing();
     this.activeDialogue = [];
     this.dialogueIndex = 0;
     this.dialogueBox.classList.add('hidden');
