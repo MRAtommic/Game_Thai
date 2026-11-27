@@ -68,6 +68,7 @@ export class SchoolWorld {
   private dustCount = 140;
   private lampCones: THREE.Mesh[] = [];
   private peemBikeFrames: THREE.CanvasTexture[] = [];
+  private shopStates: { shutter: THREE.Mesh; light: THREE.PointLight; staff: THREE.Mesh; guest: THREE.Mesh }[] = [];
 
   private rainLines: THREE.LineSegments;
   private rainPos: Float32Array;
@@ -300,13 +301,14 @@ export class SchoolWorld {
     this.addBox(this.exteriorGroup, 80, 0.16, 5.8, '#64748b', -92, 0.08, -6.1, 0.85);
     this.addBox(this.exteriorGroup, 80, 0.14, 0.28, '#cbd5e1', -92, 0.07, -3.25, 0.8);
 
-    // Grounded 2-Story Open Thai Town Shophouses (ตึกแถวเปิดร้านค้า มีแสงไฟ ชั้นวางของ และคนอยู่ข้างใน!)
+    // Grounded 2-Story Thai Town Shophouses (ตึกแถวเปิดร้านตอนกลางวัน — ปิดประตูเหล็กม้วนแบบไทยตอนกลางคืน!)
     const shophouseWin = createThaiWindowTexture(true);
+    const shutterTex = this.createThaiShutterTexture();
     [
-      { x: -120.5, wall: '#e2e8f0', roof: '#1e3a8a', awning: '#b91c1c', sign: 'ร้านขายของชำป้าพร', sub: 'ขนม • เครื่องดื่ม • เปิด 06:00-21:00', staff: 'mom_ch3' as Ch3CharKind, guest: 'student_girl' as Ch3CharKind },
+      { x: -120.5, wall: '#e2e8f0', roof: '#1e3a8a', awning: '#b91c1c', sign: 'ร้านขายของชำป้าพร', sub: 'ขนม • เครื่องดื่ม • เปิด 06:00-19:00', staff: 'mom_ch3' as Ch3CharKind, guest: 'student_girl' as Ch3CharKind },
       { x: -96, wall: '#fef3c7', roof: '#7c2d12', awning: '#0f766e', sign: 'ร้านกาแฟโบราณ & นมสด', sub: 'ชาเย็น • โอวัลติน • เปิดบริการ', staff: 'vendor_coop' as Ch3CharKind, guest: 'student_boy' as Ch3CharKind },
       { x: -82, wall: '#dbeafe', roof: '#1e293b', awning: '#1d4ed8', sign: 'ร้านเครื่องเขียนจันทรา', sub: 'สมุด • ดินสอ • ถ่ายเอกสาร', staff: 'mom_ch3' as Ch3CharKind, guest: 'student_girl' as Ch3CharKind },
-      { x: -69, wall: '#f1f5f9', roof: '#7f1d1d', awning: '#b45309', sign: 'มินิมาร์ทหน้าโรงเรียน', sub: 'เปิด 24 ชม. • ของกินเพียบ', staff: 'vendor_coop' as Ch3CharKind, guest: 'student_boy' as Ch3CharKind },
+      { x: -69, wall: '#f1f5f9', roof: '#7f1d1d', awning: '#b45309', sign: 'ร้านสะดวกซื้อหน้าโรงเรียน', sub: 'เปิดกลางวัน • ปิด 19:00 น.', staff: 'vendor_coop' as Ch3CharKind, guest: 'student_boy' as Ch3CharKind },
     ].forEach((sh) => {
       const bw = 7.4;
       const bz = -6.0;
@@ -316,8 +318,7 @@ export class SchoolWorld {
       this.addBox(this.exteriorGroup, bw, 2.68, 0.25, '#fef3c7', sh.x, 1.5, bz - 1.5, 0.85); // warm lit interior back wall
       this.addBox(this.exteriorGroup, 0.72, 2.68, 3.5, sh.wall, sh.x - 3.34, 1.5, bz, 0.85); // left framing pillar
       this.addBox(this.exteriorGroup, 0.72, 2.68, 3.5, sh.wall, sh.x + 3.34, 1.5, bz, 0.85); // right framing pillar
-      // Rolled-up shutter coil tucked neatly at top lintel + Flush Roof & Cornice (ZERO floating gap!)
-      this.addBox(this.exteriorGroup, 5.8, 0.28, 0.24, '#94a3b8', sh.x, 2.66, frontZ + 0.02, 0.45);
+      // Flush Roof & Cornice
       this.addBox(this.exteriorGroup, bw + 0.35, 0.22, 3.85, '#cbd5e1', sh.x, 5.66, bz, 0.7);
       this.addBox(this.exteriorGroup, bw + 0.6, 0.75, 4.0, sh.roof, sh.x, 6.1, bz, 0.65);
 
@@ -327,7 +328,7 @@ export class SchoolWorld {
         this.addBox(this.exteriorGroup, 0.42, 0.38, 0.28, mc, sh.x - 1.7 + mi * 0.68, 1.48, bz - 0.95, 0.4);
         this.addBox(this.exteriorGroup, 0.38, 0.32, 0.28, mc, sh.x - 1.7 + mi * 0.68, 0.96, bz - 0.95, 0.4);
       });
-      this.addBox(this.exteriorGroup, 3.6, 0.92, 0.62, '#b45309', sh.x + 0.4, 0.62, frontZ - 0.65, 0.55); // glass shop counter
+      this.addBox(this.exteriorGroup, 3.6, 0.92, 0.62, '#b45309', sh.x + 0.4, 0.62, frontZ - 0.65, 0.55);
       const shopBulb = new THREE.PointLight('#fde68a', 4.8, 10, 1.0);
       shopBulb.position.set(sh.x, 2.35, frontZ - 0.35);
       this.exteriorGroup.add(shopBulb);
@@ -344,6 +345,17 @@ export class SchoolWorld {
       guestMesh.position.set(sh.x - 1.35, 1.1, frontZ - 0.45);
       guestMesh.scale.x = 1;
       this.exteriorGroup.add(staffMesh, guestMesh);
+
+      // Authentic Thai Corrugated Steel Roll-Up Shutter (rolls down flush at night!) + Steel Header Box
+      this.addBox(this.exteriorGroup, 6.0, 0.22, 0.28, '#475569', sh.x, 2.68, frontZ + 0.04, 0.5);
+      const shutterMesh = new THREE.Mesh(
+        new THREE.BoxGeometry(5.96, 2.52, 0.08),
+        new THREE.MeshStandardMaterial({ map: shutterTex, metalness: 0.45, roughness: 0.55 })
+      );
+      shutterMesh.position.set(sh.x, 2.52, frontZ + 0.02);
+      shutterMesh.scale.y = 0.12;
+      this.exteriorGroup.add(shutterMesh);
+      this.shopStates.push({ shutter: shutterMesh, light: shopBulb, staff: staffMesh, guest: guestMesh });
 
       // Sloped striped canopy awning + Shop Sign mounted cleanly on front lip of awning fascia (zero overlap!)
       this.addBox(this.exteriorGroup, 5.8, 0.12, 1.15, sh.awning, sh.x, 2.72, frontZ + 0.48, 0.75).rotation.x = 0.2;
@@ -812,6 +824,14 @@ export class SchoolWorld {
     }
 
     const isNight = hour >= 19.0 || hour < 5.5;
+    this.shopStates.forEach((st) => {
+      st.shutter.scale.y = THREE.MathUtils.lerp(st.shutter.scale.y, isNight ? 1.0 : 0.12, Math.min(1, dt * 4));
+      st.shutter.position.y = THREE.MathUtils.lerp(st.shutter.position.y, isNight ? 1.42 : 2.52, Math.min(1, dt * 4));
+      st.light.intensity = isNight ? 0 : 4.8;
+      const showInside = !isNight || st.shutter.scale.y < 0.45;
+      st.staff.visible = showInside;
+      st.guest.visible = showInside;
+    });
     this.corridorLights.forEach((cl) => {
       if (isNight && cl.floor === 3 && !chadaReturned) {
         cl.light.intensity = cl.baseInt * (Math.sin(this.animClock * 17 + cl.seed) > 0.65 ? 0.15 : 1.0);
@@ -845,6 +865,48 @@ export class SchoolWorld {
     this.rimLight.position.set(this.camera.position.x - 14, yBase + 16, -18);
 
     this.renderer.render(this.scene, this.camera);
+  }
+
+  private createThaiShutterTexture(): THREE.CanvasTexture {
+    const c = document.createElement('canvas');
+    c.width = 256;
+    c.height = 192;
+    const ctx = c.getContext('2d')!;
+    // Classic Thai steel roller-shutter slats (ประตูเหล็กม้วนสีเทาเงิน/ฟ้าอมเทา)
+    ctx.fillStyle = '#64748b';
+    ctx.fillRect(0, 0, 256, 192);
+    for (let y = 0; y < 192; y += 12) {
+      ctx.fillStyle = '#94a3b8';
+      ctx.fillRect(0, y, 256, 6);
+      ctx.fillStyle = '#475569';
+      ctx.fillRect(0, y + 6, 256, 4);
+      ctx.fillStyle = '#cbd5e1';
+      ctx.fillRect(0, y + 1, 256, 1.5);
+    }
+    // Side vertical guide rails + heavy bottom lock bar + center brass padlock clasp
+    ctx.fillStyle = '#334155';
+    ctx.fillRect(0, 0, 10, 192);
+    ctx.fillRect(246, 0, 10, 192);
+    ctx.fillStyle = '#1e293b';
+    ctx.fillRect(0, 178, 256, 14);
+    ctx.fillStyle = '#cbd5e1';
+    ctx.fillRect(108, 170, 40, 12);
+    ctx.fillStyle = '#facc15';
+    ctx.fillRect(123, 176, 10, 10);
+    // Small Thai "ปิดร้าน" hanger card in middle
+    ctx.fillStyle = '#7f1d1d';
+    ctx.fillRect(88, 76, 80, 32);
+    ctx.strokeStyle = '#facc15';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(88, 76, 80, 32);
+    ctx.fillStyle = '#fef08a';
+    ctx.font = 'bold 16px "IBM Plex Sans Thai", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('ปิดร้าน', 128, 92);
+    const t = new THREE.CanvasTexture(c);
+    t.colorSpace = THREE.SRGBColorSpace;
+    return t;
   }
 
   private createMountainHorizonTexture(): THREE.CanvasTexture {
