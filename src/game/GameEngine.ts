@@ -85,6 +85,7 @@ export class GameEngine {
   private facing: 1 | -1 = 1;
   private codes = new Set<string>();
   private touchMoveDir: -1 | 0 | 1 = 0;
+  private touchMoveZ: -1 | 0 | 1 = 0;
   private isSprintingTouch = false;
   private stepTimer = 0;
   private weatherTimer = 55;
@@ -538,14 +539,47 @@ export class GameEngine {
       }
     }, sig);
 
-    this.touchUp.addEventListener('click', () => {
-      this.sound.init();
-      this.tryChangeFloor(1);
-    }, sig);
-    this.touchDown.addEventListener('click', () => {
-      this.sound.init();
-      this.tryChangeFloor(-1);
-    }, sig);
+    const bindHoldZBtn = (btn: HTMLElement, zDir: -1 | 1, floorDelta: -1 | 1) => {
+      let zPointerId: number | null = null;
+      const startZ = (ev: PointerEvent) => {
+        ev.preventDefault();
+        this.sound.init();
+        if (this.currentRoom === 'sia_mansion') {
+          if (floorDelta === 1 && ((this.state.floor === 0 && Math.abs(this.state.x - 8.5) <= 1.7) || (this.state.floor === 1 && Math.abs(this.state.x + 8.5) <= 1.7))) {
+            this.state.floor = (this.state.floor + 1) as FloorIndex;
+            this.state.x = this.state.floor === 1 ? 7.6 : -7.6;
+            this.isHidden = false;
+            this.updateHUD();
+          } else if (floorDelta === -1 && ((this.state.floor === 1 && Math.abs(this.state.x - 8.5) <= 1.7) || (this.state.floor === 2 && Math.abs(this.state.x + 8.5) <= 1.7))) {
+            this.state.floor = (this.state.floor - 1) as FloorIndex;
+            this.state.x = this.state.floor === 0 ? 7.6 : -7.6;
+            this.isHidden = false;
+            this.updateHUD();
+          }
+          return;
+        }
+        if (this.currentRoom === 'outside' && Math.abs(this.state.x - STAIR_X) <= 1.55) {
+          this.tryChangeFloor(floorDelta);
+          return;
+        }
+        zPointerId = ev.pointerId;
+        this.touchMoveZ = zDir;
+        btn.classList.add('pressed');
+        try { btn.setPointerCapture(ev.pointerId); } catch {}
+      };
+      const endZ = (ev: PointerEvent) => {
+        if (zPointerId !== null && ev.pointerId !== zPointerId) return;
+        ev.preventDefault();
+        zPointerId = null;
+        if (this.touchMoveZ === zDir) this.touchMoveZ = 0;
+        btn.classList.remove('pressed');
+      };
+      btn.addEventListener('pointerdown', startZ as EventListener, sig);
+      btn.addEventListener('pointerup', endZ as EventListener, sig);
+      btn.addEventListener('pointercancel', endZ as EventListener, sig);
+    };
+    bindHoldZBtn(this.touchUp, -1, 1);
+    bindHoldZBtn(this.touchDown, 1, -1);
     this.touchShoot.addEventListener('click', () => {
       this.sound.init();
       this.shootZombieGun();
@@ -560,6 +594,13 @@ export class GameEngine {
       () => {
         this.sound.init();
         this.sound.playUIClick();
+        if (this.currentRoom === 'sia_mansion') {
+          this.isSneaking = !this.isSneaking;
+          touchSprintBtn.classList.toggle('active', this.isSneaking);
+          touchSprintBtn.textContent = this.isSneaking ? '🥷 ย่อง ✓' : '🥷 ย่อง';
+          this.showToast(this.isSneaking ? 'ย่อตัวเดินย่องเบา (การ์ดมองเห็นยากขึ้น)' : 'ยืนเดินปกติ');
+          return;
+        }
         this.isSprintingTouch = !this.isSprintingTouch;
         touchSprintBtn.classList.toggle('active', this.isSprintingTouch);
         touchSprintBtn.textContent = this.isSprintingTouch ? '🏃 วิ่ง ✓' : '🏃 วิ่ง';
@@ -570,14 +611,7 @@ export class GameEngine {
     this.interactPrompt.addEventListener('click', () => {
       this.sound.init();
       if (this.activeDialogue.length > 0 || this.modalOpen) return;
-      const nearest = this.getNearestInteractable();
-      if (nearest) {
-        this.tryInteract();
-      } else if (this.currentRoom === 'outside' && Math.abs(this.state.x - STAIR_X) <= 1.55) {
-        if (this.state.floor === 0) this.tryChangeFloor(1);
-        else if (this.state.floor === 3) this.tryChangeFloor(-1);
-        else this.showToast('แตะปุ่ม ▲ ขึ้น หรือ ▼ ลง ทางขวาเพื่อเลือกชั้น');
-      }
+      this.tryInteract();
     }, sig);
     document.getElementById('btn-sober-up')?.addEventListener('click', () => {
       this.sound.init();
@@ -3616,6 +3650,7 @@ export class GameEngine {
           if (this.codes.has('KeyW') || this.codes.has('ArrowUp')) moveZ -= 1;
           if (this.codes.has('KeyS') || this.codes.has('ArrowDown')) moveZ += 1;
         }
+        if (this.touchMoveZ !== 0) moveZ += this.touchMoveZ;
       }
 
       const isMoving = moveX !== 0 || moveZ !== 0;
@@ -3755,8 +3790,23 @@ export class GameEngine {
         this.currentRoom === 'sia_mansion' &&
         ((this.state.floor === 1 && Math.abs(this.state.x - 8.5) <= 1.7) ||
           (this.state.floor === 2 && Math.abs(this.state.x + 8.5) <= 1.7));
-      this.touchUp.classList.toggle('hidden', !((nearStairs && this.state.floor < 3) || nearMansionStairUp));
-      this.touchDown.classList.toggle('hidden', !((nearStairs && this.state.floor > 0) || nearMansionStairDown));
+      const showTouchUp = (nearStairs && this.state.floor < 3) || nearMansionStairUp || inAlleyZone;
+      const showTouchDown =
+        (nearStairs && this.state.floor > 0) || nearMansionStairDown || (inAlleyZone && this.playerZ < 0.8);
+      this.touchUp.textContent = inAlleyZone && !nearStairs ? '▲ เข้าซอย' : '▲ ขึ้น';
+      this.touchDown.textContent = inAlleyZone && !nearStairs ? '▼ ออกซอย' : '▼ ลง';
+      this.touchUp.classList.toggle('hidden', !showTouchUp);
+      this.touchDown.classList.toggle('hidden', !showTouchDown);
+      const tSprint = document.getElementById('touch-sprint');
+      if (tSprint) {
+        if (this.currentRoom === 'sia_mansion') {
+          tSprint.textContent = this.isSneaking ? '🥷 ย่อง ✓' : '🥷 ย่อง';
+          tSprint.classList.toggle('active', this.isSneaking);
+        } else {
+          tSprint.textContent = this.isSprintingTouch ? '🏃 วิ่ง ✓' : '🏃 วิ่ง';
+          tSprint.classList.toggle('active', this.isSprintingTouch);
+        }
+      }
 
       const nearest = canMove ? this.getNearestInteractable() : null;
       const nearHideSpot =
