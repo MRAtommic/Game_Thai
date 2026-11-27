@@ -299,41 +299,67 @@ export class SchoolWorld {
     this.addBox(this.exteriorGroup, 80, 0.16, 5.8, '#64748b', -92, 0.08, -6.1, 0.85);
     this.addBox(this.exteriorGroup, 80, 0.14, 0.28, '#cbd5e1', -92, 0.07, -3.25, 0.8);
 
-    // Grounded 2-Story Thai Town Shophouses (ตึกแถว 2 ชั้น) with flush roofs, shop shutters, striped awnings & glowing upper windows!
+    // Grounded 2-Story Open Thai Town Shophouses (ตึกแถวเปิดร้านค้า มีแสงไฟ ชั้นวางของ และคนอยู่ข้างใน!)
     const shophouseWin = createThaiWindowTexture(true);
     [
-      { x: -119, wall: '#e2e8f0', roof: '#1e3a8a', awning: '#b91c1c', sign: 'ร้านขายของชำ' },
-      { x: -96, wall: '#fef3c7', roof: '#7c2d12', awning: '#0f766e', sign: 'ร้านกาแฟโบราณ' },
-      { x: -82, wall: '#dbeafe', roof: '#1e293b', awning: '#1d4ed8', sign: 'ร้านเครื่องเขียน' },
-      { x: -68, wall: '#f1f5f9', roof: '#7f1d1d', awning: '#b45309', sign: 'คลินิก & ร้านยา' },
+      { x: -119, wall: '#e2e8f0', roof: '#1e3a8a', awning: '#b91c1c', sign: 'ร้านขายของชำป้าพร', sub: 'ขนม • เครื่องดื่ม • เปิด 06:00-21:00', staff: 'mom_ch3' as Ch3CharKind, guest: 'student_girl' as Ch3CharKind },
+      { x: -96, wall: '#fef3c7', roof: '#7c2d12', awning: '#0f766e', sign: 'ร้านกาแฟโบราณ & นมสด', sub: 'ชาเย็น • โอวัลติน • เปิดบริการ', staff: 'vendor_coop' as Ch3CharKind, guest: 'student_boy' as Ch3CharKind },
+      { x: -82, wall: '#dbeafe', roof: '#1e293b', awning: '#1d4ed8', sign: 'ร้านเครื่องเขียนจันทรา', sub: 'สมุด • ดินสอ • ถ่ายเอกสาร', staff: 'mom_ch3' as Ch3CharKind, guest: 'student_girl' as Ch3CharKind },
+      { x: -69, wall: '#f1f5f9', roof: '#7f1d1d', awning: '#b45309', sign: 'มินิมาร์ทหน้าโรงเรียน', sub: 'เปิด 24 ชม. • ของกินเพียบ', staff: 'vendor_coop' as Ch3CharKind, guest: 'student_boy' as Ch3CharKind },
     ].forEach((sh) => {
       const bw = 7.4;
-      const bh = 5.4;
       const bz = -6.0;
       const frontZ = bz + 1.75; // -4.25
-      // Grounded main structure (y = 0.16 .. 5.56) + flush cornice & sloped roof (ZERO floating gap!)
-      this.addBox(this.exteriorGroup, bw, bh, 3.5, sh.wall, sh.x, 0.16 + bh / 2, bz, 0.88);
-      this.addBox(this.exteriorGroup, bw + 0.35, 0.22, 3.85, '#cbd5e1', sh.x, 0.16 + bh + 0.1, bz, 0.7);
-      this.addBox(this.exteriorGroup, bw + 0.6, 0.75, 4.0, sh.roof, sh.x, 0.16 + bh + 0.55, bz, 0.65);
+      // 2nd Floor Upper Body (y = 2.8 .. 5.56) + Side Columns & Back Interior Shop Wall so Ground Floor is WIDE OPEN!
+      this.addBox(this.exteriorGroup, bw, 2.76, 3.5, sh.wall, sh.x, 4.18, bz, 0.88);
+      this.addBox(this.exteriorGroup, bw, 2.68, 0.25, '#fef3c7', sh.x, 1.5, bz - 1.5, 0.85); // warm lit interior back wall
+      this.addBox(this.exteriorGroup, 0.72, 2.68, 3.5, sh.wall, sh.x - 3.34, 1.5, bz, 0.85); // left framing pillar
+      this.addBox(this.exteriorGroup, 0.72, 2.68, 3.5, sh.wall, sh.x + 3.34, 1.5, bz, 0.85); // right framing pillar
+      // Rolled-up shutter coil tucked neatly at top lintel + Flush Roof & Cornice (ZERO floating gap!)
+      this.addBox(this.exteriorGroup, 5.8, 0.28, 0.24, '#94a3b8', sh.x, 2.66, frontZ + 0.02, 0.45);
+      this.addBox(this.exteriorGroup, bw + 0.35, 0.22, 3.85, '#cbd5e1', sh.x, 5.66, bz, 0.7);
+      this.addBox(this.exteriorGroup, bw + 0.6, 0.75, 4.0, sh.roof, sh.x, 6.1, bz, 0.65);
 
-      // Ground floor roll-up shop shutter + awning canopy + signboard
-      this.addBox(this.exteriorGroup, 4.4, 2.35, 0.08, '#94a3b8', sh.x, 1.34, frontZ + 0.02, 0.45);
-      this.addBox(this.exteriorGroup, 1.4, 2.35, 0.1, '#475569', sh.x - 2.3, 1.34, frontZ + 0.02, 0.55); // glass/wood side door
-      this.addBox(this.exteriorGroup, 5.2, 0.12, 1.1, sh.awning, sh.x, 2.68, frontZ + 0.48, 0.75).rotation.x = 0.28;
-      const shopSign = new THREE.Mesh(
-        new THREE.PlaneGeometry(3.2, 0.58),
-        new THREE.MeshBasicMaterial({ map: createSchoolSignTexture(sh.sign, 'เปิดบริการ', sh.roof, '#0f172a', '#fde68a') })
+      // Stocked Shop Display Shelves, Counter & Colorful Merchandise + Warm Shop Light + Staff & Customer INSIDE!
+      this.addBox(this.exteriorGroup, 4.6, 1.9, 0.36, '#78350f', sh.x, 1.12, bz - 1.1, 0.7);
+      ['#ef4444', '#facc15', '#22c55e', '#38bdf8', '#f97316', '#e879f9'].forEach((mc, mi) => {
+        this.addBox(this.exteriorGroup, 0.42, 0.38, 0.28, mc, sh.x - 1.7 + mi * 0.68, 1.48, bz - 0.95, 0.4);
+        this.addBox(this.exteriorGroup, 0.38, 0.32, 0.28, mc, sh.x - 1.7 + mi * 0.68, 0.96, bz - 0.95, 0.4);
+      });
+      this.addBox(this.exteriorGroup, 3.6, 0.92, 0.62, '#b45309', sh.x + 0.4, 0.62, frontZ - 0.65, 0.55); // glass shop counter
+      const shopBulb = new THREE.PointLight('#fde68a', 4.8, 10, 1.0);
+      shopBulb.position.set(sh.x, 2.35, frontZ - 0.35);
+      this.exteriorGroup.add(shopBulb);
+
+      const staffMesh = new THREE.Mesh(
+        new THREE.PlaneGeometry(1.36, 1.94),
+        new THREE.MeshStandardMaterial({ map: this.charFrames[sh.staff][0], transparent: true, alphaTest: 0.35, side: THREE.DoubleSide })
       );
-      shopSign.position.set(sh.x, 3.12, frontZ + 0.08);
+      staffMesh.position.set(sh.x + 0.6, 1.1, frontZ - 1.15);
+      const guestMesh = new THREE.Mesh(
+        new THREE.PlaneGeometry(1.34, 1.92),
+        new THREE.MeshStandardMaterial({ map: this.charFrames[sh.guest][0], transparent: true, alphaTest: 0.35, side: THREE.DoubleSide })
+      );
+      guestMesh.position.set(sh.x - 1.35, 1.1, frontZ - 0.45);
+      guestMesh.scale.x = 1;
+      this.exteriorGroup.add(staffMesh, guestMesh);
+
+      // Sloped striped canopy awning + Unobstructed Shop Sign cleanly IN FRONT of balcony rail!
+      this.addBox(this.exteriorGroup, 5.8, 0.12, 1.15, sh.awning, sh.x, 2.8, frontZ + 0.48, 0.75).rotation.x = 0.26;
+      const shopSign = new THREE.Mesh(
+        new THREE.PlaneGeometry(4.1, 0.64),
+        new THREE.MeshBasicMaterial({ map: createSchoolSignTexture(sh.sign, sh.sub, sh.roof, '#0f172a', '#fde68a') })
+      );
+      shopSign.position.set(sh.x, 3.35, frontZ + 0.34);
       this.exteriorGroup.add(shopSign);
 
       // 2nd Floor balcony rail & warm glowing Thai windows
-      this.addBox(this.exteriorGroup, bw - 0.6, 0.52, 0.14, '#cbd5e1', sh.x, 3.45, frontZ + 0.18, 0.8);
+      this.addBox(this.exteriorGroup, bw - 0.6, 0.48, 0.14, '#cbd5e1', sh.x, 3.45, frontZ + 0.16, 0.8);
       [-1.7, 1.7].forEach((wx) => {
         const w = new THREE.Mesh(new THREE.PlaneGeometry(1.75, 1.25), new THREE.MeshBasicMaterial({ map: shophouseWin }));
-        w.position.set(sh.x + wx, 4.42, frontZ + 0.04);
+        w.position.set(sh.x + wx, 4.46, frontZ + 0.04);
         this.exteriorGroup.add(w);
-        this.addBox(this.exteriorGroup, 1.9, 0.1, 0.12, sh.roof, sh.x + wx, 3.76, frontZ + 0.06, 0.6);
+        this.addBox(this.exteriorGroup, 1.9, 0.1, 0.12, sh.roof, sh.x + wx, 3.8, frontZ + 0.06, 0.6);
       });
     });
 
@@ -436,15 +462,15 @@ export class SchoolWorld {
       this.addBox(this.exteriorGroup, 0.52, CH3_FLOOR_H * 4, 0.52, '#e2e8f0', px, CH3_FLOOR_H * 2, 2.15);
     }
 
-    // Sloped Thai Royal-Blue School Gable Roof topping Floor 3
+    // Sloped Thai Royal-Blue School Gable Roof + ONE Unobstructed Building Title Sign cleanly centered along roof fascia
     const roofY = CH3_FLOOR_H * 4 + 0.35;
     this.addBox(this.exteriorGroup, totalW + 2.2, 1.9, 5.4, '#1e3a8a', centerX, roofY + 0.85, 0.2, 0.6);
     this.addBox(this.exteriorGroup, totalW + 2.4, 0.32, 5.6, '#facc15', centerX, roofY, 0.2, 0.4);
     const bldgTitle = new THREE.Mesh(
-      new THREE.PlaneGeometry(8.2, 1.55),
+      new THREE.PlaneGeometry(9.2, 1.65),
       new THREE.MeshBasicMaterial({ map: createSchoolSignTexture('อาคารเรียนมัธยมจันทรารัตน์ (3 ชั้น)', 'ชั้น 1 หอสมุด-พักครู • ชั้น 2 ม.5/2 • ชั้น 3 ดนตรีไทย', '#1e3a8a', '#0f172a', '#facc15') })
     );
-    bldgTitle.position.set(centerX, roofY + 0.9, 2.95);
+    bldgTitle.position.set(centerX, roofY + 0.9, 3.18);
     this.exteriorGroup.add(bldgTitle);
 
     // Ground Floor (ใต้ถุนอาคารเรียน -12 .. +36): Terrazzo floor, clean dark baseboard, full-height doors & lobby props

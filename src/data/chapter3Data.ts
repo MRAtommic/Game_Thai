@@ -45,6 +45,14 @@ export const CH3_ITEMS: Record<string, ItemDef> = {
     usable: true,
     consumable: true,
   },
+  bami_kiew: {
+    id: 'bami_kiew',
+    name: 'บะหมี่เกี๊ยวหมูแดงชายสี่',
+    icon: '',
+    description: 'บะหมี่หมูแดงร้อนๆ จากรถเข็นชายสี่หน้าโรงเรียน ฟื้นสติ +40% และกำลังวิ่ง 100%',
+    usable: true,
+    consumable: true,
+  },
   battery_pack: {
     id: 'battery_pack',
     name: 'ถ่านไฟฉายพลังสูง',

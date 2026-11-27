@@ -18,6 +18,7 @@ export interface SchoolLifeRefs {
   busGroup: THREE.Group;
   busPhaseTimer: number;
   busStopped: boolean;
+  busReturning: boolean;
   dropStudents: { mesh: THREE.Mesh; x: number; active: boolean; kind: 'student_boy' | 'student_girl' }[];
   vehicles: { group: THREE.Group; speed: number; dir: 1 | -1 }[];
   students: {
@@ -164,14 +165,15 @@ export function buildSchoolRooms(
   const hWin = new THREE.Mesh(new THREE.PlaneGeometry(1.9, 1.45), new THREE.MeshBasicMaterial({ map: winLit }));
   hWin.position.set(-2.0, 2.25, -1.61);
   house.add(hWin);
-  addBox(house, 1.8, 0.65, 0.9, '#78350f', -2.6, 0.32, -0.65);
-  addBox(house, 1.1, 0.65, 0.14, '#0f172a', -2.6, 1.02, -0.75);
-  addBox(house, 1.65, 0.78, 0.85, '#92400e', 1.4, 0.39, -1.05);
-  addBox(house, 0.52, 0.36, 0.06, '#38bdf8', 1.4, 0.96, -1.15);
+  addBox(house, 1.8, 0.65, 0.7, '#78350f', -2.8, 0.32, -1.18);
+  addBox(house, 1.1, 0.65, 0.14, '#0f172a', -2.8, 1.02, -1.24);
+  addBox(house, 1.65, 0.78, 0.75, '#92400e', 1.4, 0.39, -1.12);
+  addBox(house, 0.52, 0.36, 0.06, '#38bdf8', 1.4, 0.96, -1.22);
   addBox(house, 2.5, 0.55, 1.5, '#1e40af', 4.3, 0.28, -0.75);
   addBox(house, 2.5, 0.14, 1.5, '#f1f5f9', 4.3, 0.6, -0.75);
   addBox(house, 0.72, 0.18, 0.45, '#fde047', 4.9, 0.74, -0.75);
-  makeNpc(house, 'mom_ch3', -2.2, 0, -0.25, 1);
+  // Mom stands cleanly on open living-room floor beside TV console so her full legs & shoes are completely visible!
+  makeNpc(house, 'mom_ch3', -1.2, 0, -0.15, -1);
 
   // 2) CLASSROOM M.5/2
   const cls = makeShell('classroom_2b', 15.2, wallTex, '#e2e8f0', '#fff7e6', 3.6);
@@ -181,14 +183,14 @@ export function buildSchoolRooms(
   );
   board.position.set(0.4, 2.35, -1.61);
   cls.add(board);
-  addBox(cls, 1.35, 0.88, 0.75, '#78350f', -3.2, 0.44, -0.85);
+  addBox(cls, 1.35, 0.88, 0.68, '#78350f', -3.5, 0.44, -1.05);
   const classRoomStudentMeshes: THREE.Mesh[] = [];
   [-1.2, 1.2, 3.6, 5.4].forEach((dx, idx) => {
-    addBox(cls, 1.25, 0.68, 0.65, '#a16207', dx, 0.34, -0.75);
-    addBox(cls, 0.55, 0.42, 0.5, '#78350f', dx, 0.21, -0.15);
-    classRoomStudentMeshes.push(makeNpc(cls, idx % 2 === 0 ? 'student_girl' : 'student_boy', dx, 0, -0.2, -1));
+    addBox(cls, 1.2, 0.68, 0.6, '#a16207', dx, 0.34, -0.98);
+    addBox(cls, 0.52, 0.4, 0.45, '#78350f', dx, 0.2, -0.48);
+    classRoomStudentMeshes.push(makeNpc(cls, idx % 2 === 0 ? 'student_girl' : 'student_boy', dx + 0.55, 0, -0.22, -1));
   });
-  const classTeacherMesh = makeNpc(cls, 'teacher_somchai', -3.2, 0, -0.35, 1);
+  const classTeacherMesh = makeNpc(cls, 'teacher_somchai', -2.3, 0, -0.25, 1);
 
   // 3) TEACHER OFFICE
   const tOff = makeShell('teacher_office', 14.4, wallTex, '#cbd5e1', '#f0f9ff', 3.4);
@@ -198,12 +200,12 @@ export function buildSchoolRooms(
   );
   tSign.position.set(0, 2.75, -1.61);
   tOff.add(tSign);
-  addBox(tOff, 1.9, 0.78, 0.9, '#92400e', -2.4, 0.39, -0.8);
-  addBox(tOff, 1.9, 0.78, 0.9, '#78350f', 1.6, 0.39, -0.8);
+  addBox(tOff, 1.9, 0.78, 0.75, '#92400e', -2.6, 0.39, -1.12);
+  addBox(tOff, 1.9, 0.78, 0.75, '#78350f', 1.8, 0.39, -1.12);
   addBox(tOff, 1.25, 1.75, 0.85, '#334155', 4.6, 0.88, -1.05, 0.45);
   addBox(tOff, 0.26, 0.26, 0.08, '#facc15', 4.6, 1.15, -0.6, 0.3);
-  const somchaiOfficeMesh = makeNpc(tOff, 'teacher_somchai', -2.2, 0, -0.2, 1);
-  const wilaiDayMesh = makeNpc(tOff, 'teacher_wilai', 1.7, 0, -0.2, -1);
+  const somchaiOfficeMesh = makeNpc(tOff, 'teacher_somchai', -1.8, 0, -0.2, 1);
+  const wilaiDayMesh = makeNpc(tOff, 'teacher_wilai', 1.2, 0, -0.2, -1);
 
   // 4) LIBRARY
   const lib = makeShell('library_room', 14.4, wallTex, '#d6d3d1', '#fef3c7', 3.1);
@@ -342,37 +344,61 @@ export function buildCampusGroundProps(
   addBox(parkedBikeGroup, 0.22, 0.07, 0.13, '#111827', -0.22, 0.8, 0);
   exteriorGroup.add(parkedBikeGroup);
 
-  // Ornate Thai School Entrance Archway straddling road threshold (x = -52, z = -2.35 .. +2.65)
-  [-2.35, 2.65].forEach((gz) => {
-    addBox(exteriorGroup, 0.96, 0.45, 0.96, '#e2e8f0', -52, 0.22, gz, 0.75); // stone lotus plinth
-    addBox(exteriorGroup, 0.78, 4.45, 0.78, '#7f1d1d', -52, 2.42, gz, 0.7);
-    addBox(exteriorGroup, 0.94, 0.24, 0.94, '#eab308', -52, 4.66, gz, 0.4);
+  // Iconic Thai "ชายสี่หมี่เกี๊ยว" Street Noodle Cart just outside School Entrance (-61.0)!
+  const bamiGrp = new THREE.Group();
+  bamiGrp.position.set(-61.0, 0, -1.65);
+  // Signature Yellow & Red Stall Cart + Wheels + Glass Roast-Pork Display + Soup Pot
+  addBox(bamiGrp, 2.5, 0.95, 1.15, '#facc15', 0, 0.72, 0, 0.45);
+  addBox(bamiGrp, 2.54, 0.32, 1.18, '#dc2626', 0, 0.42, 0, 0.55);
+  [-0.85, 0.85].forEach((wx) => {
+    const wh = new THREE.Mesh(new THREE.TorusGeometry(0.24, 0.05, 8, 14), new THREE.MeshStandardMaterial({ color: '#111827' }));
+    wh.position.set(wx, 0.26, 0.58);
+    bamiGrp.add(wh);
+  });
+  // Stainless 4-corner canopy posts + glowing yellow-red Chay Si Bami Kiew lightbox canopy!
+  [-1.18, 1.18].forEach((px) => addBox(bamiGrp, 0.08, 1.65, 0.08, '#cbd5e1', px, 1.98, 0.52, 0.3));
+  addBox(bamiGrp, 2.75, 0.65, 1.38, '#dc2626', 0, 2.75, 0, 0.45);
+  const bamiSign = new THREE.Mesh(
+    new THREE.PlaneGeometry(2.65, 0.68),
+    new THREE.MeshBasicMaterial({ map: createSchoolSignTexture('ชายสี่หมี่เกี๊ยว', 'บะหมี่เกี๊ยวหมูแดง • ปู • 35 ฿', '#facc15', '#ca8a04', '#dc2626') })
+  );
+  bamiSign.position.set(0, 2.72, 0.71);
+  bamiGrp.add(bamiSign);
+  // Glass display case showing hanging red BBQ pork & steaming stainless noodle soup pot
+  addBox(bamiGrp, 1.1, 0.72, 0.65, '#bae6fd', -0.58, 1.55, 0.08, 0.15);
+  [-0.78, -0.55, -0.35].forEach((px) => addBox(bamiGrp, 0.12, 0.42, 0.16, '#b91c1c', px, 1.6, 0.1, 0.5));
+  const soupPot = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.26, 0.24, 0.38, 12),
+    new THREE.MeshStandardMaterial({ color: '#e2e8f0', metalness: 0.7, roughness: 0.25 })
+  );
+  soupPot.position.set(0.55, 1.38, 0.08);
+  const bamiBulb = new THREE.PointLight('#fde047', 5.2, 12, 1.0);
+  bamiBulb.position.set(0, 2.25, 0.65);
+  bamiGrp.add(soupPot, bamiBulb);
+  // Plastic red stools & folding condiment table beside the cart
+  addBox(bamiGrp, 1.3, 0.06, 0.75, '#f8fafc', 2.2, 0.72, 0.1, 0.5);
+  [1.75, 2.65].forEach((sx) => addBox(bamiGrp, 0.36, 0.45, 0.36, '#ef4444', sx, 0.22, 0.15, 0.6));
+  exteriorGroup.add(bamiGrp);
+  makeNpc('vendor_coop', -61.0, 0.12, -2.55, 1);
+
+  // Natural Thai School Entrance Archway (-55.4 .. -48.6 at z = -1.95) with ONE wide centered nameplate cleanly above pillar capitals!
+  [-55.4, -48.6].forEach((gx) => {
+    addBox(exteriorGroup, 1.35, 0.42, 1.35, '#e2e8f0', gx, 0.21, -1.95, 0.75); // stone base plinth
+    addBox(exteriorGroup, 1.12, 4.15, 1.12, '#7f1d1d', gx, 2.48, -1.95, 0.7);
+    addBox(exteriorGroup, 1.32, 0.22, 1.32, '#eab308', gx, 4.62, -1.95, 0.4); // below overhead beam
     const lantern = new THREE.Mesh(new THREE.SphereGeometry(0.16, 10, 10), new THREE.MeshBasicMaterial({ color: '#fde68a' }));
-    lantern.position.set(-51.45, 3.1, gz);
+    lantern.position.set(gx, 3.1, -1.3);
     exteriorGroup.add(lantern);
   });
-  // Overhead Thai crimson & gold arch lintel spanning z = -2.8 .. +3.1 + tiered gable roof
-  addBox(exteriorGroup, 1.15, 0.85, 6.2, '#450a0a', -52, 5.15, 0.15, 0.65);
-  addBox(exteriorGroup, 1.35, 0.24, 6.45, '#b91c1c', -52, 5.66, 0.15, 0.55);
-  addBox(exteriorGroup, 1.0, 0.48, 4.2, '#991b1b', -52, 5.98, 0.15, 0.55);
-  const gateSpire = new THREE.Mesh(
-    new THREE.ConeGeometry(0.32, 0.95, 4),
-    new THREE.MeshStandardMaterial({ color: '#facc15', metalness: 0.6, roughness: 0.25 })
-  );
-  gateSpire.rotation.y = Math.PI / 4;
-  gateSpire.position.set(-52, 6.62, 0.15);
-  exteriorGroup.add(gateSpire);
-
-  // Crisp unobstructed School Archway Signs facing West (incoming street -X) AND Front (+Z camera)
+  // Crimson lintel & traditional Thai red-tile roof strictly ABOVE pillar capitals (y = 4.74+) so nothing overlaps the sign!
+  addBox(exteriorGroup, 8.6, 1.28, 1.32, '#450a0a', -52, 5.38, -1.95, 0.65);
+  addBox(exteriorGroup, 9.2, 0.32, 1.75, '#b91c1c', -52, 6.14, -1.95, 0.55);
   const archTex = createSchoolSignTexture('โรงเรียนมัธยมจันทรารัตน์', 'วิชา จริยา นาฏศิลป์สยาม', '#7f1d1d', '#450a0a', '#facc15');
-  const archSignWest = new THREE.Mesh(new THREE.PlaneGeometry(4.6, 0.95), new THREE.MeshBasicMaterial({ map: archTex }));
-  archSignWest.rotation.y = -Math.PI / 2;
-  archSignWest.position.set(-52.62, 5.15, 0.15);
-  const archSignFront = new THREE.Mesh(new THREE.PlaneGeometry(3.8, 0.82), new THREE.MeshBasicMaterial({ map: archTex }));
-  archSignFront.position.set(-52, 5.15, 3.28);
-  exteriorGroup.add(archSignWest, archSignFront);
-  const archLight = new THREE.PointLight('#fde68a', 6.0, 16, 1.0);
-  archLight.position.set(-52.6, 4.4, 0.2);
+  const archSign = new THREE.Mesh(new THREE.PlaneGeometry(7.6, 1.12), new THREE.MeshBasicMaterial({ map: archTex }));
+  archSign.position.set(-52, 5.38, -1.26);
+  exteriorGroup.add(archSign);
+  const archLight = new THREE.PointLight('#fde68a', 5.8, 15, 1.0);
+  archLight.position.set(-52, 4.4, -0.5);
   exteriorGroup.add(archLight);
 
   // Detailed School Guard Booth (ป้อมยามโรงเรียน -45.5) with sliding glass window, service ledge, door & barrier post
@@ -779,6 +805,7 @@ export function buildCampusGroundProps(
     busGroup,
     busPhaseTimer: 0,
     busStopped: false,
+    busReturning: false,
     dropStudents,
     vehicles,
     students,
@@ -935,7 +962,7 @@ export function animateSchoolLife(
       (st.mesh.material as THREE.MeshStandardMaterial).map = charFrames[st.kind][Math.floor(clock * 6) % 4];
     });
 
-    // School Bus driving up, pausing at Gate (-57.5) & dropping off students!
+    // School Bus stays strictly on town road OUTSIDE gate (stops at -59.0, drops off students walking inside, turns west back along far lane!)
     refs.busGroup.visible = hour < 18.5;
     if (refs.busGroup.visible) {
       if (refs.busStopped) {
@@ -944,26 +971,40 @@ export function animateSchoolLife(
           ds.mesh.visible = ds.active;
           if (ds.active) {
             ds.x += 2.2 * dt;
-            ds.mesh.position.set(ds.x, 0.96, 1.05 - Math.min(1, (ds.x + 56) / 6) * 0.7);
+            ds.mesh.position.set(ds.x, 0.96, 1.05 - Math.min(1, (ds.x + 58) / 7) * 0.85);
             (ds.mesh.material as THREE.MeshStandardMaterial).map = charFrames[ds.kind][Math.floor(clock * 6) % 4];
             if (ds.x > -46) ds.active = false;
           }
         });
         if (refs.busPhaseTimer <= 0) {
           refs.busStopped = false;
-          refs.busGroup.position.x = -56.0;
+          refs.busReturning = true;
+          refs.busGroup.scale.x = -1;
+          refs.busGroup.position.z = 0.25;
+        }
+      } else if (refs.busReturning) {
+        refs.busGroup.position.x -= 8.4 * dt;
+        if (refs.busGroup.position.x < -124) {
+          refs.busReturning = false;
+          refs.busGroup.scale.x = 1;
+          refs.busGroup.position.z = 3.25;
         }
       } else {
-        refs.busGroup.position.x += 8.2 * dt;
-        if (schoolHours && refs.busGroup.position.x >= -58.0 && refs.busGroup.position.x <= -56.2) {
-          refs.busStopped = true;
-          refs.busPhaseTimer = 3.6;
-          refs.dropStudents.forEach((ds, i) => {
-            ds.active = true;
-            ds.x = -57.2 - i * 1.1;
-          });
+        refs.busGroup.position.x = Math.min(-59.0, refs.busGroup.position.x + 8.2 * dt);
+        if (refs.busGroup.position.x >= -59.2) {
+          if (schoolHours) {
+            refs.busStopped = true;
+            refs.busPhaseTimer = 3.6;
+            refs.dropStudents.forEach((ds, i) => {
+              ds.active = true;
+              ds.x = -58.8 - i * 1.1;
+            });
+          } else {
+            refs.busReturning = true;
+            refs.busGroup.scale.x = -1;
+            refs.busGroup.position.z = 0.25;
+          }
         }
-        if (refs.busGroup.position.x > -18) refs.busGroup.position.x = -124;
       }
     }
 

@@ -491,6 +491,17 @@ export function drawCh3ItemIconDataUrl(id: string): string {
     ctx.fillRect(17, 13, 14, 26);
     ctx.fillStyle = '#fef08a';
     ctx.fillRect(22, 5, 4, 9);
+  } else if (id === 'bami_kiew') {
+    ctx.fillStyle = '#f8fafc';
+    ctx.beginPath();
+    ctx.arc(24, 25, 14, 0, Math.PI);
+    ctx.fill();
+    ctx.fillStyle = '#facc15';
+    ctx.fillRect(14, 18, 20, 8);
+    ctx.fillStyle = '#dc2626';
+    ctx.fillRect(16, 15, 7, 5);
+    ctx.fillStyle = '#16a34a';
+    ctx.fillRect(26, 16, 6, 4);
   } else if (id === 'battery_pack') {
     ctx.fillStyle = '#16a34a';
     ctx.fillRect(14, 12, 20, 26);

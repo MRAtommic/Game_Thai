@@ -540,6 +540,14 @@ export class Chapter3Engine {
         },
       },
       {
+        id: 'ch3_bami_cart',
+        floor: 0,
+        x: -61.0,
+        range: 2.8,
+        label: 'ซื้อบะหมี่เกี๊ยว "ชายสี่หมี่เกี๊ยว" หน้าโรงเรียน (35 ฿)',
+        onInteract: () => this.interactBamiCart(),
+      },
+      {
         id: 'ch3_janitor',
         floor: 0,
         x: -44.0,
@@ -1391,6 +1399,28 @@ export class Chapter3Engine {
     });
   }
 
+  private interactBamiCart(): void {
+    this.sound.playUIClick();
+    this.openModal(
+      `รถเข็นชายสี่หมี่เกี๊ยวหน้าโรงเรียน (เงินติดตัว: ${this.state.baht} ฿)`,
+      `
+      <p style="margin-top:0">ลุงพ่อค้าชายสี่: "รับบะหมี่เกี๊ยวหมูแดงร้อนๆ สักชามไหมไอ้หนุ่ม เติมพลังก่อนเข้าเรียนหรือท้าพิสูจน์!"</p>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-top:10px">
+        <button class="primary-btn" data-bami="35">🍜 บะหมี่เกี๊ยวหมูแดงพิเศษ (35 ฿) — ฟื้นสติ +40% & กำลังวิ่ง 100%</button>
+      </div>
+      `
+    );
+    this.modalBody.querySelector('[data-bami]')?.addEventListener('click', () => {
+      if (this.state.baht < 35) return this.showToast('เงินไม่พอ (ต้องใช้ 35 ฿)', true);
+      this.state.baht -= 35;
+      this.sound.playCoinJingle();
+      this.addItem('bami_kiew');
+      this.closeModal();
+      this.updateExtraHud();
+      this.saveGame();
+    });
+  }
+
   private interactBasketballGame(): void {
     this.openModal(
       'สนามบาสโรงเรียน — มินิเกมชู้ตบาส',
@@ -1522,6 +1552,12 @@ export class Chapter3Engine {
       this.stamina = 100;
       this.removeItem('chilled_soda');
       return this.showToast('ดื่มน้ำแดงโซดาเย็นซ่า (+30 สติ & กำลังวิ่ง 100%)');
+    }
+    if (id === 'bami_kiew') {
+      this.adjustSanity(40);
+      this.stamina = 100;
+      this.removeItem('bami_kiew');
+      return this.showToast('กินบะหมี่เกี๊ยวหมูแดงชายสี่อิ่มจุใจ (+40 สติ & กำลังวิ่ง 100%)');
     }
     if (id === 'holy_sai_sin') {
       this.adjustSanity(45);
