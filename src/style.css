@@ -1608,11 +1608,10 @@ body.ui-transparent .touch-btn:active {
   background: rgba(224, 169, 76, 0.45);
 }
 
-@media (pointer: coarse), (max-width: 1024px) {
-  #btn-rules,
-  .mobile-in-settings {
-    display: none !important;
-  }
+/* Buttons moved into the Settings modal stay in DOM for bindings, hidden from top HUD bar */
+#btn-rules,
+.mobile-in-settings {
+  display: none !important;
 }
 
 .overlay-modal {
