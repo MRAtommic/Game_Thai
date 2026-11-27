@@ -1312,15 +1312,15 @@ export class DormWorld {
     shedLight.position.set(-17.5, 2.5, 0.9);
     this.scene.add(shedLight);
 
-    // Realistic Parked Sedan + Realistic Parked Scooter with >0.6m clear bay gap between them
+    // Realistic Parked Sedan + Realistic Parked Scooter cleanly centered clear of BOTH sedan & concrete Dorm curb
     const shedSedan = buildRealisticCar({ bodyColor: '#2b3b4e', roofColor: '#233142', variant: 'sedan', facing: 1 }).group;
-    shedSedan.scale.multiplyScalar(0.8);
-    shedSedan.position.set(-18.35, 0, -0.72);
+    shedSedan.scale.multiplyScalar(0.78);
+    shedSedan.position.set(-18.5, 0, -0.72);
     this.scene.add(shedSedan);
 
     const shedBike = buildRealisticMotorcycle({ bodyColor: '#8c2222', withRider: false, facing: -1 }).group;
-    shedBike.position.set(-15.65, 0, -0.35);
-    shedBike.rotation.y = 0.25;
+    shedBike.position.set(-16.25, 0, -0.58);
+    shedBike.rotation.y = 0.08;
     this.scene.add(shedBike);
 
     // 2) Thai Bus Stop (ป้ายรถเมล์ at x = -34.5)
