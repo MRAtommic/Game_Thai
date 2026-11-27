@@ -83,30 +83,30 @@ export function buildDormDistrictExtension(
     return m;
   };
 
-  // ================= 1. SKYLINE DEPTH & ELEVATED THAI BTS SKYTRAIN (VISIBLE ABOVE ROOFS AT y = 6.75..7.8!) =================
+  // ================= 1. SKYLINE DEPTH & ELEVATED THAI BTS SKYTRAIN (VISIBLE ABOVE ROOFS & CLEAR OF MOBILE HUD!) =================
   // Double-track concrete elevated BTS viaduct + T-shaped concrete piers & steel safety parapets
-  addBox(exteriorGroup, 200, 0.72, 4.2, '#333b48', -42, 6.75, -12.25, 0.9); // concrete deck slab
-  addBox(exteriorGroup, 200, 0.34, 0.14, '#475569', -42, 7.22, -10.22, 0.85); // front parapet wall
-  addBox(exteriorGroup, 200, 0.34, 0.14, '#475569', -42, 7.22, -14.28, 0.85); // rear parapet wall
-  addBox(exteriorGroup, 200, 0.08, 0.18, '#1e293b', -42, 7.14, -11.4, 0.6);   // eastbound steel rail track
-  addBox(exteriorGroup, 200, 0.08, 0.18, '#1e293b', -42, 7.14, -13.1, 0.6);   // westbound steel rail track
+  addBox(exteriorGroup, 200, 0.68, 4.2, '#333b48', -42, 6.15, -12.25, 0.9); // concrete deck slab
+  addBox(exteriorGroup, 200, 0.3, 0.14, '#475569', -42, 6.58, -10.22, 0.85); // front parapet wall
+  addBox(exteriorGroup, 200, 0.3, 0.14, '#475569', -42, 6.58, -14.28, 0.85); // rear parapet wall
+  addBox(exteriorGroup, 200, 0.08, 0.18, '#1e293b', -42, 6.52, -11.4, 0.6);   // eastbound steel rail track
+  addBox(exteriorGroup, 200, 0.08, 0.18, '#1e293b', -42, 6.52, -13.1, 0.6);   // westbound steel rail track
   for (let px = -128; px <= 46; px += 16) {
     // T-shaped Bangkok BTS viaduct columns (strictly behind sidewalk & clear of Side-Street -31..-23!)
     if (px > -32 && px < -22) continue;
-    addBox(exteriorGroup, 1.15, 6.45, 1.15, '#2b323d', px, 3.22, -12.25, 0.92);
-    addBox(exteriorGroup, 1.9, 0.48, 3.9, '#363f4d', px, 6.32, -12.25, 0.9);
+    addBox(exteriorGroup, 1.15, 5.85, 1.15, '#2b323d', px, 2.92, -12.25, 0.92);
+    addBox(exteriorGroup, 1.9, 0.45, 3.9, '#363f4d', px, 5.75, -12.25, 0.9);
   }
 
   // Elevated BTS Station "สถานีซอย 9" (x = -65, arched skytrain canopy, green-line fascia & lit platform)
-  addBox(exteriorGroup, 22.0, 0.28, 4.8, '#e2e8f0', -65, 9.65, -12.25, 0.45); // station arched roof
-  addBox(exteriorGroup, 22.2, 0.22, 0.16, '#16a34a', -65, 9.52, -9.85, 0.35); // BTS green line trim
-  addBox(exteriorGroup, 22.2, 0.12, 0.16, '#eab308', -65, 9.36, -9.85, 0.35);
+  addBox(exteriorGroup, 22.0, 0.28, 4.8, '#e2e8f0', -65, 8.95, -12.25, 0.45); // station arched roof
+  addBox(exteriorGroup, 22.2, 0.22, 0.16, '#16a34a', -65, 8.82, -9.85, 0.35); // BTS green line trim
+  addBox(exteriorGroup, 22.2, 0.12, 0.16, '#eab308', -65, 8.66, -9.85, 0.35);
   [-74.5, -65.0, -55.5].forEach((sx) => {
-    addBox(exteriorGroup, 0.24, 2.55, 0.24, '#cbd5e1', sx, 8.38, -10.1, 0.4);
+    addBox(exteriorGroup, 0.24, 2.45, 0.24, '#cbd5e1', sx, 7.72, -10.1, 0.4);
   });
-  addBox(exteriorGroup, 20.5, 0.95, 0.08, '#93c5fd', -65, 7.62, -10.22, 0.25); // glass platform screen doors
+  addBox(exteriorGroup, 20.5, 0.9, 0.08, '#93c5fd', -65, 7.0, -10.22, 0.25); // glass platform screen doors
   const stLight = new THREE.PointLight('#dcfce7', 4.8, 24, 1.0);
-  stLight.position.set(-65, 9.1, -10.8);
+  stLight.position.set(-65, 8.4, -10.8);
   exteriorGroup.add(stLight);
 
   // Distant glowing Bangkok condos & office towers (strictly clear of the open Side-Street corridor -31..-23!)
@@ -125,31 +125,56 @@ export function buildDormDistrictExtension(
     }
   });
 
-  // Helper to build an authentic 4-car Thai BTS Skytrain (aerodynamic nose, livery stripes, glowing windows, roof AC & gangways)
+  // Helper to build an authentic 3D recessed-cabin 4-car Thai BTS Skytrain with transparent windows & visible passengers inside!
+  const btsGlassMat = new THREE.MeshStandardMaterial({
+    color: '#bae6fd',
+    transparent: true,
+    opacity: 0.24,
+    roughness: 0.08,
+    metalness: 0.15,
+    depthWrite: false,
+  });
   const buildThaiBtsTrain = (stripeTop: string, stripeBot: string, dir: 1 | -1): THREE.Group => {
     const train = new THREE.Group();
+    const passengerCols = ['#3b82f6', '#ec4899', '#eab308', '#10b981', '#f97316', '#f8fafc'];
     [-14.7, -4.9, 4.9, 14.7].forEach((cx, ci) => {
-      // Main aluminum white car body & dark lower skirt/bogies
-      addBox(train, 9.2, 1.42, 1.38, '#f1f5f9', cx, 0, 0, 0.35);
-      addBox(train, 9.1, 0.28, 1.24, '#1e293b', cx, -0.78, 0, 0.7);
-      // Iconic Thai BTS twin livery stripes
-      addBox(train, 9.24, 0.2, 1.41, stripeTop, cx, -0.34, 0, 0.35);
-      addBox(train, 9.24, 0.24, 1.41, stripeBot, cx, -0.54, 0, 0.35);
-      // Roof HVAC air-conditioning pods
-      [-2.4, 2.4].forEach((ax) => addBox(train, 1.75, 0.2, 0.96, '#cbd5e1', cx + ax, 0.78, 0, 0.5));
-      // Glowing warm interior passenger windows & twin sliding doors
-      for (let wx = -3.7; wx <= 3.7; wx += 1.48) {
-        const tw = new THREE.Mesh(
-          new THREE.PlaneGeometry(1.08, 0.54),
-          new THREE.MeshBasicMaterial({ color: '#fef3c7' })
+      // Hollow 3D car shell: bright interior back wall, floor, roof, lower body apron & twin BTS livery stripes
+      addBox(train, 9.2, 1.38, 0.14, '#fef9c3', cx, 0.02, -0.62, 0.25); // lit bright cream interior rear wall
+      addBox(train, 9.2, 0.16, 1.4, '#e2e8f0', cx, 0.68, 0, 0.35);     // roof shell
+      addBox(train, 9.2, 0.12, 1.24, '#cbd5e1', cx, 0.56, 0, 0.2);     // interior fluorescent ceiling
+      addBox(train, 9.2, 0.54, 1.4, '#f1f5f9', cx, -0.44, 0, 0.35);    // lower exterior side wall
+      addBox(train, 9.1, 0.26, 1.24, '#1e293b', cx, -0.82, 0, 0.7);    // underframe & bogies
+      addBox(train, 9.24, 0.16, 1.42, stripeTop, cx, -0.34, 0, 0.35);  // top BTS stripe
+      addBox(train, 9.24, 0.2, 1.42, stripeBot, cx, -0.52, 0, 0.35);   // bottom BTS stripe
+      // Side end pillars + window mullions framing real transparent glass panes!
+      [-4.45, -2.2, 0, 2.2, 4.45].forEach((mx) => {
+        addBox(train, 0.22, 0.74, 0.12, '#f1f5f9', cx + mx, 0.22, 0.65, 0.35);
+      });
+      // Interior long BTS bench seats & stainless grab poles
+      addBox(train, 8.6, 0.14, 0.34, '#1d4ed8', cx, -0.06, -0.36, 0.5);
+      [-2.8, 0, 2.8].forEach((px) => addBox(train, 0.04, 0.65, 0.04, '#94a3b8', cx + px, 0.22, -0.05, 0.25));
+      // Real 3D passengers seated & standing inside the train visible through the clear glass!
+      [-3.5, -1.5, 0.6, 2.4, 3.8].forEach((px, pi) => {
+        const isStanding = (pi + ci) % 2 === 0;
+        const py = isStanding ? 0.08 : 0.02;
+        const pz = isStanding ? 0.05 : -0.34;
+        const shirtCol = passengerCols[(pi + ci) % passengerCols.length];
+        addBox(train, 0.28, isStanding ? 0.42 : 0.32, 0.22, shirtCol, cx + px, py, pz, 0.6); // torso
+        const head = new THREE.Mesh(
+          new THREE.SphereGeometry(0.12, 8, 8),
+          new THREE.MeshStandardMaterial({ color: '#d4a373', roughness: 0.6 })
         );
-        tw.position.set(cx + wx, 0.16, 0.71);
-        train.add(tw);
-        // Subtle passenger silhouettes visible inside lit cabin
-        if (Math.abs(Math.round(wx + ci)) % 2 === 0) {
-          addBox(train, 0.24, 0.36, 0.02, '#475569', cx + wx, 0.08, 0.715);
-        }
-      }
+        head.position.set(cx + px, py + (isStanding ? 0.3 : 0.24), pz);
+        train.add(head);
+        addBox(train, 0.24, 0.09, 0.22, '#18181b', cx + px, py + (isStanding ? 0.38 : 0.32), pz, 0.8); // hair
+      });
+      // Transparent front glass window pane across the whole car side
+      const carGlass = new THREE.Mesh(new THREE.BoxGeometry(8.8, 0.68, 0.04), btsGlassMat);
+      carGlass.position.set(cx, 0.22, 0.68);
+      train.add(carGlass);
+
+      // Roof HVAC air-conditioning pods
+      [-2.4, 2.4].forEach((ax) => addBox(train, 1.75, 0.2, 0.96, '#cbd5e1', cx + ax, 0.84, 0, 0.5));
       // Black rubber accordion gangway connector between cars
       if (ci < 3) addBox(train, 0.75, 1.26, 1.12, '#0f172a', cx + 4.9, -0.04, 0, 0.85);
     });
@@ -176,11 +201,11 @@ export function buildDormDistrictExtension(
 
   // Two 4-car Thai BTS Skytrains running back-and-forth on parallel tracks!
   const skytrainGroup = buildThaiBtsTrain('#1d4ed8', '#dc2626', 1); // Eastbound BTS Blue/Red livery ->
-  skytrainGroup.position.set(-48, 7.95, -11.4);
+  skytrainGroup.position.set(-48, 7.35, -11.4);
   exteriorGroup.add(skytrainGroup);
 
   const skytrainWestGroup = buildThaiBtsTrain('#16a34a', '#eab308', -1); // Westbound BTS Green/Gold livery <-
-  skytrainWestGroup.position.set(18, 7.95, -13.1);
+  skytrainWestGroup.position.set(18, 7.35, -13.1);
   exteriorGroup.add(skytrainWestGroup);
 
   // ================= 2. ROOFTOP ACCESS & ROOF WATER TANK =================

@@ -37,6 +37,11 @@ import {
   buildRooftopRoom,
   DormExtensionAnimRefs,
 } from './DormDistrictExtension';
+import {
+  buildSiaMansionWorld,
+  MANSION_FLOOR_H,
+  SiaMansionRefs,
+} from './SiaMansionWorld';
 
 export const FLOOR_HEIGHT = 4.2;
 export const STREET_MIN_X = -128.0;
@@ -164,6 +169,7 @@ export class DormWorld {
   };
 
   private extRefs!: DormExtensionAnimRefs;
+  private siaMansion!: SiaMansionRefs;
   private animClock = 0;
   private lastThunderCallback?: () => void;
   private lightningTimer = 6;
@@ -294,6 +300,9 @@ export class DormWorld {
     this.playerShadow = this.makeFloorShadow(shadowTex, 0.56);
     this.playerShadow.position.set(-11.2, 0.018, 0.45);
     this.scene.add(this.playerMesh, this.playerShadow);
+
+    this.siaMansion = buildSiaMansionWorld(this.charFrames, shadowTex);
+    this.scene.add(this.siaMansion.group);
 
     this.uncleMesh = this.makeLitCharacter(this.charFrames.uncle[0], 1.5, 2.25);
     this.uncleMesh.position.set(-8.4, 0.94, 0.18);
@@ -692,10 +701,15 @@ export class DormWorld {
     crossRoad.position.set(-27.1, -0.202, -15.4);
     crossRoad.receiveShadow = true;
     this.scene.add(crossRoad);
-    // Dedicated Pedestrian Sidewalk Lanes (ช่องถนนคนเดินขนาบซ้าย-ขวา) + Protective Bollard Posts!
-    this.addBox(this.scene, 2.25, 0.08, 28.0, '#64748b', -30.05, 0.02, -16.2, 0.85);
-    this.addBox(this.scene, 2.35, 0.08, 28.0, '#64748b', -24.22, 0.02, -16.2, 0.85);
+    // Dedicated Pedestrian Sidewalk Lanes (ช่องถนนคนเดินขนาบซ้าย-ขวา เชื่อมต่อสนิทถึงขอบฟุตบาทถนนใหญ่ z = +1.28!)
+    this.addBox(this.scene, 2.28, 0.07, 31.6, '#64748b', -30.05, 0.015, -14.5, 0.85);
+    this.addBox(this.scene, 2.38, 0.07, 31.6, '#64748b', -24.22, 0.015, -14.5, 0.85);
     [-28.92, -25.4].forEach((bx) => {
+      // Connect red-white sidewalk curb seamlessly around the alley corner (z = +1.28 -> -2.2)
+      for (let cz = 0.7; cz >= -1.8; cz -= 1.2) {
+        const isRed = Math.abs(Math.floor(cz / 1.2)) % 2 === 0;
+        this.addBox(this.scene, 0.16, 0.09, 1.18, isRed ? '#dc2626' : '#f1f5f9', bx, 0.025, cz, 0.6);
+      }
       for (let bz = -2.6; bz >= -26.5; bz -= 3.2) {
         this.addBox(this.scene, 0.14, 0.1, 1.4, Math.abs(Math.floor(bz)) % 2 === 0 ? '#facc15' : '#e2e8f0', bx, 0.03, bz);
         this.addBox(this.scene, 0.09, 0.62, 0.09, '#f97316', bx, 0.31, bz);
@@ -2502,26 +2516,34 @@ export class DormWorld {
     drunkMode = false,
     zombies: { x: number; floor: FloorIndex; alive: boolean; dir: 1 | -1 }[] = [],
     gunFlashTimer = 0,
-    gunBeamEndX = 0
+    gunBeamEndX = 0,
+    isSneaking = false,
+    isHidden = false
   ): void {
     this.animClock += dt;
 
-    const isInsideRoom = currentRoom !== 'outside';
-    this.exteriorGroup.visible = !isInsideRoom;
+    const isMansion = currentRoom === 'sia_mansion';
+    const isInsideRoom = currentRoom !== 'outside' && !isMansion;
+    this.exteriorGroup.visible = currentRoom === 'outside';
+    this.siaMansion.group.visible = isMansion;
     (Object.keys(this.roomGroups) as RoomId[]).forEach((rid) => {
       const grp = this.roomGroups[rid];
       if (grp) grp.visible = rid === currentRoom;
     });
-    this.rainLines.visible = !isInsideRoom;
+    this.rainLines.visible = currentRoom === 'outside';
 
-    const yBase = isInsideRoom ? 0 : playerFloor * FLOOR_HEIGHT;
-    const footGroundedY = yBase + 0.94;
+    const yBase = isInsideRoom ? 0 : playerFloor * (isMansion ? MANSION_FLOOR_H : FLOOR_HEIGHT);
+    const sneakDrop = isSneaking ? 0.24 : 0;
+    const footGroundedY = yBase + 0.94 - sneakDrop;
+    this.playerMesh.scale.y = isSneaking ? 0.72 : 1.0;
     this.playerMesh.position.set(playerX, footGroundedY, playerZ);
     this.playerShadow.position.set(playerX, yBase + 0.026, playerZ);
 
-    const walkFrame = isMoving ? Math.floor(this.animClock * 9) % 4 : 0;
+    const walkFrame = isMoving ? Math.floor(this.animClock * (isSneaking ? 5 : 9)) % 4 : 0;
     const pMat = this.playerMesh.material as THREE.MeshStandardMaterial;
     pMat.map = this.charFrames.player[walkFrame];
+    pMat.transparent = true;
+    pMat.opacity = isHidden ? 0.45 : 1.0;
     this.setMeshFacing(this.playerMesh, playerFacing);
 
     this.flashlight.position.set(playerX + playerFacing * 0.28, footGroundedY + 0.25, playerZ + 0.25);
@@ -2766,24 +2788,79 @@ export class DormWorld {
       this.gunTracerMesh.visible = false;
     }
 
-    const camTargetX = isInsideRoom
-      ? THREE.MathUtils.clamp(playerX, currentRoom === 'rooftop' ? -3.0 : -1.2, currentRoom === 'rooftop' ? 3.0 : 1.2)
-      : playerFloor === 0
-        ? THREE.MathUtils.clamp(playerX, -122.0, 38.0)
-        : THREE.MathUtils.clamp(playerX, -7.8, 7.8);
-    const camTargetY = (isInsideRoom ? 0 : playerFloor * FLOOR_HEIGHT) + 2.05;
+    const inAlleyDepth = currentRoom === 'outside' && playerFloor === 0 && playerZ < -0.9;
+    const camTargetX = isMansion
+      ? THREE.MathUtils.clamp(playerX, -8.5, 8.5)
+      : isInsideRoom
+        ? THREE.MathUtils.clamp(playerX, currentRoom === 'rooftop' ? -3.0 : -1.2, currentRoom === 'rooftop' ? 3.0 : 1.2)
+        : playerFloor === 0
+          ? THREE.MathUtils.clamp(playerX, -122.0, 38.0)
+          : THREE.MathUtils.clamp(playerX, -7.8, 7.8);
+    const camTargetY = (isInsideRoom ? 0 : playerFloor * (isMansion ? MANSION_FLOOR_H : FLOOR_HEIGHT)) + 2.05;
+    const desiredCamZ = inAlleyDepth ? playerZ + 12.6 : this.targetCamZ;
+    const desiredLookZ = inAlleyDepth ? playerZ - 1.2 : 0;
 
     this.renderer.toneMappingExposure = sanity < 40 ? 0.94 : 1.1;
 
     this.camera.position.x = THREE.MathUtils.lerp(this.camera.position.x, camTargetX, Math.min(1, dt * 5.5));
     this.camera.position.y = THREE.MathUtils.lerp(this.camera.position.y, camTargetY, Math.min(1, dt * 5.5));
-    this.camera.position.z = THREE.MathUtils.lerp(this.camera.position.z, this.targetCamZ, Math.min(1, dt * 6.0));
-    this.camera.lookAt(this.camera.position.x, this.camera.position.y - 0.16, 0);
+    this.camera.position.z = THREE.MathUtils.lerp(this.camera.position.z, desiredCamZ, Math.min(1, dt * 6.0));
+    this.camera.lookAt(this.camera.position.x, this.camera.position.y - 0.16, desiredLookZ);
     if (drunkMode) {
       this.camera.rotation.z += Math.sin(this.animClock * 3.1) * 0.048;
     }
 
     this.renderer.render(this.scene, this.camera);
+  }
+
+  public getSiaMansionHidingSpots() {
+    return this.siaMansion.hidingSpots;
+  }
+
+  public updateSiaMansionState(
+    dt: number,
+    playerX: number,
+    playerFloor: FloorIndex,
+    isSneaking: boolean,
+    isHidden: boolean,
+    collected: { ev1: boolean; ev2: boolean; ev3: boolean }
+  ): { inVision: boolean; nearGuard: boolean } {
+    this.siaMansion.evidenceMeshes.forEach((ev) => {
+      const done = collected[ev.id];
+      ev.mesh.visible = !done;
+      ev.light.intensity = done ? 0 : 2.2 + Math.sin(this.animClock * 4) * 0.6;
+    });
+
+    let inVision = false;
+    let nearGuard = false;
+    const sightDist = isSneaking ? 2.8 : 4.4;
+    for (const g of this.siaMansion.guards) {
+      g.x += g.dir * g.speed * dt;
+      if (g.x >= g.maxX) g.dir = -1;
+      if (g.x <= g.minX) g.dir = 1;
+      const yb = g.floor * MANSION_FLOOR_H;
+      g.mesh.position.set(g.x, yb + 1.05, 0.45);
+      g.shadow.position.set(g.x, yb + 0.04, 0.45);
+      const frames = this.charFrames[g.kind];
+      const gf = Math.floor(this.animClock * 5.5) % frames.length;
+      (g.mesh.material as THREE.MeshStandardMaterial).map = frames[gf];
+      this.setMeshFacing(g.mesh, g.dir);
+
+      g.cone.rotation.z = g.dir === 1 ? Math.PI / 2 : -Math.PI / 2;
+      g.cone.position.set(g.x + g.dir * 2.2, yb + 0.12, 0.45);
+
+      let seesPlayer = false;
+      if (g.floor === playerFloor && !isHidden) {
+        const dx = playerX - g.x;
+        const inFront = dx * g.dir >= -0.3 && dx * g.dir <= sightDist;
+        if (inFront) seesPlayer = true;
+        if (Math.abs(dx) < 1.35) nearGuard = true;
+      }
+      if (seesPlayer) inVision = true;
+      g.coneMat.color.set(seesPlayer ? '#ef4444' : '#facc15');
+      g.coneMat.opacity = seesPlayer ? 0.44 : 0.24;
+    }
+    return { inVision, nearGuard };
   }
 
   private updateTimeLighting(

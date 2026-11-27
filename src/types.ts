@@ -6,7 +6,7 @@ export type EndingType = 'true' | 'normal' | 'bad';
 
 export type FloorIndex = 0 | 1 | 2 | 3;
 
-export type RoomId = 'outside' | 'storage' | 'room202' | 'bathroom2' | 'room204' | 'room304' | 'seven24' | 'rooftop';
+export type RoomId = 'outside' | 'storage' | 'room202' | 'bathroom2' | 'room204' | 'room304' | 'seven24' | 'rooftop' | 'sia_mansion';
 
 export interface ItemDef {
   id: string;
@@ -90,6 +90,10 @@ export interface GameFlags {
   fixedGeneratorMiniGame?: boolean;
   uncleTrueConfession?: boolean;
   uncoveredDoubleTwist?: boolean;
+  gotMansionEv1?: boolean;
+  gotMansionEv2?: boolean;
+  gotMansionEv3?: boolean;
+  arrestedSia?: boolean;
 }
 
 export interface SaveState {

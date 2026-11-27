@@ -91,6 +91,11 @@ export class GameEngine {
   private stairCooldown = 0;
   private autoSaveTimer = 5;
 
+  // Stealth & Sia Mansion infiltration state
+  private isSneaking = false;
+  private isHidden = false;
+  private mansionSuspicion = 0;
+
   // Rules & Ghost Chase state
   private primShowTimer = 0;
   private primPos: { x: number; floor: FloorIndex } = { x: -2.5, floor: 2 };
@@ -403,12 +408,41 @@ export class GameEngine {
       if (code === 'KeyE' || code === 'Space') {
         e.preventDefault();
         this.tryInteract();
+      } else if (code === 'KeyC' || code === 'ControlLeft' || code === 'ControlRight') {
+        if (this.currentRoom === 'sia_mansion') {
+          this.isSneaking = !this.isSneaking;
+          this.showToast(this.isSneaking ? 'ย่อตัวเดินย่องเบา (การ์ดมองเห็นยากขึ้น)' : 'ยืนเดินปกติ');
+        }
       } else if (code === 'KeyW' || code === 'ArrowUp') {
-        if (Math.abs(this.state.x - STAIR_X) <= 1.55) {
+        if (this.currentRoom === 'sia_mansion') {
+          if (this.state.floor === 0 && Math.abs(this.state.x - 8.5) <= 1.7) {
+            this.state.floor = 1;
+            this.state.x = 7.6;
+            this.isHidden = false;
+            this.updateHUD();
+          } else if (this.state.floor === 1 && Math.abs(this.state.x + 8.5) <= 1.7) {
+            this.state.floor = 2;
+            this.state.x = -7.6;
+            this.isHidden = false;
+            this.updateHUD();
+          }
+        } else if (Math.abs(this.state.x - STAIR_X) <= 1.55) {
           this.tryChangeFloor(1);
         }
       } else if (code === 'KeyS' || code === 'ArrowDown') {
-        if (Math.abs(this.state.x - STAIR_X) <= 1.55) {
+        if (this.currentRoom === 'sia_mansion') {
+          if (this.state.floor === 1 && Math.abs(this.state.x - 8.5) <= 1.7) {
+            this.state.floor = 0;
+            this.state.x = 7.6;
+            this.isHidden = false;
+            this.updateHUD();
+          } else if (this.state.floor === 2 && Math.abs(this.state.x + 8.5) <= 1.7) {
+            this.state.floor = 1;
+            this.state.x = -7.6;
+            this.isHidden = false;
+            this.updateHUD();
+          }
+        } else if (Math.abs(this.state.x - STAIR_X) <= 1.55) {
           this.tryChangeFloor(-1);
         }
       } else if (code === 'KeyF') {
@@ -1352,6 +1386,74 @@ export class GameEngine {
         onInteract: () => this.talkSevenClerk(),
       },
 
+      // Sia Wirat's 3-Story Luxury Mansion (คฤหาสน์เสี่ยวิรัช - Stealth Mission)
+      {
+        id: 'mansion_exit',
+        floor: 0,
+        room: 'sia_mansion',
+        x: -11.5,
+        range: 1.8,
+        label: 'ออกจากรั้วคฤหาสน์เสี่ยวิรัช (กลับซอย 9)',
+        onInteract: () => {
+          this.currentRoom = 'outside';
+          this.state.floor = 0;
+          this.state.x = -27.2;
+          this.playerZ = -19.5;
+          this.isSneaking = false;
+          this.isHidden = false;
+          this.mansionSuspicion = 0;
+          this.updateHUD();
+        },
+      },
+      {
+        id: 'mansion_ev1',
+        floor: 0,
+        room: 'sia_mansion',
+        x: 2.8,
+        range: 1.6,
+        condition: () => !this.state.flags.gotMansionEv1,
+        label: 'แอบเก็บซองเงินสินบนตำรวจ (หลักฐาน 1/3)',
+        onInteract: () => {
+          this.state.flags.gotMansionEv1 = true;
+          this.sound.playUIClick();
+          this.showToast('เก็บหลักฐาน 1/3: ซองเงินสินบน & รายชื่อเจ้าหน้าที่!');
+          this.saveGame();
+          this.updateHUD();
+        },
+      },
+      {
+        id: 'mansion_ev2',
+        floor: 1,
+        room: 'sia_mansion',
+        x: 1.5,
+        range: 1.6,
+        condition: () => !this.state.flags.gotMansionEv2,
+        label: 'แอบเก็บสมุดเช็ค & บัญชีฟอกเงินเสี่ย (หลักฐาน 2/3)',
+        onInteract: () => {
+          this.state.flags.gotMansionEv2 = true;
+          this.sound.playUIClick();
+          this.showToast('เก็บหลักฐาน 2/3: สมุดเช็ค & บัญชีลับของเสี่ยวิรัช!');
+          this.saveGame();
+          this.updateHUD();
+        },
+      },
+      {
+        id: 'mansion_ev3',
+        floor: 2,
+        room: 'sia_mansion',
+        x: 8.8,
+        range: 1.8,
+        condition: () => !this.state.flags.gotMansionEv3,
+        label: 'แอบเก็บบันทึกคำสั่งปิดปากพริมบนโต๊ะเสี่ย (หลักฐาน 3/3)',
+        onInteract: () => {
+          this.state.flags.gotMansionEv3 = true;
+          this.sound.playUIClick();
+          this.showToast('เก็บหลักฐานครบ 3/3 แล้ว! รีบย่องหนีออกจากคฤหาสน์ไปส่งให้ดาบวิชัยที่ป้อมตำรวจ!');
+          this.saveGame();
+          this.updateHUD();
+        },
+      },
+
       // Room 304 (Prim's Room)
       {
         id: 'r304_exit',
@@ -2131,6 +2233,28 @@ export class GameEngine {
   private interactPoliceKiosk(): void {
     const f = this.state.flags;
     this.sound.playUIClick();
+    if (f.gotMansionEv1 && f.gotMansionEv2 && f.gotMansionEv3 && !f.arrestedSia) {
+      f.arrestedSia = true;
+      f.uncoveredDoubleTwist = true;
+      this.addClue('canal_money');
+      this.startDialogue([
+        {
+          speaker: 'ต้น',
+          role: 'นักศึกษาปี 2',
+          portrait: 'player',
+          text: 'ดาบวิชัยครับ! ผมแอบย่องเข้าไปในคฤหาสน์เสี่ยวิรัชมาแล้ว ได้ทั้งซองเงินสินบน สมุดเช็คฟอกเงิน และบันทึกคำสั่งปิดปากน้องพริมครบทั้ง 3 ชิ้น!',
+        },
+        {
+          speaker: 'ดาบวิชัย',
+          role: 'สายตรวจท้ายซอย 9',
+          portrait: 'uncle',
+          text: 'ยอดเยี่ยมมากไอ้หนุ่ม!! หลักฐานมัดตัวดิ้นไม่หลุดขนาดนี้ เดี๋ยวพี่วอกำลังเสริมส่วนกลางนำหมายจับเข้าล็อกตัว "เสี่ยวิรัช" คืนนี้ทันทีเลย!',
+        },
+      ]);
+      this.saveGame();
+      this.updateHUD();
+      return;
+    }
     if (!f.checkedPoliceBox) {
       f.checkedPoliceBox = true;
       this.addClue('police_clue');
@@ -2799,6 +2923,17 @@ export class GameEngine {
     const found = this.getNearestInteractable();
     if (found) {
       found.onInteract();
+      return;
+    }
+    if (this.currentRoom === 'sia_mansion') {
+      const spot = this.world
+        .getSiaMansionHidingSpots()
+        .find((s) => s.floor === this.state.floor && Math.abs(s.x - this.state.x) <= 1.45);
+      if (spot) {
+        this.isHidden = !this.isHidden;
+        this.sound.playUIClick();
+        this.showToast(this.isHidden ? `กำลังซ่อนตัวหลัง${spot.label}` : 'ออกจากที่ซ่อน');
+      }
     }
   }
 
@@ -3119,6 +3254,7 @@ export class GameEngine {
       room304: 'ภายในห้อง 304 (จุดเกิดเหตุ)',
       seven24: 'ภายในร้านสะดวกซื้อ 24-Seven ปากซอย 9',
       rooftop: 'ดาดฟ้าหอพักเรือนจันทร์ (ชั้นบนสุด)',
+      sia_mansion: 'คฤหาสน์หรู 3 ชั้น (บ้านเสี่ยวิรัช)',
     };
     this.hudLocation.textContent =
       this.currentRoom !== 'outside'
@@ -3483,41 +3619,72 @@ export class GameEngine {
       }
 
       const isMoving = moveX !== 0 || moveZ !== 0;
+      const inAlleyZone =
+        this.currentRoom === 'outside' &&
+        this.state.floor === 0 &&
+        this.state.x >= -30.9 &&
+        this.state.x <= -23.3;
       const wantSprint =
         isMoving &&
+        !this.isSneaking &&
         (this.codes.has('ShiftLeft') || this.codes.has('ShiftRight') || this.isSprintingTouch);
       if (isMoving) {
         if (moveX !== 0) this.facing = moveX > 0 ? 1 : -1;
-        const speed = wantSprint ? 7.2 : 4.65;
+        const speed = this.isSneaking ? 2.55 : wantSprint ? 7.2 : 4.65;
         const minX =
-          this.currentRoom === 'rooftop'
-            ? -7.0
-            : this.currentRoom !== 'outside'
-            ? -5.1
-            : this.state.floor === 0
-            ? STREET_MIN_X
-            : WORLD_MIN_X;
+          this.currentRoom === 'sia_mansion'
+            ? -11.8
+            : this.currentRoom === 'rooftop'
+              ? -7.0
+              : this.currentRoom !== 'outside'
+                ? -5.1
+                : this.state.floor === 0
+                  ? STREET_MIN_X
+                  : WORLD_MIN_X;
         const maxX =
-          this.currentRoom === 'rooftop'
-            ? 7.0
-            : this.currentRoom !== 'outside'
-            ? 5.1
-            : this.state.floor === 0
-            ? EAST_MAX_X
-            : WORLD_MAX_X;
+          this.currentRoom === 'sia_mansion'
+            ? 11.2
+            : this.currentRoom === 'rooftop'
+              ? 7.0
+              : this.currentRoom !== 'outside'
+                ? 5.1
+                : this.state.floor === 0
+                  ? EAST_MAX_X
+                  : WORLD_MAX_X;
         this.state.x = Math.max(minX, Math.min(maxX, this.state.x + moveX * speed * dt));
-        this.playerZ = Math.max(-0.35, Math.min(0.95, this.playerZ + moveZ * (wantSprint ? 2.8 : 2.1) * dt));
+        const minZ = inAlleyZone ? -24.0 : this.currentRoom === 'outside' && this.state.floor === 0 ? -1.6 : -0.35;
+        const maxZ = this.currentRoom === 'outside' && this.state.floor === 0 ? 1.2 : 0.95;
+        this.playerZ = Math.max(minZ, Math.min(maxZ, this.playerZ + moveZ * (wantSprint ? 2.8 : 2.3) * dt));
+        if (this.currentRoom === 'sia_mansion' && this.isHidden) {
+          const nearHide = this.world
+            .getSiaMansionHidingSpots()
+            .some((s) => s.floor === this.state.floor && Math.abs(s.x - this.state.x) <= 1.55);
+          if (!nearHide) this.isHidden = false;
+        }
+        // Enter Sia Wirat's 3-Story Luxury Mansion when walking deep to the end of the side-alley!
+        if (inAlleyZone && this.playerZ <= -22.2) {
+          this.currentRoom = 'sia_mansion';
+          this.state.floor = 0;
+          this.state.x = -11.2;
+          this.playerZ = 0.45;
+          this.facing = 1;
+          this.isSneaking = true;
+          this.isHidden = false;
+          this.mansionSuspicion = 0;
+          this.sound.playDoorCreak();
+          this.showToast('ลัดเข้ามาถึงหน้าคฤหาสน์หรู 3 ชั้นของเสี่ยวิรัช! กด [C] ย่องเบา, [E] แอบหลังเสา/ม่าน & เก็บหลักฐาน 3 ชิ้น');
+        }
         this.updateHUD();
 
         this.stepTimer -= dt;
-        if (this.stepTimer <= 0) {
+        if (this.stepTimer <= 0 && !this.isSneaking) {
           this.stepTimer = wantSprint ? 0.19 : 0.28;
           const surf =
             this.state.floor === 0 && (this.state.weather === 'rain' || this.state.weather === 'storm')
               ? 'wet'
               : this.state.floor === 3
-              ? 'wood'
-              : 'concrete';
+                ? 'wood'
+                : 'concrete';
           this.sound.playFootstep(surf);
         }
       }
@@ -3552,7 +3719,27 @@ export class GameEngine {
 
       const period = this.world.getTimePeriod(this.state.gameMinutes);
       if (canMove) {
-        if (this.drunkMode) {
+        if (this.currentRoom === 'sia_mansion') {
+          const f = this.state.flags;
+          const res = this.world.updateSiaMansionState(dt, this.state.x, this.state.floor, this.isSneaking, this.isHidden, {
+            ev1: !!f.gotMansionEv1,
+            ev2: !!f.gotMansionEv2,
+            ev3: !!f.gotMansionEv3,
+          });
+          if (res.inVision && !this.isHidden) {
+            this.mansionSuspicion += dt * (this.isSneaking ? 42 : 92);
+            if (this.mansionSuspicion >= 100) {
+              this.mansionSuspicion = 0;
+              this.isHidden = false;
+              this.state.floor = 0;
+              this.state.x = -11.2;
+              this.adjustSanity(-10);
+              this.showToast('การ์ดเสี่ยเห็นตัว! รีบถอยมาตั้งหลักหน้าประตูรั้ว (กด [C] ย่อง และ [E] แอบหลังเสา/ม่าน)');
+            }
+          } else {
+            this.mansionSuspicion = Math.max(0, this.mansionSuspicion - dt * 35);
+          }
+        } else if (this.drunkMode) {
           this.updateDrunkZombieMode(dt);
         } else {
           this.evaluateRulesAndChase(dt, period);
@@ -3560,13 +3747,31 @@ export class GameEngine {
       }
 
       const nearStairs = this.currentRoom === 'outside' && Math.abs(this.state.x - STAIR_X) <= 1.55;
-      this.touchUp.classList.toggle('hidden', !(nearStairs && this.state.floor < 3));
-      this.touchDown.classList.toggle('hidden', !(nearStairs && this.state.floor > 0));
+      const nearMansionStairUp =
+        this.currentRoom === 'sia_mansion' &&
+        ((this.state.floor === 0 && Math.abs(this.state.x - 8.5) <= 1.7) ||
+          (this.state.floor === 1 && Math.abs(this.state.x + 8.5) <= 1.7));
+      const nearMansionStairDown =
+        this.currentRoom === 'sia_mansion' &&
+        ((this.state.floor === 1 && Math.abs(this.state.x - 8.5) <= 1.7) ||
+          (this.state.floor === 2 && Math.abs(this.state.x + 8.5) <= 1.7));
+      this.touchUp.classList.toggle('hidden', !((nearStairs && this.state.floor < 3) || nearMansionStairUp));
+      this.touchDown.classList.toggle('hidden', !((nearStairs && this.state.floor > 0) || nearMansionStairDown));
 
       const nearest = canMove ? this.getNearestInteractable() : null;
+      const nearHideSpot =
+        this.currentRoom === 'sia_mansion'
+          ? this.world.getSiaMansionHidingSpots().find((s) => s.floor === this.state.floor && Math.abs(s.x - this.state.x) <= 1.45)
+          : undefined;
       if (nearest) {
         this.interactPrompt.classList.remove('hidden');
         this.interactLabel.textContent = nearest.getLabel ? nearest.getLabel() : nearest.label;
+      } else if (nearHideSpot && canMove) {
+        this.interactPrompt.classList.remove('hidden');
+        this.interactLabel.textContent = this.isHidden ? 'กด [E] ออกจากที่ซ่อน' : `กด [E] แอบหลัง${nearHideSpot.label}`;
+      } else if ((nearMansionStairUp || nearMansionStairDown) && canMove) {
+        this.interactPrompt.classList.remove('hidden');
+        this.interactLabel.textContent = nearMansionStairUp && nearMansionStairDown ? 'กด [W] ขึ้น / [S] ลงบันได' : nearMansionStairUp ? 'กด [W] ขึ้นบันไดชั้นบน' : 'กด [S] ลงบันไดชั้นล่าง';
       } else if (nearStairs && canMove) {
         this.interactPrompt.classList.remove('hidden');
         const dirText =
@@ -3615,7 +3820,9 @@ export class GameEngine {
         this.drunkMode,
         this.zombies,
         this.gunFlashTimer,
-        this.gunBeamEndX
+        this.gunBeamEndX,
+        this.isSneaking,
+        this.isHidden
       );
     }
 

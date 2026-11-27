@@ -1013,12 +1013,22 @@ body,
 }
 
 @media (max-width: 720px) {
+  #hud-top {
+    padding: 4px 6px;
+    gap: 4px;
+  }
   .hud-card {
-    padding: 6px 9px;
+    padding: 4px 7px;
+    font-size: 0.74rem;
+    border-radius: 8px;
   }
   .hud-status {
-    min-width: 150px;
-    flex: 1 1 150px;
+    min-width: 120px;
+    flex: 1 1 120px;
+  }
+  .hud-quest,
+  .hud-nav-row {
+    font-size: 0.7rem;
   }
   .icon-btn span {
     display: none;
