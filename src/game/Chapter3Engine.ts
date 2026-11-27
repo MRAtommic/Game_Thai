@@ -26,14 +26,23 @@ interface Ch3Flags {
   talkedMomIntro: boolean;
   acceptedDare: boolean;
   attendedClass: boolean;
+  checkedDeskNote: boolean;
   checkedLibrary: boolean;
+  playedCassette: boolean;
+  askedCoopGossip: boolean;
+  checkedClinic: boolean;
+  checkedShrineAshes: boolean;
+  checkedLockerF2: boolean;
   talkedJanitor: boolean;
+  talkedJanitorProof: boolean;
   prayedShrine: boolean;
   sneakedNightSchool: boolean;
   playedRanatNight: boolean;
   snappedMirrorPhoto: boolean;
   hidFromGhostOnce: boolean;
+  confrontedWilai: boolean;
   unlockedSafeProof: boolean;
+  confrontedSomchai: boolean;
   confrontedKongTwist: boolean;
   returnedChadaCrown: boolean;
   endingReached: EndingType | null;
@@ -70,14 +79,23 @@ const DEFAULT_CH3_FLAGS = (): Ch3Flags => ({
   talkedMomIntro: false,
   acceptedDare: false,
   attendedClass: false,
+  checkedDeskNote: false,
   checkedLibrary: false,
+  playedCassette: false,
+  askedCoopGossip: false,
+  checkedClinic: false,
+  checkedShrineAshes: false,
+  checkedLockerF2: false,
   talkedJanitor: false,
+  talkedJanitorProof: false,
   prayedShrine: false,
   sneakedNightSchool: false,
   playedRanatNight: false,
   snappedMirrorPhoto: false,
   hidFromGhostOnce: false,
+  confrontedWilai: false,
   unlockedSafeProof: false,
+  confrontedSomchai: false,
   confrontedKongTwist: false,
   returnedChadaCrown: false,
   endingReached: null,
@@ -540,6 +558,22 @@ export class Chapter3Engine {
         },
       },
       {
+        id: 'ch3_cafe_shop',
+        floor: 0,
+        x: -96.0,
+        range: 2.5,
+        label: 'แวะ "ร้านกาแฟโบราณ & นมสด" (คุยข่าวลือ / ซื้อโอเลี้ยง 20 ฿)',
+        onInteract: () => this.interactCafeShop(),
+      },
+      {
+        id: 'ch3_clinic',
+        floor: 0,
+        x: -69.0,
+        range: 2.6,
+        label: 'สอบถาม "คลินิก & ร้านยา" เรื่องบันทึกคนไข้ปี 2554',
+        onInteract: () => this.interactClinicArchive(),
+      },
+      {
         id: 'ch3_bami_cart',
         floor: 0,
         x: -61.0,
@@ -562,6 +596,30 @@ export class Chapter3Engine {
         range: 2.4,
         label: 'คุยกับกลุ่มไอ้ก้อง (หัวโจกที่ท้าพิสูจน์คืนนี้)',
         onInteract: () => this.interactKongGang(),
+      },
+      {
+        id: 'ch3_lobby_admin',
+        floor: 0,
+        x: -7.5,
+        range: 2.0,
+        label: 'ตรวจดูแฟ้มเซ็นชื่อครูปี 2554 หน้าห้องธุรการ',
+        onInteract: () => this.interactLobbyAdmin(),
+      },
+      {
+        id: 'ch3_lobby_nurse',
+        floor: 0,
+        x: -0.5,
+        range: 2.0,
+        label: 'ค้นตู้ประวัติคนไข้ & ขอยาดมห้องพยาบาล',
+        onInteract: () => this.interactLobbyNurse(),
+      },
+      {
+        id: 'ch3_lobby_council',
+        floor: 0,
+        x: 21.5,
+        range: 2.0,
+        label: 'อ่านแฟ้มร้องเรียนเด็กหายหน้าห้องสภาฯ นร.',
+        onInteract: () => this.interactLobbyCouncil(),
       },
       {
         id: 'ch3_coop',
@@ -591,9 +649,17 @@ export class Chapter3Engine {
         id: 'ch3_shrine',
         floor: 0,
         x: 112.2,
-        range: 2.6,
+        range: 2.2,
         label: 'กราบศาลตายายใต้ต้นโพธิ์หลังโรงเรียน',
         onInteract: () => this.interactSchoolShrine(),
+      },
+      {
+        id: 'ch3_shrine_ashes',
+        floor: 0,
+        x: 116.5,
+        range: 2.2,
+        label: 'คุ้ยเขี่ยกองขี้เถ้าเผาจดหมายหลังต้นโพธิ์ (+116 ม.)',
+        onInteract: () => this.interactShrineAshes(),
       },
 
       // FLOOR 1 (Library + Teacher Office + 2 Hiding Lockers)
@@ -643,9 +709,10 @@ export class Chapter3Engine {
         id: 'ch3_locker_f2a',
         floor: 2,
         x: 14.0,
-        range: 1.9,
-        label: 'ซ่อนตัวในตู้ล็อกเกอร์ชั้น 2',
-        onInteract: () => this.enterHideSpot('ตู้ล็อกเกอร์ชั้น 2'),
+        range: 2.0,
+        getLabel: () => (this.ghostChase ? 'ซ่อนตัวในตู้ล็อกเกอร์ชั้น 2!!' : 'ค้น / ซ่อนตัวในตู้ล็อกเกอร์ชั้น 2'),
+        label: 'ตู้ล็อกเกอร์ชั้น 2',
+        onInteract: () => this.interactLockerF2(),
       },
       {
         id: 'ch3_bath_hide',
@@ -948,16 +1015,16 @@ export class Chapter3Engine {
       this.addClue('gongs_betrayal');
       this.startDialogue([
         {
-          speaker: 'ภีม (กำหลักฐานตู้เซฟแน่น!)',
+          speaker: 'ภีม (กำจดหมายลาตาย & ชฎาทองแน่น!)',
           role: 'เค้นคอถามไอ้ก้อง',
           portrait: 'player',
-          text: 'ไอ้ก้อง!! กูรู้หมดแล้วว่า "ครูวิไล" คือน้าแท้ๆ ของมึง! มึงหลอกท้าเด็กใหม่ขึ้นไปตายบนชั้น 3 เพื่อสังเวยเบี่ยงเบนวิญญาณพี่ดาวให้ครูวิไลรอดตัวใช่ไหม?!',
+          text: 'ไอ้ก้อง!! นอกจาก "ครูวิไล" จะเป็นน้ามึงที่หลอกท้าเด็กไปตายบนชั้น 3 แล้ว... "ครูสมชาย" ยังจ้างเกรด 4 ให้มึงคอยข่มขู่ห้ามใครค้นเรื่องปี 2554 อีกคนใช่ไหม?!',
         },
         {
-          speaker: 'ไอ้ก้อง (หน้าซีดตัวสั่นยอมรับ!)',
-          role: 'หน้าโรงเรียน',
+          speaker: 'ไอ้ก้อง (หน้าซีดตัวสั่นเข่าอ่อน!)',
+          role: 'หน้าซุ้มประตูโรงเรียน',
           portrait: 'tom',
-          text: 'อย่านะเว้ยภีม! น้าวิไลบังคับกู... น้าบอกว่าถ้าไม่มีใครขึ้นไปตีระนาดล่อวิญญาณพี่ดาวประกาย น้าจะต้องตายแทน!! รีบเอาชฎาทองไปวางคืนบนแท่นบูชาห้องดนตรีไทยเถอะ กูยอมแล้ว!',
+          text: 'พอเถอะเว้ยภีม!! กูยอมแล้ว! ครูสมชายขู่ว่าถ้ากูไม่กันเด็กไม่ให้รู้เรื่องคืนนั้น ครูจะปัดตกวิชากูไม่ให้จบ ม.6! ส่วนน้าวิไลก็หลอนจนสติแตกกลัวผีพี่ดาว... รีบขึ้นไปคืนชฎาทองและทวงความยุติธรรมให้พี่ดาวเถอะ!',
         },
       ]);
       this.saveGame();
@@ -972,12 +1039,41 @@ export class Chapter3Engine {
   }
 
   private interactClassroomLesson(): void {
+    const f = this.state.flags;
+    if (f.unlockedSafeProof && !f.confrontedSomchai) {
+      f.confrontedSomchai = true;
+      this.addClue('somchai_betrayal');
+      this.sound.playScare();
+      this.adjustSanity(-15);
+      this.startDialogue([
+        {
+          speaker: 'ภีม (ชูใบฝากครรภ์ & จดหมายลาตายต่อหน้าโต๊ะครูสมชาย!)',
+          role: 'ห้องเรียน ม.5/2',
+          portrait: 'player',
+          text: 'ครูสมชาย!! เลิกแกล้งทำเป็นครูแสนดีได้แล้ว! ในเทปปี 2554 กับจดหมายลาตายของพี่ดาวประกายระบุชื่อ "ส.ช." ชัดเจนว่าครูทำให้เธอตั้งท้องแล้วขู่ทิ้งจนเธอจบชีวิตตัวเอง!!',
+        },
+        {
+          speaker: 'ครูสมชาย (สีหน้าอบอุ่นแปรเปลี่ยนเป็นเย็นชาอำมหิต!!)',
+          role: 'ถอดหน้ากากผู้ร้ายตัวจริง',
+          portrait: 'worker',
+          text: 'หึ... เด็กปากไม่สิ้นกลิ่นน้ำนมอย่างแกกล้ามาขุดอดีตของฉันเรอะ?! 15 ปีก่อนฉันกำลังจะได้บรรจุราชการ ใครจะยอมอนาคตพังเพราะผู้หญิงคนเดียว! เอาจดหมายนั่นมาเดี๋ยวนี้นะไอ้ภีม!! (-15 สติ!)',
+        },
+        {
+          speaker: 'ภีม (ถอยหนีคว้าหลักฐานแน่น!)',
+          role: 'ห้องเรียน ม.5/2',
+          portrait: 'player',
+          text: 'ไม่มีทาง!! ความจริงทั้งหมดและชฎาทองจะถูกส่งคืนบนชั้น 3 คืนนี้ พี่ดาวประกายจะไม่ตายฟรีอีกต่อไป!',
+        },
+      ]);
+      this.saveGame();
+      return;
+    }
+
     const h = (this.state.gameMinutes % 1440) / 60;
     if (h < 6.8 || h > 16.5) {
       this.showToast('ห้องเรียน ม.5/2 เงียบสนิทนอกเวลาเรียน — ลองมาเข้าเรียนช่วงกลางวัน (07:00–16:00 น.)');
       return;
     }
-    const f = this.state.flags;
     this.openModal(
       'คาบเรียนนาฏศิลป์ & ประวัติศาสตร์ — ครูสมชาย',
       `
@@ -1006,12 +1102,12 @@ export class Chapter3Engine {
                   speaker: 'เพื่อนร่วมชั้น ม.5/2 (กระซิบ)',
                   role: 'หลังจบคาบเรียน',
                   portrait: 'prim',
-                  text: 'เก่งมากภีม! (+25 สติ & +50 ฿) ว่าแต่อย่ารับคำท้าไอ้ก้องเลยนะ... เมื่อ 15 ปีก่อน "พี่ดาวประกาย" ตั้งท้องแล้วรับความจริงไม่ได้จนจบชีวิตตัวเองบนชั้น 3! ลองก้มค้นใต้โต๊ะฝั่งขวาดูสิมีคนเขียนคำใบ้ซ่อนไว้!',
+                  text: 'เก่งมากภีม! (+25 สติ & +50 ฿) ว่าแต่อย่ารับคำท้าไอ้ก้องเลยนะ... เมื่อ 15 ปีก่อน "พี่ดาวประกาย" ตั้งท้องแล้วรับความจริงไม่ได้จนจบชีวิตตัวเองบนชั้น 3! ลองก้มค้นใต้โต๊ะฝั่งขวาดูสิมีกระดาษคำใบ้ถูกซ่อนไว้!',
                 },
               ]);
             });
           } else {
-            this.showToast('ครูสมชาย: "ตอบถูกเก่งมาก! (+25 สติ)"');
+            this.showToast('ครูสมชาย: "ตอบถูกเก่งมาก! (+25 สติ)" — (ภีมสังเกตแววตาครูหลบสายตาตอนพูดถึงปี 2554...)');
           }
           this.saveGame();
         } else {
@@ -1022,16 +1118,18 @@ export class Chapter3Engine {
   }
 
   private interactClassroomNote(): void {
+    this.state.flags.checkedDeskNote = true;
     this.addClue('classroom_note');
     this.sound.playPickup();
     this.startDialogue([
       {
-        speaker: 'ภีม (ก้มมองใต้โต๊ะเรียน)',
+        speaker: 'ภีม (แกะกระดาษคำใบ้ใต้โต๊ะเรียน)',
         role: 'ห้องเรียน ม.5/2',
         portrait: 'player',
-        text: 'เจอกระดาษโน้ตเก่าซุกอยู่: "คืนนั้นพี่ดาวร้องไห้หนักหลังถูกทรยศเรื่องตั้งท้องและถูกขู่ประจาน ลองค้นข่าวเก่าปี 2554 ในหอสมุดชั้น 1 ดู (รหัสตู้เซฟ 514)"!',
+        text: 'กระดาษเขียนว่า: "รหัสเซฟห้องพักครูวิไล (3 หลัก) ถูกแยกซ่อนตามจุดที่ผู้ชายคนนั้นแวะปิดปากพยาน = [วันครบรอบบนเถ้าจดหมายหลังศาลตายาย] + [ชั้นล็อกเกอร์ชมรม] + [วันที่ตรวจครรภ์คลินิกหน้าปากซอย]!"... ไม่ได้บอกเลขตรงๆ ต้องออกตามหาครบทั้ง 3 ที่!',
       },
     ]);
+    this.saveGame();
   }
 
   private interactLibraryArchive(): void {
@@ -1046,13 +1144,55 @@ export class Chapter3Engine {
           speaker: 'ภีม (เปิดแฟ้มข่าวเก่าปี 2554)',
           role: 'หอสมุดโรงเรียนชั้น 1',
           portrait: 'player',
-          text: 'เจอข่าวหน้าหนึ่งเมื่อ 15 ปีก่อน! "ช็อกวงการนาฏศิลป์ ดาวประกาย นางรำเอกตัดสินใจจบชีวิตตัวเองในห้องซ้อมชั้น 3 หลังข่าวลือเรื่องความสัมพันธ์ลับจนตั้งท้อง" แถมมีชื่อคู่แข่งคนสนิท "น.ส. วิไลวรรณ" และม้วน "เทปโหมโรง 2554" กับกุญแจพวงหนึ่งซ่อนอยู่ด้วย!',
+          text: 'แปลกมาก!! หน้าข่าวการสอบสวน "พยานผู้ชายที่เกี่ยวข้อง" ถูกฉีกหายไปทั้งหน้า เหลือเพียงข่าวพี่ดาวประกายเสียชีวิตและชื่อคู่แข่ง "น.ส. วิไลวรรณ" — แถมซอกลิ้นชักมีม้วน "เทปโหมโรง 2554" ซ่อนอยู่! ลองกดเปิดฟังเทปในช่องไอเทมดูสิ!',
         },
       ]);
       this.saveGame();
     } else {
-      this.showToast('ค้นแฟ้มข่าวปี 2554 เรียบร้อยแล้ว');
+      if (!f.playedCassette) this.playCassetteModal();
+      else this.showToast('ค้นแฟ้มข่าวปี 2554 และถอดเสียงท้ายเทปเรียบร้อยแล้ว');
     }
+  }
+
+  private playCassetteModal(): void {
+    this.sound.playSwitchClick();
+    this.openModal(
+      'เครื่องเล่นเทปคาสเซ็ต — ม้วน "เทปโหมโรง 2554"',
+      `
+      <p style="margin-top:0">ฟังเสียงซ้อมดนตรีปี 2554: ช่วงแรกเป็นเสียงระนาดเอกปกติ แต่ช่วงท้ายม้วนมี <strong>เสียงซ่าผิดปกติราวกับอัดทับการทะเลาะวิวาท</strong>!</p>
+      <div id="tape-status" style="padding:10px;background:#0f172a;border-radius:6px;margin:10px 0;color:#cbd5e1;font-size:0.9rem">⏳ กำลังรอเล่นเสียงช่วงท้ายม้วน...</div>
+      <div style="display:flex;gap:8px">
+        <button id="tape-rev" class="primary-btn" style="flex:1">⏪ กรอฟังช่วงท้ายม้วน</button>
+      </div>
+      `
+    );
+    document.getElementById('tape-rev')?.addEventListener('click', () => {
+      this.sound.playRanatNote(3, true);
+      this.state.flags.playedCassette = true;
+      this.addClue('cassette_audio');
+      this.closeModal();
+      this.startDialogue([
+        {
+          speaker: 'เสียงผู้ชายในเทป (สั่นเครือเกรี้ยวกราด!)',
+          role: 'บันทึกเสียงลับท้ายเทปปี 2554',
+          portrait: 'worker',
+          text: '"ดาว!! ถ้าเรื่องลูกในท้องหลุดออกไป ฉันหมดอนาคตข้าราชการแน่! เอาเงินนี่ไปจัดการเงียบๆ ซะ!" — (เสียงพี่ดาวร้องไห้สะอื้น: "หนูไม่เอาเงิน... ทำไมครูใจร้ายขนาดนี้!!")',
+        },
+        {
+          speaker: 'เสียงผู้หญิงในเทป (หัวเราะเย็นยะเยือก)',
+          role: 'นาทีถัดมาในห้องซ้อม',
+          portrait: 'narrator',
+          text: '"ตายจริง... นางรำคนเก่งตั้งท้องกับครูสมชายงั้นเหรอ?! รอให้ฉันแฉหน้าเสาธงพรุ่งนี้ทั้งคู่เลยเป็นไง!" — (เสียงฝีเท้าวิ่งหนีเข้าห้องกระจกและเสียงกลอนล็อกดังแกร๊ก!!)',
+        },
+        {
+          speaker: 'ภีม (ขนลุกซู่ทั้งตัว!!)',
+          role: 'ถอดรหัสความจริงจากม้วนเทป',
+          portrait: 'player',
+          text: 'เสียงผู้ชายในเทปมันเสียง "ครูสมชาย" นี่นา!! แสดงว่าปมนี้มีผู้เกี่ยวข้องทั้งครูสมชายและครูวิไล! รีบไปสอบปากคำลุงมั่น ลุงร้านกาแฟ คลินิกหน้าซอย และห้องธุรการเดี๋ยวนี้!',
+        },
+      ]);
+      this.saveGame();
+    });
   }
 
   private interactJanitor(): void {
@@ -1061,27 +1201,45 @@ export class Chapter3Engine {
       f.talkedJanitor = true;
       this.addClue('janitor_witness');
       this.addItem('teacher_key');
-      this.addItem('music_room_key');
       this.sound.playPickup();
       this.startDialogue([
         {
           speaker: 'ลุงมั่น (ภารโรงเก่าแก่)',
           role: 'ป้อมหน้าโรงเรียน',
           portrait: 'uncle',
-          text: 'หนุ่มภีมเอ๊ย... ลุงเห็นนะว่าไอ้ก้องมันท้าเอ็งขึ้นชั้น 3! คืนเกิดเหตุเมื่อ 15 ปีก่อน พี่ดาวประกายวิ่งร้องไห้ขึ้นห้องดนตรีไทยเพราะถูกคนรักทอดทิ้งตอนตั้งท้อง แถมครูวิไลยังขู่แฉประจานจนเธอรับไม่ได้ คิดสั้นจบชีวิตตัวเอง และไอ้ก้องก็เป็น "หลานชายแท้ๆ ของครูวิไล"!',
+          text: 'หนุ่มภีมเอ๊ย... ลุงเห็นนะว่าไอ้ก้องมันท้าเอ็ง! เรื่องเมื่อ 15 ปีก่อนน่ะซับซ้อนกว่าที่เด็กม.5 เล่ากันนะ... คืนนั้นลุงเห็นทั้ง "ครูวิไล" หัวเราะเยาะหน้าห้องซ้อม และเห็นอาจารย์ผู้ชายลากแขนพี่ดาวที่กำลังร้องไห้กุมท้อง!',
         },
         {
           speaker: 'ลุงมั่น',
-          role: 'ยื่นพวงกุญแจสำรองให้ภีม',
+          role: 'ยื่นกุญแจห้องพักครูก่อน',
           portrait: 'uncle',
-          text: 'ถ้าเอ็งคิดจะพิสูจน์เปิดโปงความจริง ลุงฝาก "กุญแจห้องพักครู" กับ "กุญแจห้องดนตรีไทย" ไว้ให้ เผื่อเอ็งต้องแอบเข้าไปกลางดึกตอนตึกเงียบ!',
+          text: 'เอา "กุญแจห้องพักครู" ไปสืบดูก่อน! ส่วน "กุญแจห้องดนตรีไทยชั้น 3" มันอันตราย ลุงขอเห็นหลักฐานคลินิก (-69 ม.) หรือกองเถ้าหลังศาลตายาย (+116 ม.) ก่อนถึงจะยอมมอบให้เอ็ง!',
+        },
+      ]);
+      this.saveGame();
+      return;
+    }
+    if (!f.talkedJanitorProof && (f.checkedClinic || f.checkedShrineAshes || f.playedCassette)) {
+      f.talkedJanitorProof = true;
+      this.addItem('music_room_key');
+      this.sound.playPickup();
+      this.startDialogue([
+        {
+          speaker: 'ลุงมั่น (เบิกตากว้างเมื่อเห็นหลักฐาน ส.ช.!!)',
+          role: 'ป้อมหน้าโรงเรียน',
+          portrait: 'uncle',
+          text: 'ส.ช.... อาจารย์สมชายจริงๆ ด้วย!! ที่แท้ตลอด 15 ปีแกแสร้งเป็นครูใจดีกลบเกลื่อนความผิด! เอา "กุญแจห้องดนตรีไทยชั้น 3" นี่ไปเถอะภีม เปิดโปงความจริงแล้วนำชฎาทองไปคืนพี่ดาวซะ!',
         },
       ]);
       this.saveGame();
       return;
     }
     this.adjustSanity(15);
-    this.showToast('ลุงมั่น: "ระวังตัวบนชั้น 3 ด้วยนะลูก ถ้าได้ยินเสียงระนาดรีบเข้าตู้ล็อกเกอร์!" (+15 สติ)');
+    this.showToast(
+      !f.talkedJanitorProof
+        ? 'ลุงมั่น: "ลองไปหาหลักฐานที่คลินิกหน้าปากซอย (-69 ม.) หรือกองขี้เถ้าหลังศาล (+116 ม.) แล้วกลับมาขอกุญแจชั้น 3 นะ!" (+15 สติ)'
+        : 'ลุงมั่น: "ระวังตัวบนชั้น 3 ด้วยนะลูก ถ้าได้ยินเสียงระนาดรีบเข้าตู้ล็อกเกอร์!" (+15 สติ)'
+    );
   }
 
   private interactTeacherDoor(): void {
@@ -1093,17 +1251,45 @@ export class Chapter3Engine {
   }
 
   private interactTeacherWilai(): void {
+    const f = this.state.flags;
     const h = (this.state.gameMinutes % 1440) / 60;
     if (h >= 19 || h < 5.5) {
       this.showToast('โต๊ะครูวิไลว่างเปล่าในยามวิกาล... แต่ตู้เซฟเหล็กมุมห้องยังคงตั้งอยู่');
+      return;
+    }
+    if ((f.playedCassette || f.checkedClinic) && !f.confrontedWilai) {
+      f.confrontedWilai = true;
+      this.addClue('wilai_confession');
+      this.sound.playScare();
+      this.startDialogue([
+        {
+          speaker: 'ภีม (เปิดหลักฐานใบฝากครรภ์ & เทปเสียงปี 2554!)',
+          role: 'จี้ถามครูวิไลวรรณกลางห้องพักครู',
+          portrait: 'player',
+          text: 'ครูวิไล!! ในเทปเสียงคืนนั้น ครูเป็นคนขู่จะประจานเรื่องพี่ดาวประกายท้องหน้าเสาธงใช่ไหม?! แล้วยังขโมยชฎาทองของพี่ดาวมาซ่อนไว้อีก!',
+        },
+        {
+          speaker: 'ครูวิไล (หน้าถอดสีทรุดลงกับเก้าอี้ทั้งน้ำตา!!)',
+          role: 'ยอมรับความจริงบางส่วน',
+          portrait: 'narrator',
+          text: 'ใช่... ครูผิดเองที่อิจฉาและเอาชฎามาขู่เธอให้สละสิทธิ์แข่ง แต่ครูไม่คิดจะฆ่าเธอนะภีม!! คนที่บีบคั้นจิตใจและทำให้ดาวตั้งท้องแล้วทอดทิ้งอย่างเลือดเย็นก็คือ "ครูสมชาย"!!',
+        },
+        {
+          speaker: 'ครูวิไล (เสียงสั่นเครือ)',
+          role: 'ห้องพักครูหมวดศิลปะ',
+          portrait: 'narrator',
+          text: 'จดหมายลาตายตัวจริงของดาวกับชฎาอยู่ในตู้เซฟมุมห้อง... รหัส 3 หลักคือ [วันครบรอบหลังศาลตายาย] + [ชั้นล็อกเกอร์ชมรม] + [วันที่คลินิก] (7... 2... 9...) รีบเปิดมันซะ!',
+        },
+      ]);
+      this.saveGame();
       return;
     }
     this.startDialogue([
       {
         speaker: 'ครูวิไล (ยิ้มเย็นผิดปกติ)',
         role: 'หัวหน้าชมรมนาฏศิลป์',
-        portrait: 'vendor',
-        text: 'อ้าว ภีม ม.5/2 มีธุระอะไรที่ห้องพักครูจ๊ะ? อย่าไปสนใจข่าวลือไร้สาระเรื่องห้องดนตรีไทยชั้น 3 เลยนะ... แต่ถ้าอยากลองพิสูจน์ตอนกลางคืนกับเพื่อนๆ ครูก็ไม่ห้ามหรอก หึหึ',
+        portrait: 'narrator',
+        text: 'อ้าว ภีม ม.5/2 มีธุระอะไรที่ห้องพักครูจ๊ะ? อย่าไปสนใจข่าวลือไร้สาระเรื่องห้องดนตรีไทยชั้น 3 เลยนะ... ลองไปสืบให้ดีก่อนว่าใครกันแน่ที่เป็น "ส.ช."!',
       },
     ]);
   }
@@ -1111,14 +1297,18 @@ export class Chapter3Engine {
   private interactTeacherSafe(): void {
     const f = this.state.flags;
     if (f.unlockedSafeProof) {
-      this.showToast('ตู้เซฟเปิดออกแล้ว — คุณนำ "ชฎาทองโบราณ" ออกมาเรียบร้อย');
+      this.showToast('ตู้เซฟเปิดออกแล้ว — คุณนำ "ชฎาทองโบราณ & จดหมายลาตาย" ออกมาเรียบร้อย');
       return;
     }
+    const d1 = f.checkedShrineAshes ? '7' : '?';
+    const d2 = f.checkedLockerF2 ? '2' : '?';
+    const d3 = f.checkedClinic ? '9' : '?';
     let code = '';
     this.openModal(
       'ตู้เซฟนิรภัยมุมโต๊ะครูวิไล',
       `
-      <p style="text-align:center;color:#9fa6b8;margin-top:0">ใส่รหัส 3 หลัก (คำใบ้: โน้ตใต้โต๊ะห้อง ม.5/2 = 514)</p>
+      <p style="text-align:center;color:#9fa6b8;margin-top:0">รหัส 3 หลักจากการสืบคดีจริง: [<strong style="color:#fde047">${d1}</strong>] - [<strong style="color:#fde047">${d2}</strong>] - [<strong style="color:#fde047">${d3}</strong>]</p>
+      <div style="font-size:0.78rem;text-align:center;color:#94a3b8;margin-bottom:8px">ศาลตายาย (+116 ม.) • ตู้ล็อกเกอร์ชั้น 2 (+14 ม.) • คลินิกหน้าปากซอย (-69 ม.)</div>
       <div class="keypad-display" id="safe-disp">---</div>
       <div class="keypad-grid">
         ${[1, 2, 3, 4, 5, 6, 7, 8, 9, 'C', 0, 'ตกลง'].map((k) => `<button class="keypad-btn" data-skp="${k}">${k}</button>`).join('')}
@@ -1132,9 +1322,10 @@ export class Chapter3Engine {
         const v = b.dataset.skp!;
         if (v === 'C') code = '';
         else if (v === 'ตกลง') {
-          if (code === '514') {
+          if (code === '729') {
             f.unlockedSafeProof = true;
             this.addItem('gold_chada');
+            this.addItem('daw_diary_proof');
             this.addClue('wilai_safe_proof');
             this.closeModal();
             this.sound.playClueChime();
@@ -1143,13 +1334,13 @@ export class Chapter3Engine {
                 speaker: 'ภีม (เบิกตากว้าง!!)',
                 role: 'หน้าตู้เซฟห้องพักครู',
                 portrait: 'player',
-                text: 'ข้างในตู้เซฟมี "ชฎาทองโบราณ" กับ "จดหมายลาตายและผลตรวจครรภ์ของพี่ดาวประกาย"!! ความจริงคือเธอมีสัมพันธ์ลับจนตั้งท้องแล้วถูกทรยศ แถมครูวิไลยังขู่ประจานจนเธอรับไม่ได้ ต้องฆ่าตัวตายและกลายเป็นวิญญาณแค้นออกหลอกหลอนทุกคนยามค่ำคืน! รีบนำชฎาทองนี้ไปคืนบนแท่นบูชาห้องดนตรีไทยชั้น 3 เดี๋ยวนี้!',
+                text: 'ข้างในตู้เซฟมี "ชฎาทองโบราณ" กับ "จดหมายลาตายตัวจริงของพี่ดาวประกาย"!! เธอระบุชัดเจนว่า "ครูสมชาย" คือพ่อของลูกในท้องที่ทอดทิ้งและขู่ทำลายชื่อเสียง ส่วนครูวิไลก็ขู่ประจานจนเธอต้องจบชีวิตตัวเอง! เอาจดหมายนี้ไปคาดคั้นกับครูสมชายในห้อง ม.5/2 และไอ้ก้องเดี๋ยวนี้!',
               },
             ]);
             this.saveGame();
             return;
           } else {
-            this.showToast('รหัสตู้เซฟไม่ถูกต้อง!', true);
+            this.showToast('รหัสตู้เซฟไม่ถูกต้อง! ลองหาเบาะแสให้ครบทั้ง 3 จุด (729)', true);
             code = '';
           }
         } else if (code.length < 3) code += v;
@@ -1269,7 +1460,14 @@ export class Chapter3Engine {
     this.saveGame();
 
     const endType: EndingType =
-      f.unlockedSafeProof && f.snappedMirrorPhoto && f.confrontedKongTwist ? 'true' : 'normal';
+      f.unlockedSafeProof &&
+      f.snappedMirrorPhoto &&
+      f.confrontedKongTwist &&
+      f.confrontedSomchai &&
+      f.confrontedWilai &&
+      f.playedCassette
+        ? 'true'
+        : 'normal';
 
     this.playCutscene('dancer_finale', () => {
       this.startDialogue([
@@ -1298,14 +1496,14 @@ export class Chapter3Engine {
 
     const info: Record<EndingType, { title: string; sub: string; body: string }> = {
       true: {
-        title: 'Chapter 3 True Ending — ตำนานผีนางรำพังทลาย',
-        sub: 'คืนชฎาทองให้พี่ดาวประกาย และเปิดโปงแผนชั่วของครูวิไล & ไอ้ก้อง',
-        body: 'ภาพถ่ายหน้ากระจก เทปเพลงโหมโรงปี 2554 และจดหมายลาตายกับผลตรวจครรภ์ในตู้เซฟถูกส่งตรงถึงตำรวจและผู้อำนวยการ! ครูวิไลและผู้ที่เกี่ยวข้องเมื่อ 15 ปีก่อนถูกเปิดโปงดำเนินคดี ไอ้ก้องยอมขอขมา ส่วนวิญญาณพี่ดาวประกายและลูกน้อยก็พ้นบ่วงแค้นไปสู่สุคติในรุ่งอรุณ...',
+        title: 'Chapter 3 True Ending — กระชากหน้ากาก & ปลดปล่อยดวงวิญญาณแม่ลูก',
+        sub: 'เปิดโปงทั้ง "ครูสมชาย", "ครูวิไล" และ "แก๊งไอ้ก้อง" ได้ครบ 100%',
+        body: 'ภาพถ่ายหน้ากระจก เทปโหมโรงปี 2554 ใบฝากครรภ์คลินิก เศษสัญญาหมั้น และจดหมายลาตายในเซฟ 729 ถูกส่งถึงตำรวจและกระทรวงศึกษาธิการ! "ครูสมชาย" ผู้ซ่อนหน้ากากคนดีถูกถอดใบประกอบวิชาชีพและจับกุมทันทีพร้อม "ครูวิไล" ส่วนไอ้ก้องสารภาพผิดทั้งหมด ดวงวิญญาณพี่ดาวประกายและลูกน้อยพ้นบ่วงกรรมสู่สุคติในแสงรุ่งอรุณ...',
       },
       normal: {
-        title: 'Chapter 3 Normal Ending — คืนชฎาแต่ความลับยังไม่สิ้น',
-        sub: 'ดวงวิญญาณสงบลงชั่วคราว แต่ยังสืบปากคำไอ้ก้องไม่ครบ',
-        body: 'ภีมวางชฎาทองคืนที่แท่นบูชาได้สำเร็จ ผีนางรำสงบลงและยอมปล่อยให้ภีมกลับบ้านอย่างปลอดภัย ทว่าครูวิไลยังอ้างว่าไม่รู้เห็นเรื่องเก่า...',
+        title: 'Chapter 3 Normal Ending — คืนชฎาแต่ความจริงยังเปิดโปงไม่หมด',
+        sub: 'ดวงวิญญาณสงบลงชั่วคราว แต่ผู้ร้ายตัวจริง (ครูสมชาย/ครูวิไล) ยังลอยนวลบางส่วน',
+        body: 'ภีมวางชฎาทองคืนที่แท่นบูชาได้สำเร็จ ผีนางรำสงบลงและปล่อยให้ภีมกลับบ้านปลอดภัย ทว่าหลักฐานเทปเสียง การคาดคั้นครูวิไล ครูสมชาย และไอ้ก้องยังไม่ครบถ้วนพอจะจับกุมผู้กระทำผิดทั้งหมด...',
       },
       bad: {
         title: 'Chapter 3 Bad Ending — นาฏศิลป์นิรันดร์บนชั้น 3',
@@ -1376,14 +1574,29 @@ export class Chapter3Engine {
     this.openModal(
       `สหกรณ์โรงเรียน (เงินติดตัว: ${this.state.baht} ฿)`,
       `
-      <p style="margin-top:0">ป้าแม่ค้าสหกรณ์: "เอาหยังดีลูกภีม เตรียมเสบียงไว้เผื่ออยู่ดึกทำรายงานไหม?"</p>
+      <p style="margin-top:0">ป้าแม่ค้าสหกรณ์: "เอาหยังดีลูกภีม เตรียมเสบียงไว้เผื่ออยู่ดึก หรืออยากซุบซิบเรื่องตึกเรียน?"</p>
       <div style="display:flex;flex-direction:column;gap:8px;margin-top:10px">
-        <button class="primary-btn" data-buy="battery_pack" data-p="30">🔋 ถ่านไฟฉายพลังสูง (30 ฿) — ฟื้นแบต +85%</button>
+        <button class="primary-btn" data-gossip="1">💬 ถามป้าเรื่องเงาลึกลับหน้าล็อกเกอร์ชั้น 2 & ศาลตายาย</button>
+        <button class="secondary-btn" data-buy="battery_pack" data-p="30">🔋 ถ่านไฟฉายพลังสูง (30 ฿) — ฟื้นแบต +85%</button>
         <button class="secondary-btn" data-buy="inhaler" data-p="25">🌿 ยาดมสมุนไพร (25 ฿) — ฟื้นสติ +35%</button>
         <button class="secondary-btn" data-buy="chilled_soda" data-p="20">🥤 น้ำแดงโซดา (20 ฿) — ฟื้นสติ +30% & กำลังวิ่ง 100%</button>
       </div>
       `
     );
+    this.modalBody.querySelector('[data-gossip]')?.addEventListener('click', () => {
+      this.closeModal();
+      this.state.flags.askedCoopGossip = true;
+      this.addClue('coop_gossip');
+      this.startDialogue([
+        {
+          speaker: 'ป้าแม่ค้าสหกรณ์ (ชะโงกหน้ากระซิบ)',
+          role: 'โรงอาหารโรงเรียน',
+          portrait: 'vendor',
+          text: 'อุ๊ย! เมื่อสัปดาห์ก่อนป้าเห็นครูคนหนึ่งแอบขึ้นไปรื้อ "ตู้ล็อกเกอร์ชั้น 2 (+14 ม.)" ยามเย็นอย่างลุกลี้ลุกลน แถมลุงมั่นบอกว่าเคยเห็นคนแอบหอบกล่องจดหมายไปเผาตรง "ใต้ต้นโพธิ์หลังศาลตายาย (+116 ม.)" ด้วยนะลูก!!',
+        },
+      ]);
+      this.saveGame();
+    });
     this.modalBody.querySelectorAll<HTMLButtonElement>('[data-buy]').forEach((b) => {
       b.addEventListener('click', () => {
         const id = b.dataset.buy!;
@@ -1572,7 +1785,187 @@ export class Chapter3Engine {
     }
     if (id === 'bicycle') return this.toggleBicycle();
     if (id === 'camera_phone') return this.takePhoto();
+    if (id === 'old_cassette') return this.playCassetteModal();
     this.showToast(`${it.name} — ${it.description}`);
+  }
+
+  private interactClinicArchive(): void {
+    if (this.isNightTime()) {
+      this.showToast('คลินิก & ร้านยาปิดประตูเหล็กม้วนแล้วตอนกลางคืน! แวะมาใหม่ช่วง 06:00–19:00 น.');
+      return;
+    }
+    const f = this.state.flags;
+    if (f.checkedClinic) {
+      this.showToast('ตรวจแฟ้มผู้ป่วยปี 2554 แล้ว — ใบฝากครรภ์ 9 ธ.ค. ออกค่าใช้จ่ายโดย "นาย ส.ช." (หลักที่ 3 = 9)');
+      return;
+    }
+    this.openModal(
+      'คลินิก & ร้านยาหน้าโรงเรียน — ขอค้นเวชระเบียนปี 2554',
+      `
+      <p style="margin-top:0">เภสัชกร & พยาบาล: "บันทึกผู้ป่วยเก่าเมื่อ 15 ปีก่อน (2554) ต้องชำระค่าธรรมเนียมค้นเอกสาร หรือจะลองคุยขอความช่วยเหลือเรื่องสืบคดีผีโรงเรียน?"</p>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-top:10px">
+        <button class="primary-btn" data-clinic="1">📂 ค้นแฟ้มเวชระเบียนปี 2554 (ค่าถ่ายสำเนา 15 ฿)</button>
+      </div>
+      `
+    );
+    this.modalBody.querySelector('[data-clinic]')?.addEventListener('click', () => {
+      if (this.state.baht < 15) return this.showToast('เงินไม่พอ (ต้องใช้ 15 ฿ — หาจากเข้าเรียน ม.5/2 ได้ +50 ฿)', true);
+      this.state.baht -= 15;
+      f.checkedClinic = true;
+      this.closeModal();
+      this.addItem('clinic_receipt');
+      this.addClue('clinic_record');
+      this.updateExtraHud();
+      this.startDialogue([
+        {
+          speaker: 'พยาบาลคลินิก (พลิกแฟ้มเก่าปี 2554)',
+          role: 'คลินิกหน้าปากซอย (-69 ม.)',
+          portrait: 'vendor',
+          text: 'เจอแล้วจ้ะ! บัตรฝากครรภ์ "ด.ญ. ดาวประกาย อายุครรภ์ 10 สัปดาห์" วันที่ 9 ธ.ค. 2554... แถมช่องผู้ปกครอง/ผู้จ่ายเงินเขียนด้วยลายมือหวัดๆ ว่า "นาย ส.ช." (หลักที่ 3 ของรหัสเซฟ = 9)!!',
+        },
+      ]);
+      this.saveGame();
+    });
+  }
+
+  private interactShrineAshes(): void {
+    const f = this.state.flags;
+    if (f.checkedShrineAshes) {
+      this.showToast('ตรวจสอบกองเถ้าแล้ว — เศษสัญญาหมั้น "7 ก.พ. 2554" ลงชื่อ "ส.ช." (หลักที่ 1 = 7)');
+      return;
+    }
+    f.checkedShrineAshes = true;
+    this.addClue('shrine_ashes');
+    this.sound.playPickup();
+    this.startDialogue([
+      {
+        speaker: 'ภีม (เขี่ยกองขี้เถ้าหลังต้นโพธิ์)',
+        role: 'สวนหลังโรงเรียน (+116 ม.)',
+        portrait: 'player',
+        text: 'เจอเศษกระดาษไหม้ไฟครึ่งใบ!! เป็นจดหมายสัญญาหมั้นเก่าลงวันที่ "7 กุมภาพันธ์" ลงชื่อย่อ "รักเสมอ — ส.ช." ... นี่ต้องเป็นของ "ส.ช." ในโรงเรียนแน่ๆ! (ได้หลักที่ 1 ของตู้เซฟ = 7!)',
+      },
+    ]);
+    this.saveGame();
+  }
+
+  private interactLockerF2(): void {
+    if (this.ghostChase) {
+      this.enterHideSpot('ตู้ล็อกเกอร์ชั้น 2');
+      return;
+    }
+    const f = this.state.flags;
+    this.openModal(
+      'ตู้ล็อกเกอร์ชมรมนาฏศิลป์ ชั้น 2 (+14 ม.)',
+      `
+      <p style="margin-top:0">ตู้เหล็กหมายเลข 2 ล็อกคล้องหลวมๆ สามารถเปิดตรวจด้านในหรือใช้หลบซ่อนผีได้:</p>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-top:10px">
+        <button class="primary-btn" data-lk="search">🔎 แง้มค้นซับในตู้ล็อกเกอร์หมายเลข 2</button>
+        <button class="secondary-btn" data-lk="hide">🚪 เข้าไปแอบซ่อนตัวในตู้ล็อกเกอร์</button>
+      </div>
+      `
+    );
+    this.modalBody.querySelectorAll<HTMLButtonElement>('[data-lk]').forEach((b) => {
+      b.addEventListener('click', () => {
+        this.closeModal();
+        if (b.dataset.lk === 'hide') {
+          this.enterHideSpot('ตู้ล็อกเกอร์ชั้น 2');
+        } else {
+          if (f.checkedLockerF2) {
+            this.showToast('ค้นตู้ล็อกเกอร์ชั้น 2 แล้ว — สมุดบันทึกยืนยันหลักที่ 2 ของตู้เซฟ = 2');
+          } else {
+            f.checkedLockerF2 = true;
+            this.addClue('locker_f2_diary');
+            this.startDialogue([
+              {
+                speaker: 'ภีม (ล้วงเจอสมุดโน้ตหลังแผ่นเหล็ก)',
+                role: 'ตู้ล็อกเกอร์ชั้น 2',
+                portrait: 'player',
+                text: 'สมุดไดอารี่ซ้อมรำของพี่ดาวประกาย! หน้าสุดท้ายเขียนไว้ทั้งคราบน้ำตา: "หนูอับอายเกินกว่าจะมีชีวิตอยู่ต่อ... ให้ตู้หมายเลข 2 นี้เก็บความลับไว้ตลอดกาล" (ได้หลักที่ 2 ของรหัสเซฟ = 2!)',
+              },
+            ]);
+            this.saveGame();
+          }
+        }
+      });
+    });
+  }
+
+  private interactCafeShop(): void {
+    if (this.isNightTime()) {
+      this.showToast('ร้านกาแฟโบราณปิดประตูเหล็กม้วนแล้วตอนกลางคืน! แวะมาใหม่ตอนกลางวันนะ');
+      return;
+    }
+    this.openModal(
+      `ร้านกาแฟโบราณ & นมสด (เงินติดตัว: ${this.state.baht} ฿)`,
+      `
+      <p style="margin-top:0">แปะเจ้าของร้าน: "รับโอเลี้ยงเย็นๆ สักแก้วไหมไอ้หนู หรืออยากรู้เรื่องครูคนเก่าๆ ของโรงเรียนนี้ล่ะ?"</p>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-top:10px">
+        <button class="primary-btn" data-cf="talk">🗣️ ถามแปะเรื่อง "ครูวิไล" กับ "ครูสมชาย" สมัยปี 2554</button>
+        <button class="secondary-btn" data-cf="buy">🧋 ซื้อโอเลี้ยงสูตรโบราณ (20 ฿ — ฟื้นสติ +30% & กำลังวิ่ง 100%)</button>
+      </div>
+      `
+    );
+    this.modalBody.querySelectorAll<HTMLButtonElement>('[data-cf]').forEach((b) => {
+      b.addEventListener('click', () => {
+        this.closeModal();
+        if (b.dataset.cf === 'talk') {
+          this.startDialogue([
+            {
+              speaker: 'แปะร้านกาแฟโบราณ',
+              role: 'ตึกแถวหน้าโรงเรียน (-96 ม.)',
+              portrait: 'uncle',
+              text: 'เมื่อ 15 ปีก่อน อาจารย์สมชายสมัยบรรจุใหม่มานั่งกินกาแฟร้านแปะบ่อยมากับสาวสวยชมรมรำ! พอกลางธันวาปีนั้นอาจารย์ก็หน้าตาตื่นวิ่งหายไปคลินิกปากซอย (-69 ม.) แล้วแม่หนูคนนั้นก็ตายคาห้องดนตรีไทยเลยล่ะลูกเอ๊ย...',
+            },
+          ]);
+        } else {
+          if (this.state.baht < 20) return this.showToast('เงินไม่พอ (ต้องใช้ 20 ฿)', true);
+          this.state.baht -= 20;
+          this.sound.playCoinJingle();
+          this.addItem('chilled_soda');
+          this.updateExtraHud();
+          this.saveGame();
+        }
+      });
+    });
+  }
+
+  private interactLobbyAdmin(): void {
+    this.sound.playPickup();
+    this.startDialogue([
+      {
+        speaker: 'แฟ้มลงเวลาครูปี 2554 (หน้าห้องธุรการ)',
+        role: 'ใต้ถุนอาคารเรียน (-7.5 ม.)',
+        portrait: 'player',
+        text: 'เปิดดูหน้าวันที่ 9 ธันวาคม 2554... ชื่อ "ครูสมชาย (ส.ช.)" และ "ครูวิไลวรรณ (ว.ว.)" เซ็นเข้าตึกตอนทุ่มตรงทั้งคู่!! ทั้งที่ครูสมชายอ้างในห้องเรียนว่าวันนั้นไปอบรมต่างจังหวัด!',
+      },
+    ]);
+  }
+
+  private interactLobbyNurse(): void {
+    const f = this.state.flags;
+    this.sound.playPickup();
+    this.adjustSanity(20);
+    if (!f.checkedDeskNote) this.addItem('inhaler');
+    this.startDialogue([
+      {
+        speaker: 'สมุดเวชระเบียนเก่า (ห้องพยาบาลชั้นล่าง)',
+        role: 'ใต้ถุนอาคารเรียน (-0.5 ม.)',
+        portrait: 'player',
+        text: 'บันทึก 15 ปีก่อน: "น.ส. ดาวประกาย เป็นลมอาเจียนกลางคาบซ้อมนาฏศิลป์ — ครูสมชายมารับตัวออกไปตรวจข้างนอกเอง" (+20 สติ!)',
+      },
+    ]);
+  }
+
+  private interactLobbyCouncil(): void {
+    this.sound.playUIClick();
+    this.startDialogue([
+      {
+        speaker: 'บอร์ดร้องเรียนสภานักเรียนเก่า',
+        role: 'ใต้ถุนอาคารเรียน (+21.5 ม.)',
+        portrait: 'player',
+        text: 'มีบันทึกคำร้องนักเรียน ม.4 สามรายที่เคยถูก "พี่ก้อง ม.6" ท้าให้ขึ้นห้องดนตรีไทยชั้น 3 แล้วขวัญผวาจนต้องย้ายโรงเรียน... แต่เรื่องทั้งหมดถูกหัวหน้าระดับชั้นสั่งเก็บเข้าแฟ้มเงียบอย่างน่าสงสัย!',
+      },
+    ]);
   }
 
   private addItem(id: string): void {
@@ -1787,36 +2180,69 @@ export class Chapter3Engine {
       tFloor = 2;
       tx = -3.2;
       text = 'ขึ้นชั้น 2 เข้าห้องเรียน ม.5/2 (+4 ม.) เรียนกับครูสมชาย (+25 สติ & +50 ฿)';
+    } else if (!f.checkedDeskNote) {
+      tRoom = 'classroom_2b';
+      tFloor = 2;
+      tx = 3.6;
+      text = 'ตรวจดูใต้โต๊ะเรียนฝั่งขวาในห้อง ม.5/2 เพื่อหาคำใบ้รหัสตู้เซฟ!';
     } else if (!f.checkedLibrary) {
       tRoom = 'library_room';
       tFloor = 1;
       tx = 0.2;
-      text = 'เข้าหอสมุดชั้น 1 (+4 ม.) ค้นแฟ้มข่าวเก่าปี 2554';
+      text = 'เข้าหอสมุดชั้น 1 (+4 ม.) ค้นแฟ้มข่าวปี 2554 & เก็บเทปโหมโรง';
+    } else if (!f.playedCassette) {
+      tx = this.state.x;
+      tRoom = this.currentRoom;
+      tFloor = this.state.floor;
+      text = 'กดใช้งาน "เทปโหมโรง 2554" ในช่องไอเทมด้านล่างเพื่อกรอฟังความจริง!';
     } else if (!f.talkedJanitor) {
       tx = -44.0;
-      text = 'ไปป้อมยามหน้าโรงเรียน (-44 ม.) ขอกุญแจห้องพักครู & ห้องดนตรีไทยจากลุงมั่น';
+      text = 'ไปป้อมยาม (-44 ม.) คุยกับลุงมั่นขอกุญแจห้องพักครู';
+    } else if (!f.checkedClinic) {
+      tx = -69.0;
+      text = 'แวะ "คลินิก & ร้านยา" (-69 ม.) ช่วงกลางวันค้นใบฝากครรภ์ปี 2554 (หลักที่ 3)';
+    } else if (!f.checkedShrineAshes) {
+      tx = 116.5;
+      text = 'ไปหลังต้นโพธิ์ศาลตายาย (+116 ม.) คุ้ยกองขี้เถ้าหาสัญญาหมั้น ส.ช. (หลักที่ 1)';
+    } else if (!f.checkedLockerF2) {
+      tFloor = 2;
+      tx = 14.0;
+      text = 'ค้น "ตู้ล็อกเกอร์ชั้น 2 (+14 ม.)" หาสมุดบันทึกชมรม (หลักที่ 2)';
+    } else if (!f.talkedJanitorProof) {
+      tx = -44.0;
+      text = 'นำหลักฐาน ส.ช. กลับไปรับ "กุญแจห้องดนตรีไทยชั้น 3" จากลุงมั่น (-44 ม.)!';
+    } else if (!f.confrontedWilai) {
+      tRoom = 'teacher_office';
+      tFloor = 1;
+      tx = 1.7;
+      text = 'เข้าห้องพักครูชั้น 1 (+21.5 ม.) เค้นความจริงจากครูวิไลช่วงกลางวัน!';
+    } else if (!f.unlockedSafeProof) {
+      tRoom = 'teacher_office';
+      tFloor = 1;
+      tx = 4.6;
+      text = 'นำรหัส 3 หลัก (ศาล+ล็อกเกอร์+คลินิก) ไขตู้เซฟห้องพักครู!';
+    } else if (!f.confrontedSomchai) {
+      tRoom = 'classroom_2b';
+      tFloor = 2;
+      tx = -3.2;
+      text = 'ถือหลักฐานจดหมายลาตายไปกระชากหน้ากาก "ครูสมชาย" ในห้อง ม.5/2!';
+    } else if (!f.confrontedKongTwist) {
+      tx = -38.5;
+      text = 'เค้นความจริงจากไอ้ก้องหน้าโรงเรียน (-38 ม.) เรื่องสินบนครูสมชาย & น้าวิไล!';
     } else if (!this.isNightTime() && !f.playedRanatNight) {
       tRoom = 'protagonist_house';
       tx = 4.3;
-      text = 'กลับบ้านพักนอนบนเตียงรอถึงคืนท้าพิสูจน์ (21:00 น.) หรือสำรวจศาล/สหกรณ์ก่อน!';
+      text = 'กลับบ้านพักนอนบนเตียงรอถึงคืนท้าพิสูจน์ (21:00 น.)!';
     } else if (!f.playedRanatNight || !f.snappedMirrorPhoto) {
       tRoom = 'music_room';
       tFloor = 3;
       tx = f.playedRanatNight ? 3.6 : 1.8;
       text = f.playedRanatNight ? 'ถ่ายรูปหน้ากระจกห้องดนตรีไทย [E/C]' : 'ขึ้นชั้น 3 เข้าห้องดนตรีไทย (+22 ม.) ตีระนาดเอกหน้าเวที!';
-    } else if (!f.unlockedSafeProof) {
-      tRoom = 'teacher_office';
-      tFloor = 1;
-      tx = 4.6;
-      text = 'เข้าห้องพักครูชั้น 1 (+21.5 ม.) ไขตู้เซฟ (514) นำชฎาทองออกมา!';
-    } else if (!f.confrontedKongTwist) {
-      tx = -38.5;
-      text = 'ไปเค้นความจริงจากไอ้ก้องหน้าโรงเรียน (-38 ม.) เรื่องครูวิไล!';
     } else {
       tRoom = 'music_room';
       tFloor = 3;
       tx = 5.4;
-      text = 'นำชฎาทองขึ้นห้องดนตรีไทยชั้น 3 วางคืนบนแท่นบูชาปลดปล่อยวิญญาณ!';
+      text = 'วาง "ชฎาทองโบราณ & หลักฐานความจริง" บนแท่นบูชาปลดปล่อยวิญญาณพี่ดาว!';
     }
 
     const doorX: Record<Ch3RoomId, number> = {

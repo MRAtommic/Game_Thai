@@ -525,6 +525,14 @@ export function drawCh3ItemIconDataUrl(id: string): string {
     ctx.fillRect(8, 14, 32, 20);
     ctx.fillStyle = '#f8fafc';
     ctx.fillRect(14, 18, 20, 7);
+  } else if (id === 'clinic_receipt' || id === 'daw_diary_proof') {
+    ctx.fillStyle = id === 'clinic_receipt' ? '#e0f2fe' : '#fef3c7';
+    ctx.fillRect(11, 8, 26, 32);
+    ctx.fillStyle = id === 'clinic_receipt' ? '#0284c7' : '#b91c1c';
+    ctx.fillRect(15, 13, 18, 4);
+    ctx.fillStyle = '#475569';
+    ctx.fillRect(15, 22, 18, 3);
+    ctx.fillRect(15, 29, 14, 3);
   } else if (id === 'holy_sai_sin') {
     ctx.strokeStyle = '#fef3c7';
     ctx.lineWidth = 4;

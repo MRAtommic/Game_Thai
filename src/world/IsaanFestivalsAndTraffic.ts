@@ -137,6 +137,7 @@ export interface TempleFairController {
   bulbs: THREE.Mesh[];
   stageLights: THREE.PointLight[];
   stageDancers: THREE.Group[];
+  stageAudience: THREE.Group[];
   boothVendors: THREE.Group[];
   closedSign: THREE.Mesh;
 }
@@ -547,45 +548,154 @@ export function buildTempleFairZone(scene: THREE.Scene): TempleFairController {
     }
   });
 
-  // 3) Ramwong / Morlam Fair Stage (เวทีรำวงงานวัด x = 87.8) + 4 Dancers!
+  // 3) Ramwong / Morlam Concert Stage (เวทีรำวง & หมอลำซิ่ง x = 87.8) + Lead Singer + 4 Glittering Dancers + Cheering Audience Below!
   const stgX = 87.8;
-  addPart(scene, 6.2, 0.72, 2.6, '#3b2416', stgX, 0.36, -2.1); // wooden stage deck
-  addPart(scene, 6.2, 2.6, 0.18, '#1e1b4b', stgX, 2.0, -3.25); // backdrop
-  addPart(scene, 6.6, 0.18, 2.8, '#991b1b', stgX, 3.45, -2.1); // canopy
+  addPart(scene, 8.2, 0.72, 2.7, '#3b2416', stgX, 0.36, -2.1); // wide raised stage deck
+  addPart(scene, 8.2, 0.1, 2.74, '#facc15', stgX, 0.7, -2.1, 0.35, 0.4); // gold stage trim
+  addPart(scene, 8.2, 2.8, 0.18, '#1e1b4b', stgX, 2.1, -3.35); // concert backdrop
+  addPart(scene, 8.6, 0.22, 3.0, '#991b1b', stgX, 3.6, -2.1); // marquee roof
   const stageBanner = new THREE.Mesh(
-    new THREE.PlaneGeometry(3.8, 0.9),
+    new THREE.PlaneGeometry(4.4, 0.96),
     new THREE.MeshBasicMaterial({ map: makeBannerTex('#581c87', '#facc15', '#fef08a', 'เวทีรำวง & หมอลำซิ่ง', 'งานบุญประจำปีวัดป่าบ้านทุ่ง') })
   );
-  stageBanner.position.set(stgX, 2.6, -3.14);
+  stageBanner.position.set(stgX, 2.75, -3.22);
   scene.add(stageBanner);
 
-  // Twin stage speaker stacks
-  [-2.6, 2.6].forEach((sx) => addPart(scene, 0.65, 1.5, 0.65, '#09090b', stgX + sx, 1.48, -1.65));
+  // Twin outer concert speaker towers with dual circular woofer cones (well clear of dancers!)
+  [-3.65, 3.65].forEach((sx) => {
+    addPart(scene, 0.75, 1.75, 0.75, '#09090b', stgX + sx, 1.58, -1.9);
+    [1.22, 1.95].forEach((cy) => {
+      const woofer = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.24, 0.24, 0.06, 14),
+        new THREE.MeshStandardMaterial({ color: '#334155', roughness: 0.4, metalness: 0.5 })
+      );
+      woofer.rotation.x = Math.PI / 2;
+      woofer.position.set(stgX + sx, cy, -1.5);
+      scene.add(woofer);
+    });
+  });
+
+  // Hanging concert disco wash bulbs along stage front canopy
+  ['#f43f5e', '#facc15', '#22d3ee', '#a855f7'].forEach((col, bi) => {
+    const spotBulb = new THREE.Mesh(
+      new THREE.SphereGeometry(0.11, 8, 8),
+      new THREE.MeshBasicMaterial({ color: col })
+    );
+    spotBulb.position.set(stgX - 2.4 + bi * 1.6, 3.45, -0.75);
+    scene.add(spotBulb);
+  });
 
   const stageLights: THREE.PointLight[] = [
     new THREE.PointLight('#f43f5e', 5.5, 12, 1.1),
     new THREE.PointLight('#22d3ee', 5.5, 12, 1.1),
-    new THREE.PointLight('#facc15', 5.5, 14, 1.0),
+    new THREE.PointLight('#facc15', 6.5, 15, 1.0),
+    new THREE.PointLight('#e879f9', 4.8, 12, 1.0),
   ];
   stageLights[0].position.set(66.5, 3.2, -0.5);
   stageLights[1].position.set(76.0, 4.4, -0.4);
-  stageLights[2].position.set(87.8, 3.4, -0.3);
+  stageLights[2].position.set(87.8, 3.3, -0.8);
+  stageLights[3].position.set(87.8, 2.8, -1.2);
   stageLights.forEach((l) => scene.add(l));
 
   const stageDancers: THREE.Group[] = [];
+  const stageAudience: THREE.Group[] = [];
   const boothVendors: THREE.Group[] = [];
-  // Track fair booth vendors cleanly inside fair controller
   [65.5, 70.5, 81.5].forEach((fx, fi) => {
     const v = makeVillagerFigure(['#fb7185', '#38bdf8', '#fbbf24'][fi], '#1e293b');
     v.position.set(fx - 0.55, 0, -1.65);
     scene.add(v);
     boothVendors.push(v);
   });
-  [85.6, 86.9, 88.6, 89.8].forEach((dx, idx) => {
-    const d = makeVillagerFigure(flagCols[idx], '#1e293b');
-    d.position.set(dx, idx % 2 === 0 ? 0.72 : 0, idx % 2 === 0 ? -1.8 : -0.75);
+
+  const makeShowPerformer = (dressCol: string, plumeCol: string, isLeadSinger = false): THREE.Group => {
+    const g = new THREE.Group();
+    const legL = addPart(g, 0.1, 0.52, 0.1, '#dfb089', -0.07, 0.26, 0);
+    const legR = addPart(g, 0.1, 0.52, 0.1, '#dfb089', 0.07, 0.26, 0);
+    legL.name = 'legL';
+    legR.name = 'legR';
+    // Flared sparkling sequined mini-skirt + metallic gold belt + fitted bodice
+    const skirt = new THREE.Mesh(
+      new THREE.ConeGeometry(0.28, 0.42, 10),
+      new THREE.MeshStandardMaterial({ color: dressCol, roughness: 0.28, metalness: 0.45 })
+    );
+    skirt.position.set(0, 0.62, 0);
+    g.add(skirt);
+    addPart(g, 0.28, 0.07, 0.2, '#facc15', 0, 0.78, 0, 0.3, 0.6); // gold sequin waist
+    addPart(g, 0.28, 0.42, 0.2, dressCol, 0, 0.98, 0, 0.35, 0.35);
+    const armL = addPart(g, 0.08, 0.44, 0.08, '#dfb089', -0.2, 1.0, 0);
+    const armR = addPart(g, 0.08, 0.44, 0.08, '#dfb089', 0.2, 1.0, 0);
+    armL.name = 'armL';
+    armR.name = 'armR';
+    // Head + long flowing dark hair + glamorous tall feathered Mor Lam showgirl crown!
+    addPart(g, 0.24, 0.25, 0.22, '#e8bc96', 0, 1.36, 0);
+    addPart(g, 0.28, 0.36, 0.14, '#111827', 0, 1.32, -0.08);
+    addPart(g, 0.25, 0.1, 0.23, '#18181b', 0, 1.48, 0);
+    const crown = new THREE.Mesh(
+      new THREE.ConeGeometry(0.14, 0.3, 6),
+      new THREE.MeshStandardMaterial({ color: '#facc15', metalness: 0.7, roughness: 0.25 })
+    );
+    crown.position.set(0, 1.62, 0);
+    const plume = new THREE.Mesh(
+      new THREE.BoxGeometry(0.46, 0.24, 0.06),
+      new THREE.MeshStandardMaterial({ color: plumeCol, emissive: plumeCol, emissiveIntensity: 0.25 })
+    );
+    plume.position.set(0, 1.72, -0.02);
+    g.add(crown, plume);
+
+    if (isLeadSinger) {
+      // Chrome mic stand + silver microphone in front of singer!
+      addPart(g, 0.04, 1.25, 0.04, '#e2e8f0', 0, 0.62, 0.26, 0.25, 0.8);
+      addPart(g, 0.22, 0.04, 0.22, '#334155', 0, 0.02, 0.26, 0.4, 0.6);
+      const micHead = new THREE.Mesh(
+        new THREE.SphereGeometry(0.065, 10, 10),
+        new THREE.MeshStandardMaterial({ color: '#f8fafc', metalness: 0.8, roughness: 0.2 })
+      );
+      micHead.position.set(0, 1.26, 0.26);
+      g.add(micHead);
+    }
+    return g;
+  };
+
+  // Lead Singer centered front on stage (index 0) + 4 Glittering Female Backup Dancers evenly across stage!
+  const leadSinger = makeShowPerformer('#db2777', '#fde047', true);
+  leadSinger.position.set(stgX, 0.72, -1.45);
+  scene.add(leadSinger);
+  stageDancers.push(leadSinger);
+
+  [
+    { x: stgX - 2.35, dress: '#f43f5e', plume: '#fdf2f8' },
+    { x: stgX - 1.18, dress: '#06b6d4', plume: '#fef08a' },
+    { x: stgX + 1.18, dress: '#a855f7', plume: '#fbcfe8' },
+    { x: stgX + 2.35, dress: '#eab308', plume: '#ffffff' },
+  ].forEach((dc) => {
+    const d = makeShowPerformer(dc.dress, dc.plume, false);
+    d.position.set(dc.x, 0.72, -2.05);
     scene.add(d);
     stageDancers.push(d);
+  });
+
+  // Lively Cheering Villager Audience Crowd watching & swaying below the stage!
+  [
+    { x: stgX - 3.1, z: -0.25, shirt: '#38bdf8', glow: '#f43f5e' },
+    { x: stgX - 2.1, z: 0.05, shirt: '#fbbf24', glow: '' },
+    { x: stgX - 1.05, z: -0.3, shirt: '#4ade80', glow: '#22d3ee' },
+    { x: stgX + 0.05, z: 0.12, shirt: '#f472b6', glow: '' },
+    { x: stgX + 1.15, z: -0.25, shirt: '#c084fc', glow: '#fde047' },
+    { x: stgX + 2.2, z: 0.05, shirt: '#fb7185', glow: '' },
+    { x: stgX + 3.15, z: -0.22, shirt: '#2dd4bf', glow: '#f43f5e' },
+  ].forEach((aud) => {
+    const v = makeVillagerFigure(aud.shirt, '#1e293b');
+    if (aud.glow) {
+      const stick = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.03, 0.03, 0.34, 8),
+        new THREE.MeshBasicMaterial({ color: aud.glow })
+      );
+      stick.position.set(-0.24, 1.18, 0.1);
+      v.add(stick);
+    }
+    v.position.set(aud.x, 0, aud.z);
+    scene.add(v);
+    stageAudience.push(v);
   });
 
   // Notice banner shown across stage when fair cancels during Krasue lockdown
@@ -597,7 +707,7 @@ export function buildTempleFairZone(scene: THREE.Scene): TempleFairController {
   closedSign.visible = false;
   scene.add(closedSign);
 
-  return { ferrisWheel, gondolas, bulbs, stageLights, stageDancers, boothVendors, closedSign };
+  return { ferrisWheel, gondolas, bulbs, stageLights, stageDancers, stageAudience, boothVendors, closedSign };
 }
 
 /** Builds School & Haunted Swing (-112), Welcome Arch (-104.5), Takian (-96.5), Show-huay Store (-89.5), Bang Fai (-67.5), PA Tower (-8.6), Granary (-11.4), Clinic (+96), Lotus Bridge, Morning Monk, Tani, and Saleng. */
@@ -1203,11 +1313,34 @@ export function animateIsaanWorldLife(
   fair.stageDancers.forEach((d, idx) => {
     d.visible = isFestive;
     if (isFestive) {
-      d.rotation.z = Math.sin(clock * 4.5 + idx * 1.3) * 0.1;
-      const armL = d.getObjectByName('armL');
-      const armR = d.getObjectByName('armR');
-      if (armL) armL.rotation.z = 0.8 + Math.sin(clock * 5.5 + idx) * 0.5;
-      if (armR) armR.rotation.z = -0.8 - Math.cos(clock * 5.5 + idx) * 0.5;
+      if (idx === 0) {
+        // Lead Singer swaying expressively behind mic stand
+        d.rotation.z = Math.sin(clock * 3.4) * 0.08;
+        d.position.y = 0.72 + Math.abs(Math.sin(clock * 4.2)) * 0.05;
+        const armL = d.getObjectByName('armL');
+        const armR = d.getObjectByName('armR');
+        if (armL) armL.rotation.z = 1.15 + Math.sin(clock * 5.0) * 0.35;
+        if (armR) armR.rotation.z = -0.65 - Math.cos(clock * 4.5) * 0.25;
+      } else {
+        // 4 Pretty Backup Dancers performing synchronized Mor Lam choreography!
+        d.rotation.z = Math.sin(clock * 5.5 + idx * 0.8) * 0.14;
+        d.position.y = 0.72 + Math.abs(Math.sin(clock * 6.8 + idx * 0.8)) * 0.1;
+        const armL = d.getObjectByName('armL');
+        const armR = d.getObjectByName('armR');
+        if (armL) armL.rotation.z = 1.0 + Math.sin(clock * 6.5 + idx) * 0.6;
+        if (armR) armR.rotation.z = -1.0 - Math.cos(clock * 6.5 + idx) * 0.6;
+      }
+    }
+  });
+  fair.stageAudience.forEach((a, idx) => {
+    a.visible = isFestive;
+    if (isFestive) {
+      a.position.y = Math.abs(Math.sin(clock * 5.2 + idx * 1.1)) * 0.08;
+      a.rotation.z = Math.sin(clock * 3.2 + idx) * 0.07;
+      const armL = a.getObjectByName('armL');
+      const armR = a.getObjectByName('armR');
+      if (armL) armL.rotation.z = 1.35 + Math.sin(clock * 6.0 + idx) * 0.45;
+      if (armR) armR.rotation.z = -0.95 - Math.cos(clock * 6.0 + idx) * 0.45;
     }
   });
   fair.boothVendors.forEach((v) => {
