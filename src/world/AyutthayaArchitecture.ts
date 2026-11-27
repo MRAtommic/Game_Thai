@@ -873,43 +873,57 @@ export function makeAyutthayaHorse(
   neckUpper.rotation.z = -0.34;
   g.add(neckLower, neckUpper);
 
-  // Flowing multi-tuft horse mane arching along the crest
-  for (let mi = 0; mi < 5; mi++) {
-    const tuft = new THREE.Mesh(new THREE.ConeGeometry(0.085, 0.26, 6), maneMat);
-    tuft.position.set(0.62 + mi * 0.085, 1.46 + mi * 0.1, 0);
-    tuft.rotation.z = 0.65;
-    g.add(tuft);
-  }
+  // Flowing layered horse mane sweeping gracefully along the arched neck crest
+  const maneStrip = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.72, 0.085), maneMat);
+  maneStrip.position.set(0.75, 1.56, 0);
+  maneStrip.rotation.z = -0.5;
+  const maneUpper = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.36, 0.08), maneMat);
+  maneUpper.position.set(0.92, 1.84, 0);
+  maneUpper.rotation.z = -0.22;
+  g.add(maneStrip, maneUpper);
 
-  // Sculpted Horse Head: rounded cheeks/jaw + tapered angled nasal muzzle + nostril ridge + golden bridle!
-  const jaw = new THREE.Mesh(new THREE.SphereGeometry(0.175, 12, 10), coatMat);
-  jaw.scale.set(1.25, 0.95, 0.78);
-  jaw.position.set(1.1, 1.84, 0);
-  const muzzle = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.135, 0.44, 10), coatMat);
-  muzzle.rotation.z = Math.PI / 2 + 0.56;
-  muzzle.scale.set(0.9, 1, 0.85);
-  muzzle.position.set(1.3, 1.72, 0);
-  const noseTip = new THREE.Mesh(new THREE.SphereGeometry(0.076, 8, 8), coatDarkMat);
-  noseTip.position.set(1.48, 1.6, 0);
-  const bridleRing = new THREE.Mesh(new THREE.TorusGeometry(0.11, 0.016, 6, 12), goldMat);
-  bridleRing.rotation.y = Math.PI / 2;
-  bridleRing.rotation.x = 0.56;
-  bridleRing.position.set(1.36, 1.68, 0);
-  const forelock = new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.22, 6), maneMat);
-  forelock.position.set(1.18, 1.96, 0);
-  forelock.rotation.z = -0.8;
-  g.add(jaw, muzzle, noseTip, bridleRing, forelock);
+  // Unified Anatomical Horse Head Group rotated naturally forward-down (-0.52 rad ~ 30 deg)
+  const headGrp = new THREE.Group();
+  headGrp.position.set(1.06, 1.84, 0);
+  headGrp.rotation.z = -0.52;
+
+  const cranium = new THREE.Mesh(new THREE.SphereGeometry(0.168, 14, 12), coatMat);
+  cranium.scale.set(1.15, 0.96, 0.8);
+  const muzzle = new THREE.Mesh(new THREE.CylinderGeometry(0.082, 0.145, 0.44, 14), coatMat);
+  muzzle.rotation.z = -Math.PI / 2; // rotates +Y cylinder tip straight along local +X!
+  muzzle.scale.set(1.0, 0.92, 0.84);
+  muzzle.position.set(0.24, -0.015, 0);
+  const noseTip = new THREE.Mesh(new THREE.SphereGeometry(0.084, 12, 10), coatDarkMat);
+  noseTip.scale.set(1.05, 0.9, 0.86);
+  noseTip.position.set(0.45, -0.015, 0);
+  const jawUnder = new THREE.Mesh(new THREE.SphereGeometry(0.11, 10, 8), coatMat);
+  jawUnder.position.set(0.08, -0.075, 0);
+  const bridleNose = new THREE.Mesh(new THREE.TorusGeometry(0.102, 0.014, 6, 14), goldMat);
+  bridleNose.rotation.y = Math.PI / 2;
+  bridleNose.position.set(0.32, -0.015, 0);
+  const bridleHead = new THREE.Mesh(new THREE.TorusGeometry(0.148, 0.014, 6, 14), goldMat);
+  bridleHead.rotation.y = Math.PI / 2;
+  bridleHead.position.set(0.04, 0.01, 0);
+  const forelock = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.12, 0.07), maneMat);
+  forelock.position.set(0.08, 0.14, 0);
+  forelock.rotation.z = -0.35;
+  headGrp.add(cranium, muzzle, noseTip, jawUnder, bridleNose, bridleHead, forelock);
 
   [-1, 1].forEach((side) => {
-    const ear = new THREE.Mesh(new THREE.ConeGeometry(0.045, 0.17, 7), coatMat);
-    ear.position.set(1.04, 2.02, side * 0.085);
+    const ear = new THREE.Mesh(new THREE.ConeGeometry(0.042, 0.16, 7), coatMat);
+    ear.position.set(-0.07, 0.17, side * 0.078);
     ear.rotation.z = -0.15;
-    const eye = new THREE.Mesh(new THREE.SphereGeometry(0.032, 8, 8), eyeMat);
-    eye.position.set(1.18, 1.87, side * 0.11);
-    const rein = addPartBox(g, 0.78, 0.018, 0.018, goldMat, 0.78, 1.56, side * 0.14);
-    rein.rotation.z = 0.28;
-    g.add(ear, eye);
+    const eye = new THREE.Mesh(new THREE.SphereGeometry(0.028, 8, 8), eyeMat);
+    eye.position.set(0.11, 0.055, side * 0.11);
+    const nostril = new THREE.Mesh(new THREE.SphereGeometry(0.018, 6, 6), eyeMat);
+    nostril.position.set(0.42, 0.015, side * 0.052);
+    const cheekStrap = addPartBox(headGrp, 0.28, 0.018, 0.016, goldMat, 0.18, 0.0, side * 0.095);
+    cheekStrap.rotation.z = -0.08;
+    const rein = addPartBox(g, 0.82, 0.016, 0.016, goldMat, 0.82, 1.54, side * 0.16);
+    rein.rotation.z = 0.18;
+    headGrp.add(ear, eye, nostril);
   });
+  g.add(headGrp);
 
   // Sweeping Dual-Section Horse Tail
   const tailBase = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.085, 0.35, 8), maneMat);
