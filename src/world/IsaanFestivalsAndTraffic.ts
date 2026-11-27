@@ -652,33 +652,36 @@ export function buildTrafficAndParkedVehicles(scene: THREE.Scene): MovingVehicle
 
         // 1) Giant Illuminated Rotating Ferris Wheel (ชิงช้าสวรรค์งานวัด x = 76, z = -3.4)
         const wheelCenterX = 76.0;
-        const wheelCenterY = 4.65;
-        const wheelZ = -3.4;
-        // Supporting A-frame legs
-        [-1.6, 1.6].forEach((dx) => {
-          const leg = addPart(scene, 0.18, 5.2, 0.18, '#475569', wheelCenterX + dx * 0.62, 2.4, wheelZ, 0.5, 0.6);
-          leg.rotation.z = dx > 0 ? 0.32 : -0.32;
+        const wheelCenterY = 6.3;
+        const wheelZ = -3.6;
+        // Twin front/back A-frame support legs grounded cleanly under the 10m Ferris wheel
+        [-1.9, 1.9].forEach((dx) => {
+          [-0.52, 0.52].forEach((lz) => {
+            const leg = addPart(scene, 0.22, 6.9, 0.22, '#475569', wheelCenterX + dx * 0.62, 3.25, wheelZ + lz, 0.5, 0.6);
+            leg.rotation.z = dx > 0 ? 0.3 : -0.3;
+          });
         });
 
         const ferrisWheel = new THREE.Group();
         ferrisWheel.position.set(wheelCenterX, wheelCenterY, wheelZ);
+        const wheelR = 4.85;
 
         // Twin parallel steel rims (front & back) + glowing center carnival star hub!
-        [-0.34, 0.34].forEach((rz) => {
+        [-0.52, 0.52].forEach((rz) => {
           const rim = new THREE.Mesh(
-            new THREE.TorusGeometry(3.35, 0.085, 8, 32),
+            new THREE.TorusGeometry(wheelR, 0.11, 8, 36),
             new THREE.MeshStandardMaterial({ color: '#facc15', emissive: '#ca8a04', emissiveIntensity: 0.4, metalness: 0.5 })
           );
           rim.position.z = rz;
           const innerRing = new THREE.Mesh(
-            new THREE.TorusGeometry(2.15, 0.05, 6, 28),
+            new THREE.TorusGeometry(wheelR * 0.64, 0.065, 6, 32),
             new THREE.MeshStandardMaterial({ color: '#cbd5e1', metalness: 0.6, roughness: 0.35 })
           );
           innerRing.position.z = rz;
           ferrisWheel.add(rim, innerRing);
         });
         const hubCenter = new THREE.Mesh(
-          new THREE.CylinderGeometry(0.42, 0.42, 0.84, 14),
+          new THREE.CylinderGeometry(0.56, 0.56, 1.2, 14),
           new THREE.MeshStandardMaterial({ color: '#eab308', emissive: '#ca8a04', emissiveIntensity: 0.55, metalness: 0.6 })
         );
         hubCenter.rotation.x = Math.PI / 2;
@@ -691,53 +694,53 @@ export function buildTrafficAndParkedVehicles(scene: THREE.Scene): MovingVehicle
         const spokesCount = 10;
         for (let i = 0; i < spokesCount; i++) {
           const ang = (i / spokesCount) * Math.PI * 2;
-          [-0.34, 0.34].forEach((sz) => {
-            const spoke = addPart(ferrisWheel, 0.05, 6.68, 0.05, '#e2e8f0', 0, 0, sz, 0.4, 0.7);
+          [-0.52, 0.52].forEach((sz) => {
+            const spoke = addPart(ferrisWheel, 0.06, wheelR * 2, 0.06, '#e2e8f0', 0, 0, sz, 0.4, 0.7);
             spoke.rotation.z = ang;
           });
 
-          const gx = Math.cos(ang) * 3.35;
-          const gy = Math.sin(ang) * 3.35;
+          const gx = Math.cos(ang) * wheelR;
+          const gy = Math.sin(ang) * wheelR;
           // Crossbar axle connecting front & back rims at each gondola pivot
-          addPart(ferrisWheel, 0.06, 0.06, 0.72, '#cbd5e1', gx, gy, 0, 0.35, 0.75);
+          addPart(ferrisWheel, 0.08, 0.08, 1.1, '#cbd5e1', gx, gy, 0, 0.35, 0.75);
 
           const gon = new THREE.Group();
           gon.position.set(gx, gy, 0);
           const gonCol = gColors[i % gColors.length];
 
-          // Open-frame carnival gondola: suspension hanger rods, lower tub, side/front safety rails & canopy!
-          [-0.24, 0.24].forEach((hx) => {
-            addPart(gon, 0.035, 0.58, 0.035, '#e2e8f0', hx, -0.29, 0, 0.3, 0.75);
+          // Full-size open-frame carnival gondola: suspension hanger rods, lower tub, side/front safety rails & canopy!
+          [-0.44, 0.44].forEach((hx) => {
+            addPart(gon, 0.045, 0.92, 0.045, '#e2e8f0', hx, -0.46, 0, 0.3, 0.75);
           });
           // Gondola floor & waist-high tub walls (hollow interior!)
-          addPart(gon, 0.66, 0.06, 0.52, '#334155', 0, -0.66, 0, 0.6); // floor
-          addPart(gon, 0.68, 0.24, 0.06, gonCol, 0, -0.52, 0.24, 0.42); // front lower wall
-          addPart(gon, 0.68, 0.24, 0.06, gonCol, 0, -0.52, -0.24, 0.42); // back lower wall
-          [-0.31, 0.31].forEach((wx) => addPart(gon, 0.06, 0.24, 0.52, gonCol, wx, -0.52, 0, 0.42));
+          addPart(gon, 1.2, 0.08, 0.84, '#334155', 0, -1.04, 0, 0.6); // floor
+          addPart(gon, 1.24, 0.36, 0.08, gonCol, 0, -0.84, 0.38, 0.42); // front lower wall
+          addPart(gon, 1.24, 0.36, 0.08, gonCol, 0, -0.84, -0.38, 0.42); // back lower wall
+          [-0.58, 0.58].forEach((wx) => addPart(gon, 0.08, 0.36, 0.84, gonCol, wx, -0.84, 0, 0.42));
           // Safety grab bar + canopy roof
-          addPart(gon, 0.62, 0.03, 0.03, '#f8fafc', 0, -0.35, 0.22, 0.3, 0.6);
-          addPart(gon, 0.72, 0.06, 0.56, '#fef08a', 0, -0.04, 0, 0.4);
-          addPart(gon, 0.74, 0.04, 0.58, gonCol, 0, 0.01, 0, 0.4);
+          addPart(gon, 1.12, 0.04, 0.04, '#f8fafc', 0, -0.56, 0.34, 0.3, 0.6);
+          addPart(gon, 1.32, 0.08, 0.92, '#fef08a', 0, -0.05, 0, 0.4);
+          addPart(gon, 1.34, 0.05, 0.94, gonCol, 0, 0.02, 0, 0.4);
 
-          // Real 3D seated passengers inside most gondolas!
+          // Real life-sized seated passengers inside most gondolas!
           if (i % 5 !== 4) {
-            const seats = i % 2 === 0 ? [-0.14, 0.14] : [0];
+            const seats = i % 2 === 0 ? [-0.26, 0.26] : [0];
             seats.forEach((sx, si) => {
               const sCol = riderShirts[(i + si) % riderShirts.length];
-              // Seated torso, legs, head & hands gripping front rail
-              addPart(gon, 0.16, 0.24, 0.13, sCol, sx, -0.45, -0.04, 0.7);
-              addPart(gon, 0.14, 0.08, 0.18, '#1e293b', sx, -0.56, 0.05, 0.8);
+              // Full human-scale seated torso, legs, head & hands gripping front rail
+              addPart(gon, 0.26, 0.4, 0.2, sCol, sx, -0.66, -0.08, 0.7);
+              addPart(gon, 0.22, 0.12, 0.28, '#1e293b', sx, -0.84, 0.08, 0.8);
               const rHead = new THREE.Mesh(
-                new THREE.SphereGeometry(0.08, 8, 7),
+                new THREE.SphereGeometry(0.125, 9, 8),
                 new THREE.MeshStandardMaterial({ color: '#d9a47c', roughness: 0.75 })
               );
-              rHead.position.set(sx, -0.27, -0.04);
+              rHead.position.set(sx, -0.36, -0.08);
               const rHair = new THREE.Mesh(
-                new THREE.SphereGeometry(0.084, 7, 7, 0, Math.PI * 2, 0, Math.PI * 0.55),
+                new THREE.SphereGeometry(0.13, 8, 8, 0, Math.PI * 2, 0, Math.PI * 0.55),
                 new THREE.MeshStandardMaterial({ color: si % 2 === 0 ? '#111827' : '#3f2718', roughness: 0.85 })
               );
-              rHair.position.set(sx, -0.25, -0.04);
-              const arm = addPart(gon, 0.045, 0.18, 0.045, sCol, sx + 0.08, -0.38, 0.1, 0.7);
+              rHair.position.set(sx, -0.33, -0.08);
+              const arm = addPart(gon, 0.07, 0.3, 0.07, sCol, sx + 0.13, -0.56, 0.14, 0.7);
               arm.rotation.x = 0.85;
               gon.add(rHead, rHair);
             });
@@ -746,12 +749,12 @@ export function buildTrafficAndParkedVehicles(scene: THREE.Scene): MovingVehicle
           ferrisWheel.add(gon);
           gondolas.push(gon);
 
-          [-0.34, 0.34].forEach((bz) => {
+          [-0.52, 0.52].forEach((bz) => {
             const bulb = new THREE.Mesh(
-              new THREE.SphereGeometry(0.1, 8, 8),
+              new THREE.SphereGeometry(0.12, 8, 8),
               new THREE.MeshBasicMaterial({ color: gonCol })
             );
-            bulb.position.set(gx * 0.94, gy * 0.94, bz + (bz > 0 ? 0.09 : -0.09));
+            bulb.position.set(gx * 0.94, gy * 0.94, bz + (bz > 0 ? 0.11 : -0.11));
             ferrisWheel.add(bulb);
             bulbs.push(bulb);
           });
