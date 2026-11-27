@@ -1987,6 +1987,7 @@ export class Chapter2Engine {
     this.sound.playUIClick();
     this.dialogueIndex++;
     if (this.dialogueIndex >= this.activeDialogue.length) {
+      stopVoiceActing();
       this.dialogueBox.classList.add('hidden');
       this.activeDialogue = [];
       cur?.onFinish?.();

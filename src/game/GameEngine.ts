@@ -535,7 +535,7 @@ export class GameEngine {
         activePointerId = ev.pointerId;
         this.touchMoveDir = dir;
         btn.classList.add('pressed');
-        try { btn.setPointerCapture(ev.pointerId); } catch {}
+        try { btn.setPointerCapture(ev.pointerId); } catch { }
       };
       const end = (ev: PointerEvent) => {
         if (activePointerId !== null && ev.pointerId !== activePointerId) return;
@@ -594,7 +594,7 @@ export class GameEngine {
         zPointerId = ev.pointerId;
         this.touchMoveZ = zDir;
         btn.classList.add('pressed');
-        try { btn.setPointerCapture(ev.pointerId); } catch {}
+        try { btn.setPointerCapture(ev.pointerId); } catch { }
       };
       const endZ = (ev: PointerEvent) => {
         if (zPointerId !== null && ev.pointerId !== zPointerId) return;
@@ -2216,15 +2216,15 @@ export class GameEngine {
     const endChoices = [
       ...(hasDoubleTwist
         ? [
-            {
-              label:
-                'เปิดโปงปมซ้อนปม! พี่ต้อมผลักพริมแล้วหนี แต่ "เสี่ยวิรัช (เจ้าของหอ พ่อต้อม)" ขึ้นมาฆ่าซ้ำ จัดฉากแขวนคอ & ยัดเงินปิดคดี!',
-              action: () => {
-                this.state.flags.uncoveredDoubleTwist = true;
-                this.triggerEnding('true');
-              },
+          {
+            label:
+              'เปิดโปงปมซ้อนปม! พี่ต้อมผลักพริมแล้วหนี แต่ "เสี่ยวิรัช (เจ้าของหอ พ่อต้อม)" ขึ้นมาฆ่าซ้ำ จัดฉากแขวนคอ & ยัดเงินปิดคดี!',
+            action: () => {
+              this.state.flags.uncoveredDoubleTwist = true;
+              this.triggerEnding('true');
             },
-          ]
+          },
+        ]
         : []),
       {
         label: hasDoubleTwist
@@ -3227,11 +3227,11 @@ export class GameEngine {
       this.state.clues.length === 0
         ? '<p style="color:#9fa6b8">ยังไม่ได้จดบันทึกอะไรไว้ — ลองเดินดูรอบๆ หอพักก่อน</p>'
         : this.state.clues
-            .map((id) => {
-              const c = CLUES[id];
-              return `<div class="clue-item"><div class="clue-title">${c.title}</div><div>${c.detail}</div></div>`;
-            })
-            .join('');
+          .map((id) => {
+            const c = CLUES[id];
+            return `<div class="clue-item"><div class="clue-title">${c.title}</div><div>${c.detail}</div></div>`;
+          })
+          .join('');
 
     this.openModal(
       `สมุดบันทึก (${this.state.clues.length}/${Object.keys(CLUES).length})`,
@@ -3257,7 +3257,7 @@ export class GameEngine {
       </div>`
         )
         .join('') +
-        '<p style="font-size:0.82rem;color:#9fa6b8">ทิป: กด [Shift] หรือปุ่ม 🏃 เพื่อวิ่งไว หรือเรียก "วินมอไซค์พี่เบิร์ด" (-20 ม.) นั่งข้ามจุดได้เลย!</p>'
+      '<p style="font-size:0.82rem;color:#9fa6b8">ทิป: กด [Shift] หรือปุ่ม 🏃 เพื่อวิ่งไว หรือเรียก "วินมอไซค์พี่เบิร์ด" (-20 ม.) นั่งข้ามจุดได้เลย!</p>'
     );
   }
 
@@ -3270,8 +3270,8 @@ export class GameEngine {
       <div class="keypad-display" id="kp-disp">---</div>
       <div class="keypad-grid">
         ${[1, 2, 3, 4, 5, 6, 7, 8, 9, 'C', 0, 'ตกลง']
-          .map((k) => `<button class="keypad-btn" data-kp="${k}">${k}</button>`)
-          .join('')}
+        .map((k) => `<button class="keypad-btn" data-kp="${k}">${k}</button>`)
+        .join('')}
       </div>
       `
     );
@@ -3309,15 +3309,15 @@ export class GameEngine {
     const endings: Record<EndingType, { title: string; subtitle: string; body: string }> = {
       true: this.state.flags.uncoveredDoubleTwist
         ? {
-            title: 'True Ending+ (ปมซ้อนปมสมบูรณ์) — พังทลายอาณาจักรเรือนจันทร์',
-            subtitle: 'กระชากหน้ากากทั้งมือผลักและผู้บงการฆ่าปิดปากลงอย่างราบคาบ!',
-            body: 'ทั้งสมุดบันทึกพริม SD Card กล้องวงจรปิด เครื่องอัดเสียงห้อง 204 พร้อมหลักฐานกล่องเหล็กใต้คลองและเทปเสียงลุงชัยบนดาดฟ้า เปิดโปงความจริงสุดช็อกต่อหน้าตำรวจส่วนกลาง! พี่ต้อมถูกจับข้อหาทำร้ายร่างกาย ส่วน "เสี่ยวิรัช" เจ้าของหอพักถูกดำเนินคดีฆ่าอำพราง ฟอกเงิน และติดสินบนเจ้าพนักงาน ดวงวิญญาณพริมยิ้มจางๆ ก้มคำนับขอบคุณต้นก่อนสลายหายไปพร้อมแสงอาทิตย์แรก...',
-          }
+          title: 'True Ending+ (ปมซ้อนปมสมบูรณ์) — พังทลายอาณาจักรเรือนจันทร์',
+          subtitle: 'กระชากหน้ากากทั้งมือผลักและผู้บงการฆ่าปิดปากลงอย่างราบคาบ!',
+          body: 'ทั้งสมุดบันทึกพริม SD Card กล้องวงจรปิด เครื่องอัดเสียงห้อง 204 พร้อมหลักฐานกล่องเหล็กใต้คลองและเทปเสียงลุงชัยบนดาดฟ้า เปิดโปงความจริงสุดช็อกต่อหน้าตำรวจส่วนกลาง! พี่ต้อมถูกจับข้อหาทำร้ายร่างกาย ส่วน "เสี่ยวิรัช" เจ้าของหอพักถูกดำเนินคดีฆ่าอำพราง ฟอกเงิน และติดสินบนเจ้าพนักงาน ดวงวิญญาณพริมยิ้มจางๆ ก้มคำนับขอบคุณต้นก่อนสลายหายไปพร้อมแสงอาทิตย์แรก...',
+        }
         : {
-            title: 'True Ending — แสงเช้าหลังคืนฝนตก',
-            subtitle: 'ความจริงที่ถูกปิดเงียบมานานหนึ่งปี ถูกเปิดเผยในที่สุด',
-            body: 'จดหมายขู่ คำให้การของลุงชัย เครื่องอัดเสียงจากหน้าห้อง 204 และสมุดบันทึกสีแดงของพริม เพียงพอที่จะรื้อคดีฆาตกรรมอำพรางขึ้นมาใหม่ เช้าวันนั้นตำรวจเข้าจับกุมรุ่นพี่ห้อง 204... คืนต่อๆ มา หอพักเรือนจันทร์ยังคงเก่าและเงียบเหมือนเดิม แต่ไม่เคยมีเสียงฝีเท้าเปียกน้ำหรือเสียงร้องไห้ดังมาจากชั้น 3 อีกเลย',
-          },
+          title: 'True Ending — แสงเช้าหลังคืนฝนตก',
+          subtitle: 'ความจริงที่ถูกปิดเงียบมานานหนึ่งปี ถูกเปิดเผยในที่สุด',
+          body: 'จดหมายขู่ คำให้การของลุงชัย เครื่องอัดเสียงจากหน้าห้อง 204 และสมุดบันทึกสีแดงของพริม เพียงพอที่จะรื้อคดีฆาตกรรมอำพรางขึ้นมาใหม่ เช้าวันนั้นตำรวจเข้าจับกุมรุ่นพี่ห้อง 204... คืนต่อๆ มา หอพักเรือนจันทร์ยังคงเก่าและเงียบเหมือนเดิม แต่ไม่เคยมีเสียงฝีเท้าเปียกน้ำหรือเสียงร้องไห้ดังมาจากชั้น 3 อีกเลย',
+        },
       normal: {
         title: 'Normal Ending — เช้าวันที่รอดออกมาได้',
         subtitle: 'คุณหนีออกมาจากชั้น 3 ได้... แต่คดีของห้อง 304 ยังคงคลุมเครือ',
@@ -3428,20 +3428,20 @@ export class GameEngine {
       this.currentRoom !== 'outside'
         ? roomNames[this.currentRoom]
         : this.state.floor === 0 && this.state.x < -98
-        ? 'ท้ายซอย 9 — ป้อมตำรวจ & สะพานข้ามคลอง'
-        : this.state.floor === 0 && this.state.x < -14.5
-        ? 'นอกหอพัก — ปากซอย 9 (วิน / เซเว่น / ตลาด / ร้านลาบ)'
-        : this.state.floor === 0 && this.state.x > 14.5
-        ? 'ข้างหอฝั่งตะวันออก — สนามบาส / ร้านซักรีด 24 ชม. / ห้องปั่นไฟ'
-        : FLOOR_NAMES[this.state.floor];
+          ? 'ท้ายซอย 9 — ป้อมตำรวจ & สะพานข้ามคลอง'
+          : this.state.floor === 0 && this.state.x < -14.5
+            ? 'นอกหอพัก — ปากซอย 9 (วิน / เซเว่น / ตลาด / ร้านลาบ)'
+            : this.state.floor === 0 && this.state.x > 14.5
+              ? 'ข้างหอฝั่งตะวันออก — สนามบาส / ร้านซักรีด 24 ชม. / ห้องปั่นไฟ'
+              : FLOOR_NAMES[this.state.floor];
     this.hudSanityVal.textContent = `${this.state.sanity}%`;
     this.hudSanityFill.style.width = `${this.state.sanity}%`;
     this.hudSanityFill.style.background =
       this.state.sanity > 60
         ? '#679c77'
         : this.state.sanity > 30
-        ? '#c99746'
-        : '#b83b3b';
+          ? '#c99746'
+          : '#b83b3b';
 
     this.sanityOverlay.classList.toggle('low-sanity', this.state.sanity <= 55 && this.state.sanity > 25);
     this.sanityOverlay.classList.toggle('critical-sanity', this.state.sanity <= 25);
@@ -3639,8 +3639,8 @@ export class GameEngine {
           Math.abs(dxExit) <= 1.4
             ? 'กด [E] ออกจากห้องนี้ก่อน'
             : dxExit < 0
-            ? '◀ เดินไปประตูฝั่งซ้ายเพื่อออกจากห้อง'
-            : '▶ เดินไปประตูเพื่อออกจากห้อง';
+              ? '◀ เดินไปประตูฝั่งซ้ายเพื่อออกจากห้อง'
+              : '▶ เดินไปประตูเพื่อออกจากห้อง';
       } else {
         direction = this.computeOutsideDirection(targetFloor, targetX);
       }
@@ -3976,8 +3976,8 @@ export class GameEngine {
           this.state.floor === 0
             ? 'กด [W] ขึ้นชั้น 1'
             : this.state.floor === 3
-            ? 'กด [S] ลงชั้น 2'
-            : 'กด [W] ขึ้น / [S] ลงบันได';
+              ? 'กด [S] ลงชั้น 2'
+              : 'กด [W] ขึ้น / [S] ลงบันได';
         this.interactLabel.textContent = dirText;
       } else {
         this.interactPrompt.classList.add('hidden');
