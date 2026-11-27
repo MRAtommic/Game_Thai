@@ -1182,6 +1182,49 @@ export class DormWorld {
       sideWall.rotation.y = idx === 0 ? Math.PI / 2 : -Math.PI / 2;
       this.scene.add(sideWall);
     });
+    // Deep Side-Alley Shophouse Depth: balconies, glowing windows, striped awnings, AC units, streetlamps & distant market!
+    const alleyWinLit = createThaiWindowTexture(true);
+    const alleyWinDark = createThaiWindowTexture(false);
+    [-5.2, -9.2, -13.4].forEach((az, idx) => {
+      // Left-side shophouse awning, glowing upper window & AC condenser
+      this.addBox(this.scene, 0.95, 0.14, 2.6, idx % 2 === 0 ? '#b91c1c' : '#0f766e', -29.7, 2.35, az);
+      const lWin = new THREE.Mesh(
+        new THREE.PlaneGeometry(1.4, 1.1),
+        new THREE.MeshBasicMaterial({ map: idx % 2 === 0 ? alleyWinLit : alleyWinDark })
+      );
+      lWin.rotation.y = Math.PI / 2;
+      lWin.position.set(-30.16, 3.35, az);
+      this.scene.add(lWin);
+      this.addBox(this.scene, 0.36, 0.45, 0.58, '#cbd5e1', -29.98, 2.75, az + 1.1); // AC unit
+
+      // Right-side shophouse awning, window & hanging vertical Thai street sign
+      this.addBox(this.scene, 0.95, 0.14, 2.6, idx % 2 === 0 ? '#1d4ed8' : '#b45309', -24.5, 2.35, az - 0.6);
+      const rWin = new THREE.Mesh(
+        new THREE.PlaneGeometry(1.4, 1.1),
+        new THREE.MeshBasicMaterial({ map: idx === 1 ? alleyWinDark : alleyWinLit })
+      );
+      rWin.rotation.y = -Math.PI / 2;
+      rWin.position.set(-24.04, 3.35, az - 0.6);
+      this.scene.add(rWin);
+      this.addBox(this.scene, 0.16, 1.15, 0.42, idx % 2 === 0 ? '#facc15' : '#38bdf8', -24.75, 2.95, az + 0.55);
+    });
+    // Alley streetlamps + distant bustling night-market stall silhouettes at end of alley (z = -16.5..-18.5)
+    [-6.8, -12.8].forEach((lz, li) => {
+      this.addBox(this.scene, 0.16, 4.6, 0.16, '#475569', li === 0 ? -29.6 : -24.6, 2.3, lz);
+      const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.11, 8, 8), new THREE.MeshBasicMaterial({ color: '#fde68a' }));
+      bulb.position.set(li === 0 ? -29.0 : -25.2, 4.35, lz);
+      this.scene.add(bulb);
+      const aLight = new THREE.PointLight('#ffbf69', 3.4, 11, 1.1);
+      aLight.position.set(-27.1, 4.0, lz);
+      this.scene.add(aLight);
+    });
+    // Distant alley market stall, warm lantern & shophouse backdrop closing the deep view cleanly
+    this.addTexturedPlane(6.8, 5.2, wallTex, -27.1, 2.6, -18.8, 0.92);
+    this.addBox(this.scene, 3.4, 0.85, 0.85, '#7f1d1d', -27.3, 0.42, -16.6);
+    this.addBox(this.scene, 3.8, 0.18, 1.4, '#dc2626', -27.3, 2.45, -16.4);
+    const farAlleyLight = new THREE.PointLight('#fb923c', 4.0, 12, 1.1);
+    farAlleyLight.position.set(-27.1, 2.3, -15.4);
+    this.scene.add(farAlleyLight);
 
     // Graffiti murals placed strictly on solid wall segments (never across the side-alley road!)
     this.addTexturedPlane(6.5, 3.2, graffitiTex, -46.5, 1.6, -2.28, 0.92);
@@ -1465,7 +1508,35 @@ export class DormWorld {
     // Interior checkout counter tucked cleanly on the right wing behind the right window (-49.65), NEVER blocking center door!
     this.addBox(this.scene, 1.55, 0.88, 0.6, '#ffffff', -49.65, 0.44, -1.55, 0.35);
     this.addBox(this.scene, 1.58, 0.08, 0.64, '#16a34a', -49.65, 0.9, -1.55, 0.35);
-    this.addBox(this.scene, 1.65, 1.65, 0.4, '#e2e8f0', -51.5, 0.85, -1.96, 0.4); // deep rear chilled aisle wall rack
+    // POS register screen + glowing Slurpee/coffee machine on checkout counter
+    this.addBox(this.scene, 0.28, 0.24, 0.14, '#0f172a', -49.35, 1.06, -1.52, 0.3);
+    this.addBox(this.scene, 0.22, 0.16, 0.02, '#38bdf8', -49.35, 1.08, -1.44);
+    this.addBox(this.scene, 0.32, 0.42, 0.28, '#e2e8f0', -50.1, 1.15, -1.58, 0.35);
+    this.addBox(this.scene, 0.28, 0.12, 0.04, '#ef4444', -50.1, 1.32, -1.43);
+
+    // Visible 7-Eleven Store Clerk behind counter + Customer shopping at left shelf (seen through glass from outside!)
+    const sevenClerk = new THREE.Mesh(
+      new THREE.PlaneGeometry(1.18, 1.76),
+      new THREE.MeshBasicMaterial({ map: createCharacterTexture('clerk', 0), transparent: true, alphaTest: 0.2 })
+    );
+    sevenClerk.position.set(-49.65, 0.92, -1.94);
+    this.scene.add(sevenClerk);
+
+    const sevenShopper = new THREE.Mesh(
+      new THREE.PlaneGeometry(1.14, 1.72),
+      new THREE.MeshBasicMaterial({ map: createCharacterTexture('office_lady', 0), transparent: true, alphaTest: 0.2 })
+    );
+    sevenShopper.position.set(-53.05, 0.88, -1.16);
+    this.scene.add(sevenShopper);
+    this.addBox(this.scene, 0.26, 0.18, 0.2, '#16a34a', -52.82, 0.72, -1.14, 0.5); // green shopping basket
+
+    // Deep rear chilled beverage cooler with glowing cyan-white LED trim & drink rows
+    this.addBox(this.scene, 1.65, 1.85, 0.42, '#e2e8f0', -51.5, 0.94, -1.98, 0.4);
+    this.addBox(this.scene, 1.48, 1.32, 0.05, '#bae6fd', -51.5, 1.06, -1.76, 0.2);
+    ['#ef4444', '#facc15', '#22c55e', '#3b82f6'].forEach((dc, di) => {
+      this.addBox(this.scene, 0.24, 0.22, 0.12, dc, -51.95 + di * 0.3, 1.36, -1.73, 0.3);
+      this.addBox(this.scene, 0.24, 0.22, 0.12, dc, -51.95 + di * 0.3, 0.88, -1.73, 0.3);
+    });
     const inShopLight = new THREE.PointLight('#ffffff', 4.6, 9.5, 0.9);
     inShopLight.position.set(sX, 2.45, -1.0);
     this.scene.add(inShopLight);
@@ -1763,72 +1834,21 @@ export class DormWorld {
     this.addBox(this.room304SealGroup, 0.24, 0.65, 0.04, '#a62121', 3.5, y + 1.45, -1.13);
     this.scene.add(this.room304SealGroup);
 
-    // Realistic heavy-duty stairwell security barrier blocking Floor 3 (กั้นทางขึ้นชั้น 3 แบบสมจริง)
+    // Detailed chain & padlock gate blocking Floor 3 stairwell
     const fy = FLOOR_HEIGHT * 2;
-    // Thick square tube steel posts (เหล็กท่อสี่เหลี่ยมด้านขวา-ซ้าย)
-    [10.65, 12.15].forEach((px) => {
-      this.addBox(this.floor3GateMesh, 0.14, 0.14, 0.14, '#1e293b', px, fy + 1.44, 0.35);    // top cap
-      this.addBox(this.floor3GateMesh, 0.12, 1.5, 0.12, '#334155', px, fy + 0.74, 0.35);     // main post tube
-      this.addBox(this.floor3GateMesh, 0.18, 0.1, 0.18, '#1e293b', px, fy + 0.0, 0.35);      // base foot plate
-    });
-    // 3-tier horizontal steel guard rails (สีแดง + เทาเข้ม แบบของจริง)
-    this.addBox(this.floor3GateMesh, 1.52, 0.09, 0.09, '#dc2626', 11.4, fy + 1.32, 0.35);   // top red rail
-    this.addBox(this.floor3GateMesh, 1.52, 0.09, 0.09, '#dc2626', 11.4, fy + 0.72, 0.35);   // mid red rail
-    this.addBox(this.floor3GateMesh, 1.52, 0.07, 0.07, '#374151', 11.4, fy + 0.36, 0.35);   // low grey kickrail
-    // Welded vertical infill bars between rails (เหล็กแนวตั้ง 4 เส้น)
-    [10.88, 11.14, 11.65, 11.91].forEach((bx) => {
-      this.addBox(this.floor3GateMesh, 0.055, 0.98, 0.055, '#4b5563', bx, fy + 0.72, 0.35);
-    });
-    // Warning reflective stripes on top rail (แถบสะท้อนแสง เหลือง-ดำ)
-    [10.76, 10.96, 11.16, 11.36, 11.56, 11.76, 11.96].forEach((rx, ri) => {
-      this.addBox(this.floor3GateMesh, 0.09, 0.07, 0.11, ri % 2 === 0 ? '#facc15' : '#1e293b', rx, fy + 1.32, 0.35);
-    });
-    // Stainless heavy padlock body + shackle + chain loop on mid rail
-    const lockBody = new THREE.Mesh(
-      new THREE.BoxGeometry(0.17, 0.2, 0.09),
-      new THREE.MeshStandardMaterial({ color: '#d4af37', metalness: 0.82, roughness: 0.18 })
-    );
-    lockBody.position.set(11.4, fy + 0.72, 0.42);
-    this.floor3GateMesh.add(lockBody);
-    const shackle = new THREE.Mesh(
-      new THREE.TorusGeometry(0.065, 0.018, 8, 14, Math.PI),
-      new THREE.MeshStandardMaterial({ color: '#b8c8d8', metalness: 0.9, roughness: 0.12 })
-    );
-    shackle.rotation.z = Math.PI;
-    shackle.position.set(11.4, fy + 0.94, 0.42);
-    this.floor3GateMesh.add(shackle);
-    // Heavy steel chain drooping from post to lock (ห่วงโซ่)
-    for (let cx = 10.75; cx <= 11.32; cx += 0.16) {
+    this.addBox(this.floor3GateMesh, 1.75, 0.14, 0.08, '#991b1b', 11.4, fy + 1.25, 0.35);
+    this.addBox(this.floor3GateMesh, 0.1, 1.4, 0.1, '#475569', 10.75, fy + 0.7, 0.35);
+    this.addBox(this.floor3GateMesh, 0.1, 1.4, 0.1, '#475569', 12.1, fy + 0.7, 0.35);
+    // Steel chain links & brass padlock
+    for (let cx = 10.85; cx <= 12.0; cx += 0.22) {
       const link = new THREE.Mesh(
-        new THREE.TorusGeometry(0.055, 0.016, 6, 10),
-        new THREE.MeshStandardMaterial({ color: '#94a3b8', metalness: 0.78, roughness: 0.28 })
+        new THREE.TorusGeometry(0.06, 0.02, 6, 10),
+        new THREE.MeshStandardMaterial({ color: '#94a3b8', metalness: 0.75, roughness: 0.3 })
       );
-      link.position.set(cx, fy + 0.72 - Math.sin((cx - 10.75) / 0.57 * Math.PI) * 0.08, 0.41);
-      link.rotation.y = cx % 0.32 < 0.16 ? Math.PI / 2 : 0;
+      link.position.set(cx, fy + 0.92, 0.4);
       this.floor3GateMesh.add(link);
     }
-    // Warning sign: ห้ามขึ้นชั้น 3 / ไม่ปลอดภัย (ป้ายไม่ให้ขึ้น แบบสมจริง)
-    const warnCanvas = document.createElement('canvas');
-    warnCanvas.width = 192; warnCanvas.height = 88;
-    const warnCtx = warnCanvas.getContext('2d')!;
-    warnCtx.fillStyle = '#dc2626'; warnCtx.fillRect(0, 0, 192, 88);
-    warnCtx.fillStyle = '#facc15'; warnCtx.fillRect(4, 4, 184, 80);
-    warnCtx.fillStyle = '#1e293b';
-    warnCtx.font = 'bold 16px "IBM Plex Sans Thai", sans-serif';
-    warnCtx.textAlign = 'center';
-    warnCtx.fillText('⚠ ห้ามขึ้นชั้น 3', 96, 34);
-    warnCtx.font = '12px "IBM Plex Sans Thai", sans-serif';
-    warnCtx.fillText('โครงสร้างเสียหาย • อันตราย', 96, 60);
-    warnCtx.font = '10px sans-serif';
-    warnCtx.fillText('DANGER — DO NOT ENTER', 96, 76);
-    const warnTex = new THREE.CanvasTexture(warnCanvas);
-    warnTex.colorSpace = THREE.SRGBColorSpace;
-    const warnSign = new THREE.Mesh(
-      new THREE.PlaneGeometry(0.88, 0.4),
-      new THREE.MeshStandardMaterial({ map: warnTex, roughness: 0.45 })
-    );
-    warnSign.position.set(11.4, fy + 1.1, 0.41);
-    this.floor3GateMesh.add(warnSign);
+    this.addBox(this.floor3GateMesh, 0.18, 0.22, 0.08, '#d4af37', 11.4, fy + 0.85, 0.44, 0.35);
     this.scene.add(this.floor3GateMesh);
 
     this.addCorridorLight(3, -8.0, '#b5d6ff', '160, 200, 255', 0.5, 11.2);

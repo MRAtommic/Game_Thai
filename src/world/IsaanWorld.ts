@@ -929,7 +929,7 @@ export class IsaanWorld {
     this.addBackgroundStiltHouse(-22.5, -4.8, '#473022', true);
     this.addBackgroundStiltHouse(-15.5, -6.0, '#36261d', true);
     this.addBackgroundStiltHouse(14.0, -5.8, '#4c2618', true);
-    this.addBackgroundStiltHouse(106.0, -6.2, '#3d2c20', false);
+    this.addBackgroundStiltHouse(132.0, -6.2, '#3d2c20', false);
 
     // Cozy Rice-Field Hut (เถียงนาอีสาน at x = -16.8, z = -3.8)
     [-17.8, -15.8].forEach((hx) => {
@@ -999,7 +999,7 @@ export class IsaanWorld {
     });
 
     // Trees & banana clumps placed strictly in open land gaps clear of School (-116..-110), Store (-92..-87), and Clinic (+93..+99)
-    const treePositions = [-101.5, -84.0, -77, -64, -60.5, -21, -18.8, -14, -7.2, 7.2, 13.0, 16.0, 91.2, 100.8, 106.0, 117.0];
+    const treePositions = [-101.5, -84.0, -77, -64, -60.5, -21, -18.8, -14, -7.2, 7.2, 13.0, 16.0, 91.2, 101.0, 127.5];
     treePositions.forEach((tx, idx) => {
       const tr = idx % 2 === 0 ? build25DStreetTree({ scale: 1.12 }) : build25DBananaClump(1.08);
       tr.position.set(tx, 0, -2.9 - (idx % 3) * 0.45);
@@ -2015,6 +2015,11 @@ export class IsaanWorld {
     ring.position.set(cx, 0.07, cz);
     this.saiSinGroup.add(ring);
 
+    // Grounded twin bamboo signposts + wooden frame backing for Sai Sin zone sign (never floating!)
+    [-0.92, 0.92].forEach((dx) => {
+      this.addBox(this.saiSinGroup, 0.08, 2.68, 0.08, '#78350f', cx + dx, 1.34, cz - 1.44);
+    });
+    this.addBox(this.saiSinGroup, 2.18, 0.66, 0.05, '#334155', cx, 2.35, cz - 1.44);
     const sign = new THREE.Mesh(
       new THREE.PlaneGeometry(2.1, 0.58),
       new THREE.MeshStandardMaterial({ map: paintSignTex('#1e293b', '#f8fafc', '#fef08a', 'เขตวงสายสิญจน์', 'ผีเข้าไม่ได้ • ปลอดภัย') })
