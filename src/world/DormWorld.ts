@@ -230,6 +230,7 @@ export class DormWorld {
       this.charFrames.worker.push(createCharacterTexture('worker', f));
       this.charFrames.worker_yellow.push(createCharacterTexture('worker_yellow', f));
       this.charFrames.office_lady.push(createCharacterTexture('office_lady', f));
+      this.charFrames.uncle_local.push(createCharacterTexture('uncle_local', f));
       this.charFrames.zombie.push(createCharacterTexture('zombie', f));
     }
     for (let f = 0; f < 2; f++) {
@@ -237,7 +238,6 @@ export class DormWorld {
       this.charFrames.tom.push(createCharacterTexture('tom', f));
       this.charFrames.vendor.push(createCharacterTexture('vendor', f));
       this.charFrames.noodle_chef.push(createCharacterTexture('noodle_chef', f));
-      this.charFrames.uncle_local.push(createCharacterTexture('uncle_local', f));
       this.charFrames.gang_maroon.push(createCharacterTexture('gang_maroon', f));
       this.charFrames.gang_denim.push(createCharacterTexture('gang_denim', f));
       this.charFrames.gang_hoodie.push(createCharacterTexture('gang_hoodie', f));
@@ -649,18 +649,18 @@ export class DormWorld {
     road.receiveShadow = true;
     this.scene.add(road);
 
-    // Raised Thai Sidewalk / Footpath (ฟุตบาทริมถนนหน้าซอย) left & right of the Side-Alley (-31.2 .. -23.0) with Red-White Curbs!
+    // Raised Wide Thai Sidewalk / Footpath (ฟุตบาทริมถนนหน้าซอยกว้างขวาง z = -2.35 .. +1.28) with Red-White Curbs!
     [
       { cx: -73.1, w: 83.8 }, // -115.0 .. -31.2
       { cx: -19.1, w: 7.8 },  // -23.0 .. -15.2
     ].forEach((seg) => {
-      this.addBox(this.scene, seg.w, 0.07, 2.65, '#64748b', seg.cx, 0.015, -1.05, 0.85);
-      // Red & white painted Thai sidewalk curb stones along z = +0.28
+      this.addBox(this.scene, seg.w, 0.07, 3.65, '#64748b', seg.cx, 0.015, -0.55, 0.85);
+      // Red & white painted Thai sidewalk curb stones along z = +1.28
       const startX = seg.cx - seg.w / 2;
       const endX = seg.cx + seg.w / 2;
       for (let kx = startX + 0.6; kx < endX - 0.3; kx += 1.2) {
         const isRed = Math.abs(Math.floor(kx / 1.2)) % 2 === 0;
-        this.addBox(this.scene, 1.18, 0.09, 0.16, isRed ? '#dc2626' : '#f1f5f9', kx, 0.025, 0.28, 0.6);
+        this.addBox(this.scene, 1.18, 0.09, 0.16, isRed ? '#dc2626' : '#f1f5f9', kx, 0.025, 1.28, 0.6);
       }
     });
 
@@ -674,16 +674,16 @@ export class DormWorld {
       m.position.set(x, 0.014, z);
       this.scene.add(m);
     };
-    addMainRoadMark(83.8, 0.12, '#e2e8f0', -73.1, 0.55); // near curb white line (left of alley)
-    addMainRoadMark(7.8, 0.12, '#e2e8f0', -19.1, 0.55);  // near curb white line (right of alley)
-    addMainRoadMark(99.8, 0.12, '#e2e8f0', -65.2, 4.95); // far edge white line
+    addMainRoadMark(83.8, 0.12, '#e2e8f0', -73.1, 1.55); // near curb white line (left of alley)
+    addMainRoadMark(7.8, 0.12, '#e2e8f0', -19.1, 1.55);  // near curb white line (right of alley)
+    addMainRoadMark(99.8, 0.12, '#e2e8f0', -65.2, 5.45); // far edge white line
     for (let rx = -114.0; rx <= -16.5; rx += 4.4) {
       if (rx > -31.8 && rx < -22.5) continue; // clear T-junction box
-      addMainRoadMark(2.2, 0.14, '#facc15', rx, 2.75); // crisp yellow highway dashed centerline!
+      addMainRoadMark(2.2, 0.14, '#facc15', rx, 3.5); // crisp yellow highway dashed centerline!
     }
     [-55.5, -34.5].forEach((zx) => {
-      for (let zBar = 0.85; zBar <= 4.55; zBar += 0.72) {
-        addMainRoadMark(2.1, 0.36, '#f8fafc', zx, zBar); // Zebra crosswalks at 24-Seven & Bus Stop
+      for (let zBar = 1.85; zBar <= 5.05; zBar += 0.68) {
+        addMainRoadMark(2.1, 0.34, '#f8fafc', zx, zBar); // Zebra crosswalks at 24-Seven & Bus Stop
       }
     });
 
@@ -2642,8 +2642,9 @@ export class DormWorld {
         if (ap.z <= ap.minZ) ap.dir = 1;
         ap.mesh.position.set(ap.x, 0.92, ap.z);
         ap.shadow.position.set(ap.x, 0.068, ap.z);
-        const pf = Math.floor(this.animClock * 6.0) % 4;
-        (ap.mesh.material as THREE.MeshStandardMaterial).map = this.charFrames[ap.kind][pf];
+        const frames = this.charFrames[ap.kind];
+        const pf = Math.floor(this.animClock * 6.0) % frames.length;
+        (ap.mesh.material as THREE.MeshStandardMaterial).map = frames[pf];
         this.setMeshFacing(ap.mesh, ap.x < -27 ? 1 : -1);
       }
     }
