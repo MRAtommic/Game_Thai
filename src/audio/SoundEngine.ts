@@ -12,6 +12,9 @@ export class SoundEngine {
   private ruralTimer = 2.5;
   private rotHaeBeatTimer = 0;
   private rotHaeStep = 0;
+  private marketChatterTimer = 0.5;
+  private fairMusicTimer = 0.25;
+  private fairStep = 0;
   private howlTimer = 8;
   private heartbeatTimer = 0;
   private chaseStepTimer = 0;
@@ -978,5 +981,127 @@ export class SoundEngine {
     pGain.connect(this.masterGain);
     phin.start(now);
     phin.stop(now + 0.2);
+  }
+
+  /**
+   * Natural spatial market ambience: overlapping filtered vocal murmurs, pan clinks & footsteps around x = -42.
+   */
+  public updateIsaanMarketAmbience(dt: number, distanceToMarket: number, active: boolean): void {
+    if (!this.ctx || !this.masterGain || !this.initialized || !active || this.muted) return;
+    const proximity = Math.max(0, 1 - distanceToMarket / 28);
+    if (proximity <= 0.02) return;
+
+    this.marketChatterTimer -= dt;
+    if (this.marketChatterTimer > 0) return;
+    this.marketChatterTimer = 0.14 + Math.random() * 0.28;
+
+    const now = this.ctx.currentTime;
+    const vol = proximity * proximity;
+
+    // Gentle overlapping human murmur formant (speech-like cadence without harsh buzz)
+    const dur = 0.14 + Math.random() * 0.22;
+    const len = Math.floor(this.ctx.sampleRate * dur);
+    const buf = this.ctx.createBuffer(1, len, this.ctx.sampleRate);
+    const arr = buf.getChannelData(0);
+    let lp = 0;
+    for (let i = 0; i < len; i++) {
+      const env = Math.sin((i / len) * Math.PI);
+      lp = (lp + 0.18 * (Math.random() * 2 - 1)) / 1.18;
+      arr[i] = lp * env;
+    }
+    const src = this.ctx.createBufferSource();
+    src.buffer = buf;
+    const formant = this.ctx.createBiquadFilter();
+    formant.type = 'bandpass';
+    formant.frequency.value = 340 + Math.random() * 440; // varied vendor/buyer voices
+    formant.Q.value = 2.8;
+    const gain = this.ctx.createGain();
+    gain.gain.setValueAtTime(0.11 * vol, now);
+    src.connect(formant);
+    formant.connect(gain);
+    gain.connect(this.masterGain);
+    src.start(now);
+
+    // Occasional metallic ladle/wok clink or somtam mortar tap ("โป๊ก!")
+    if (Math.random() < 0.24) {
+      const osc = this.ctx.createOscillator();
+      const cGain = this.ctx.createGain();
+      const isMortar = Math.random() < 0.55;
+      osc.type = isMortar ? 'triangle' : 'sine';
+      osc.frequency.setValueAtTime(isMortar ? 420 + Math.random() * 90 : 1750 + Math.random() * 450, now);
+      osc.frequency.exponentialRampToValueAtTime(isMortar ? 210 : 1400, now + 0.08);
+      cGain.gain.setValueAtTime(0.045 * vol, now);
+      cGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.09);
+      osc.connect(cGain);
+      cGain.connect(this.masterGain);
+      osc.start(now);
+      osc.stop(now + 0.1);
+    }
+  }
+
+  /**
+   * Lively spatial Temple Fair & Mor Lam Stage music (Khaen/Phin + Ramwong drum) around x = +76.
+   */
+  public updateTempleFairAmbience(dt: number, distanceToFair: number, active: boolean): void {
+    if (!this.ctx || !this.masterGain || !this.initialized || !active || this.muted) return;
+    const proximity = Math.max(0, 1 - distanceToFair / 32);
+    if (proximity <= 0.02) return;
+
+    this.fairMusicTimer -= dt;
+    if (this.fairMusicTimer > 0) return;
+    this.fairMusicTimer = 0.24; // bouncy Mor Lam / Ramwong temple fair groove
+
+    const now = this.ctx.currentTime;
+    const step = this.fairStep % 16;
+    this.fairStep++;
+    const vol = proximity * proximity;
+
+    // Warm Ramwong tom drum beat
+    if (step % 2 === 0) {
+      const drum = this.ctx.createOscillator();
+      const dg = this.ctx.createGain();
+      drum.type = 'sine';
+      drum.frequency.setValueAtTime(step % 4 === 0 ? 110 : 145, now);
+      drum.frequency.exponentialRampToValueAtTime(48, now + 0.13);
+      dg.gain.setValueAtTime(0.001, now);
+      dg.gain.linearRampToValueAtTime(0.11 * vol, now + 0.01);
+      dg.gain.exponentialRampToValueAtTime(0.0001, now + 0.15);
+      drum.connect(dg);
+      dg.connect(this.masterGain);
+      drum.start(now);
+      drum.stop(now + 0.16);
+    }
+
+    // Crisp Ching (ฉิ่ง) cymbal shimmer every half bar
+    if (step % 4 === 2) {
+      const ching = this.ctx.createOscillator();
+      const cg = this.ctx.createGain();
+      ching.type = 'sine';
+      ching.frequency.setValueAtTime(step % 8 === 2 ? 2650 : 2250, now);
+      cg.gain.setValueAtTime(0.032 * vol, now);
+      cg.gain.exponentialRampToValueAtTime(0.0001, now + 0.12);
+      ching.connect(cg);
+      cg.connect(this.masterGain);
+      ching.start(now);
+      ching.stop(now + 0.13);
+    }
+
+    // Festive Khaen & Phin Isaan melody loop
+    const scale = [392, 440, 523.25, 587.33, 659.25, 587.33, 523.25, 440, 523.25, 659.25, 783.99, 659.25, 587.33, 523.25, 440, 392];
+    const osc = this.ctx.createOscillator();
+    const flt = this.ctx.createBiquadFilter();
+    const g = this.ctx.createGain();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(scale[step], now);
+    flt.type = 'lowpass';
+    flt.frequency.value = 1700;
+    g.gain.setValueAtTime(0.001, now);
+    g.gain.linearRampToValueAtTime(0.048 * vol, now + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + 0.21);
+    osc.connect(flt);
+    flt.connect(g);
+    g.connect(this.masterGain);
+    osc.start(now);
+    osc.stop(now + 0.22);
   }
 }

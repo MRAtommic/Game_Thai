@@ -2,6 +2,7 @@ import { drawCh2CharacterCanvas, drawCh2ItemIconDataUrl } from '../art/Chapter2S
 import { SoundEngine } from '../audio/SoundEngine';
 import { CH2_CLUES, CH2_ITEMS, CH2_RULES, CH2_ZONE_NAMES } from '../data/chapter2Data';
 import { DialogueLine, EndingType, FloorIndex, TimePeriod, WeatherType } from '../types';
+import { CutscenePlayer, IsaanCutsceneId } from '../ui/CutscenePlayer';
 import { renderSharedInventoryBar } from '../ui/InventoryBar';
 import { bindCameraZoomControls } from '../ui/mobileZoom';
 import { CH2_MAX_X, CH2_MIN_X, Ch2RoomId, IsaanWorld, VillageMood } from '../world/IsaanWorld';
@@ -137,6 +138,7 @@ export class Chapter2Engine {
   private activeDialogue: DialogueLine[] = [];
   private dialogueIndex = 0;
   private modalOpen = false;
+  private cutscene = new CutscenePlayer();
   private iconCache = new Map<string, string>();
   private interactables: Ch2Interactable[] = [];
 
@@ -207,6 +209,13 @@ export class Chapter2Engine {
     };
   }
 
+  private playCutscene(id: IsaanCutsceneId, after?: () => void): void {
+    this.codes.clear();
+    this.touchMoveDir = 0;
+    this.isSprintingTouch = false;
+    this.cutscene.play(id, after);
+  }
+
   public startNewGame(): void {
     this.sound.init();
     this.sound.playUIClick();
@@ -217,20 +226,22 @@ export class Chapter2Engine {
     this.krasueShowTimer = 0; // Slow-burn: NO Krasue on Day 1 arrival!
     this.saveGame();
     this.beginPlay();
-    this.startDialogue([
-      {
-        speaker: 'หนุ่ม',
-        role: 'บัณฑิตจบใหม่ — ลานหน้าบ้านไม้ยกสูง',
-        portrait: 'player',
-        text: 'ในที่สุดก็ได้กลับมาเหยียบแผ่นดินบ้านเกิดภาคอีสานสักที... สี่ปีที่ไปเรียนและทำงานในกรุงเทพฯ คิดถึงกลิ่นดิน กลิ่นทุ่งนา และเสียงลมเย็นๆ ใต้ถุนบ้านไม้ยกสูงชะมัด',
-      },
-      {
-        speaker: 'หนุ่ม',
-        role: 'คิดถึงครอบครัว',
-        portrait: 'player',
-        text: 'ป่านนี้แม่คำกับน้องแก้วคงรออยู่ข้างบนแล้ว แม่ส่งไลน์มาบอกตั้งแต่เมื่อวานว่าจะทำต้มไก่บ้านรอรับขวัญ เดี๋ยวรีบเดินขึ้นบันไดไปกอดแม่กับน้องก่อนดีกว่า!',
-      },
-    ]);
+    this.playCutscene('homecoming', () => {
+      this.startDialogue([
+        {
+          speaker: 'หนุ่ม',
+          role: 'บัณฑิตจบใหม่ — ลานหน้าบ้านไม้ยกสูง',
+          portrait: 'player',
+          text: 'ในที่สุดก็ได้กลับมาเหยียบแผ่นดินบ้านเกิดภาคอีสานสักที... สี่ปีที่ไปเรียนและทำงานในกรุงเทพฯ คิดถึงกลิ่นดิน กลิ่นทุ่งนา และเสียงลมเย็นๆ ใต้ถุนบ้านไม้ยกสูงชะมัด',
+        },
+        {
+          speaker: 'หนุ่ม',
+          role: 'คิดถึงครอบครัว',
+          portrait: 'player',
+          text: 'ป่านนี้แม่คำกับน้องแก้วคงรออยู่ข้างบนแล้ว แม่ส่งไลน์มาบอกตั้งแต่เมื่อวานว่าจะทำต้มไก่บ้านรอรับขวัญ เดี๋ยวรีบเดินขึ้นบันไดไปกอดแม่กับน้องก่อนดีกว่า!',
+        },
+      ]);
+    });
   }
 
   public continueGame(): void {
@@ -270,7 +281,12 @@ export class Chapter2Engine {
     this.touchDown.classList.add('hidden');
     this.touchFlashlight.classList.add('hidden');
     this.touchBike.classList.add('hidden');
-    this.touchSprint?.classList.add('hidden');
+    this.isSprintingTouch = false;
+    if (this.touchSprint) {
+      this.touchSprint.classList.add('hidden');
+      this.touchSprint.classList.remove('active');
+      this.touchSprint.textContent = '🏃 วิ่ง';
+    }
     this.touchPhoto?.classList.add('hidden');
     this.chaseBanner.querySelector('span:last-child')!.textContent =
       'ผีกระสือกำลังลอยไล่ตามมา! รีบวิ่งหนีเข้า "วงสายสิญจน์ลานวัด" ที่หลบตุ่มมังกร หรือขึ้นบ้านไม้ยกสูง';
@@ -301,6 +317,7 @@ export class Chapter2Engine {
   }
 
   public destroy(): void {
+    this.cutscene.stop();
     this.running = false;
     cancelAnimationFrame(this.rafId);
     this.ac.abort();
@@ -310,7 +327,12 @@ export class Chapter2Engine {
     document.getElementById('touch-shoot')?.classList.add('hidden');
     this.touchFlashlight.classList.add('hidden');
     this.touchBike.classList.add('hidden');
-    this.touchSprint?.classList.add('hidden');
+    this.isSprintingTouch = false;
+    if (this.touchSprint) {
+      this.touchSprint.classList.add('hidden');
+      this.touchSprint.classList.remove('active');
+      this.touchSprint.textContent = '🏃 วิ่ง';
+    }
     this.touchPhoto?.classList.add('hidden');
     this.hudExtra?.classList.add('hidden');
     this.interactPrompt.classList.add('hidden');
@@ -350,8 +372,6 @@ export class Chapter2Engine {
     window.addEventListener('blur', () => {
       this.codes.clear();
       this.touchMoveDir = 0;
-      this.isSprintingTouch = false;
-      this.touchSprint?.classList.remove('pressed');
     }, sig);
 
     bindCameraZoomControls(
@@ -364,7 +384,7 @@ export class Chapter2Engine {
     window.addEventListener(
       'keydown',
       (e) => {
-        if (!this.running) return;
+        if (!this.running || this.cutscene.isPlaying()) return;
         const code = e.code;
         this.codes.add(code);
         if (e.repeat) return;
@@ -483,27 +503,21 @@ export class Chapter2Engine {
       this.sound.init();
       if (this.state.inventory.includes('bicycle')) this.toggleBicycle();
     }, sig);
-    // ปุ่มวิ่งไว [Shift] & กล้องมือถือ [C]
-    if (this.touchSprint) {
-      let sprintPtr: number | null = null;
-      const startSprint = (ev: PointerEvent) => {
-        ev.preventDefault();
-        sprintPtr = ev.pointerId;
-        this.isSprintingTouch = true;
-        this.touchSprint?.classList.add('pressed');
-        try { this.touchSprint?.setPointerCapture(ev.pointerId); } catch { }
-      };
-      const endSprint = (ev: PointerEvent) => {
-        if (sprintPtr !== null && ev.pointerId !== sprintPtr) return;
-        ev.preventDefault();
-        sprintPtr = null;
-        this.isSprintingTouch = false;
-        this.touchSprint?.classList.remove('pressed');
-      };
-      this.touchSprint.addEventListener('pointerdown', startSprint as EventListener, sig);
-      this.touchSprint.addEventListener('pointerup', endSprint as EventListener, sig);
-      this.touchSprint.addEventListener('pointercancel', endSprint as EventListener, sig);
-    }
+    // ปุ่มโหมดวิ่ง [กดทีเดียว เปิด/ปิด] & กล้องมือถือ [C]
+    this.touchSprint?.addEventListener(
+      'click',
+      () => {
+        this.sound.init();
+        this.sound.playUIClick();
+        this.isSprintingTouch = !this.isSprintingTouch;
+        this.touchSprint?.classList.toggle('active', this.isSprintingTouch);
+        if (this.touchSprint) {
+          this.touchSprint.textContent = this.isSprintingTouch ? '🏃 วิ่ง ✓' : '🏃 วิ่ง';
+        }
+        this.showToast(this.isSprintingTouch ? 'เปิดโหมดวิ่งแล้ว! กดเดินเพื่อวิ่งเร็วได้เลย' : 'สลับกลับเป็นโหมดเดินปกติแล้ว');
+      },
+      sig
+    );
     this.touchPhoto?.addEventListener('click', () => {
       this.sound.init();
       this.takeEvidencePhoto();
@@ -823,9 +837,11 @@ export class Chapter2Engine {
         range: 2.4,
         label: 'กราบไหว้พระประธานในอุโบสถ (+30 สติ)',
         onInteract: () => {
-          this.adjustSanity(30);
           this.sound.playClueChime();
-          this.showToast('ก้มกราบพระประธานในพระอุโบสถ — ใจสงบเยือกเย็น (+30 สติ)');
+          this.playCutscene('pray_buddha', () => {
+            this.adjustSanity(30);
+            this.showToast('ก้มกราบพระประธานสามครั้งในพระอุโบสถ — ใจสงบเยือกเย็น (+30 สติ)');
+          });
         },
       },
 
@@ -942,32 +958,34 @@ export class Chapter2Engine {
       this.state.battery = 100;
       this.state.baht = (this.state.baht ?? 120) + 50;
       this.sound.playCoinJingle();
-      this.startDialogue([
-        {
-          speaker: 'หนุ่ม',
-          role: 'คืนแรกอันแสนอบอุ่นในเรือนไม้',
-          portrait: 'player',
-          text: 'แม่คำทำต้มยำปลาช่อนกับหมูย่างหอมกรุ่น! ทั้งครอบครัวล้อมวงจกข้าวเหนียวกินข้าวแลงพร้อมหน้า หัวเราะกันใต้แสงตะเกียงท่ามกลางเสียงรถแห่แว่วไกลๆ คืนนั้นเป็นคืนที่อบอุ่นใจที่สุดตั้งแต่กลับมาบ้านเกิด',
-        },
-        {
-          speaker: 'แม่คำ (เช้าวันรุ่งขึ้น — 08:30 น.)',
-          role: 'ชวนคุยบนเรือนไม้ยกสูง',
-          portrait: 'vendor',
-          text: 'ตื่นแล้วบ่ลูกหนุ่ม... เมื่อคืนตอนตีสอง แม่สะดุ้งตื่นเพราะได้ยินเสียงแมวร้องขู่กับเสียงหมาหอนลากยาวใต้ถุนบ้านแปลกๆ ชอบกลเหมือนมีอะไรมากุ๊กกักใต้เรือน',
-        },
-        {
-          speaker: 'น้องแก้ว',
-          role: 'น้องสาวของหนุ่ม (เพิ่งนึกขึ้นได้)',
-          portrait: 'prim',
-          text: 'เออแม่นอ้ายหนุ่ม! เมื่อวานตอนบ่ายก่อนอ้ายเข้าบ้าน มีป้าแก่หลังค่อมยื่น "ข้าวต้มมัด" ให้แก้วตรงรั้วบ้าน แก้วได้กลิ่นมันคาวๆ แปลกๆ เลยแอบโยนทิ้งไว้ใต้แคร่ไม้ใต้ถุนบ้าน บ่กล้ากิน...',
-        },
-        {
-          speaker: 'หนุ่ม',
-          role: 'นึกถึงตำนานที่ตาชมเล่า!',
-          portrait: 'player',
-          text: 'เดี๋ยวนะ... ข้าวต้มมัดกลิ่นคาวจากป้าแก่หลังค่อม?! เหมือนที่ตาชมเล่าเรื่องตำนานกระสือคายน้ำลายใส่ของกินเลย! เดี๋ยวอ้ายสิลงไปก้มเบิ่งใต้แคร่ไม้ไผ่ใต้ถุนบ้านเดี๋ยวนี้!',
-        },
-      ]);
+      this.playCutscene('family_dinner', () => {
+        this.startDialogue([
+          {
+            speaker: 'หนุ่ม',
+            role: 'คืนแรกอันแสนอบอุ่นในเรือนไม้',
+            portrait: 'player',
+            text: 'แม่คำทำต้มยำปลาช่อนกับหมูย่างหอมกรุ่น! ทั้งครอบครัวล้อมวงจกข้าวเหนียวกินข้าวแลงพร้อมหน้า หัวเราะกันใต้แสงตะเกียงท่ามกลางเสียงรถแห่แว่วไกลๆ (+50 ฿ & ชาร์จไฟฉายเต็ม 100%)',
+          },
+          {
+            speaker: 'แม่คำ (เช้าวันรุ่งขึ้น — 08:30 น.)',
+            role: 'ชวนคุยบนเรือนไม้ยกสูง',
+            portrait: 'vendor',
+            text: 'ตื่นแล้วบ่ลูกหนุ่ม... เมื่อคืนตอนตีสอง แม่สะดุ้งตื่นเพราะได้ยินเสียงแมวร้องขู่กับเสียงหมาหอนลากยาวใต้ถุนบ้านแปลกๆ ชอบกลเหมือนมีอะไรมากุ๊กกักใต้เรือน',
+          },
+          {
+            speaker: 'น้องแก้ว',
+            role: 'น้องสาวของหนุ่ม (เพิ่งนึกขึ้นได้)',
+            portrait: 'prim',
+            text: 'เออแม่นอ้ายหนุ่ม! เมื่อวานตอนบ่ายก่อนอ้ายเข้าบ้าน มีป้าแก่หลังค่อมยื่น "ข้าวต้มมัด" ให้แก้วตรงรั้วบ้าน แก้วได้กลิ่นมันคาวๆ แปลกๆ เลยแอบโยนทิ้งไว้ใต้แคร่ไม้ใต้ถุนบ้าน บ่กล้ากิน...',
+          },
+          {
+            speaker: 'หนุ่ม',
+            role: 'นึกถึงตำนานที่ตาชมเล่า!',
+            portrait: 'player',
+            text: 'เดี๋ยวนะ... ข้าวต้มมัดกลิ่นคาวจากป้าแก่หลังค่อม?! เหมือนที่ตาชมเล่าเรื่องตำนานกระสือคายน้ำลายใส่ของกินเลย! เดี๋ยวอ้ายสิลงไปก้มเบิ่งใต้แคร่ไม้ไผ่ใต้ถุนบ้านเดี๋ยวนี้!',
+          },
+        ]);
+      });
       f.learnedSweetTrap = true;
       this.saveGame();
       return;
@@ -1085,20 +1103,22 @@ export class Chapter2Engine {
       this.krasueShowTimer = 6.0;
       this.krasueX = 6.5;
       this.adjustSanity(-20);
-      this.startDialogue([
-        {
-          speaker: 'หนุ่ม (ตะลึงงัน!)',
-          role: 'หน้าต่างเรือนไม้ — กลางดึก',
-          portrait: 'player',
-          text: 'ลมหอบใหญ่พัดบานหน้าต่างเปิดผาง!! ตรงความมืดนอกชายคา มีหัวผู้หญิงผมกระเซิงลอยเคว้งคว้าง พร้อมตับไตไส้พุงสีเขียวแดงเรืองแสงวูบวาบ แสยะปากมีคราบเลือดจ้องตรงเข้ามาหาน้องแก้ว!!',
-        },
-        {
-          speaker: 'หนุ่ม',
-          role: 'รีบกระชากบานหน้าต่างปิด!',
-          portrait: 'player',
-          text: 'มันกรีดร้องแผดเสียงก่อนบินวูบหายไปทางทุ่งนาวัด!! ตรงขอบหน้าต่างมีคราบเมือกเรืองแสงหยดทิ้งไว้... ข่าวแพร่สะพัดทั่วหมู่บ้านภายในพริบตา ชาวบ้านรีบปิดประตูหน้าต่างเข้าบ้านเงียบกริบ ไม่มีรถวิ่ง งานวัดและรถแห่ปิดตัวลงหมด!',
-        },
-      ]);
+      this.playCutscene('krasue_window', () => {
+        this.startDialogue([
+          {
+            speaker: 'หนุ่ม (ตะลึงงัน!)',
+            role: 'หน้าต่างเรือนไม้ — กลางดึก',
+            portrait: 'player',
+            text: 'ลมหอบใหญ่พัดบานหน้าต่างเปิดผาง!! ตรงความมืดนอกชายคา มีหัวผู้หญิงผมกระเซิงลอยเคว้งคว้าง พร้อมตับไตไส้พุงสีเขียวแดงเรืองแสงวูบวาบ แสยะปากมีคราบเลือดจ้องตรงเข้ามาหาน้องแก้ว!!',
+          },
+          {
+            speaker: 'หนุ่ม',
+            role: 'รีบกระชากบานหน้าต่างปิด!',
+            portrait: 'player',
+            text: 'มันกรีดร้องแผดเสียงก่อนบินวูบหายไปทางทุ่งนาวัด!! ตรงขอบหน้าต่างมีคราบเมือกเรืองแสงหยดทิ้งไว้... ข่าวแพร่สะพัดทั่วหมู่บ้านภายในพริบตา ชาวบ้านรีบปิดประตูหน้าต่างเข้าบ้านเงียบกริบ ไม่มีรถวิ่ง งานวัดและรถแห่ปิดตัวลงหมด!',
+          },
+        ]);
+      });
       this.saveGame();
       return;
     }
@@ -1107,14 +1127,16 @@ export class Chapter2Engine {
       f.placedThornsAtWindow = true;
       this.removeItem('jujube_thorns');
       this.sound.playPickup();
-      this.startDialogue([
-        {
-          speaker: 'หนุ่ม',
-          role: 'หน้าต่างเรือนไม้ยกสูง',
-          portrait: 'player',
-          text: 'นำกิ่งหนามพุทราสดมาขัดวางเรียงใต้ขอบหน้าต่างจนแน่นหนา! จากนี้ไปผีกระสือจะลอยเฉียดเข้ามาคายน้ำลายสืบทายาทไม่ได้แล้ว — ถึงเวลาออกไปสืบความจริงจากป้าบัว เฮียตี๋ และยายสายในตลาดให้ชัดเจนว่าใครคือกระสือตัวจริง!',
-        },
-      ]);
+      this.playCutscene('jujube_thorns', () => {
+        this.startDialogue([
+          {
+            speaker: 'หนุ่ม',
+            role: 'หน้าต่างเรือนไม้ยกสูง',
+            portrait: 'player',
+            text: 'นำกิ่งหนามพุทราสดมาขัดวางเรียงใต้ขอบหน้าต่างจนแน่นหนา! จากนี้ไปผีกระสือจะลอยเฉียดเข้ามาคายน้ำลายสืบทายาทไม่ได้แล้ว — ถึงเวลาออกไปสืบความจริงจากป้าบัว เฮียตี๋ และยายสายในตลาดให้ชัดเจนว่าใครคือกระสือตัวจริง!',
+          },
+        ]);
+      });
       this.saveGame();
       return;
     }
@@ -1367,20 +1389,22 @@ export class Chapter2Engine {
       f.checkedSaiSinCircle = true;
       this.addItem('sai_sin');
       this.addClue('saisin_lore');
-      this.startDialogue([
-        {
-          speaker: 'ตาชม',
-          role: 'ในวงสายสิญจน์ลานวัดป่า (กำธูปในมือ)',
-          portrait: 'uncle',
-          text: 'รีบก้าวเท้าข้ามเข้ามาในวงสายสิญจน์เร็วไอ้หนุ่ม! หลวงพี่โยงด้ายสายสิญจน์จากพระประธานในอุโบสถออกมาล้อมรอบเสาไม้ไผ่ 8 ทิศให้ชาวบ้านแล้ว!',
-        },
-        {
-          speaker: 'เฮียตี๋ & ป้าบัว',
-          role: 'ชาวบ้านในวงสายสิญจน์',
-          portrait: 'tom',
-          text: 'จำไว้ให้ขึ้นใจนะหนุ่ม — ตราบใดที่ยืนอยู่ใน "วงสายสิญจน์" นี้ทุกคนจะปลอดภัย ผีกระสือไม่มีวันฝ่าด้ายขาวเข้ามาได้เด็ดขาด! แต่ถ้ามึงเดินออกไปนอกวงกลางทุ่งนาเมื่อไหร่แล้วโดนไล่ รีบวิ่งกลับมาเหยียบเข้าในวงนี้ให้ทัน! เอ้านี่ รับม้วนสายสิญจน์ปลุกเสกพกติดตัวไว้ด้วย แล้วรีบขึ้นกุฏิหลวงพี่ฝั่งขวาเลย!',
-        },
-      ]);
+      this.playCutscene('saisin_ward', () => {
+        this.startDialogue([
+          {
+            speaker: 'ตาชม',
+            role: 'ในวงสายสิญจน์ลานวัดป่า (กำธูปในมือ)',
+            portrait: 'uncle',
+            text: 'รีบก้าวเท้าข้ามเข้ามาในวงสายสิญจน์เร็วไอ้หนุ่ม! หลวงพี่โยงด้ายสายสิญจน์จากพระประธานในอุโบสถออกมาล้อมรอบเสาไม้ไผ่ 8 ทิศให้ชาวบ้านแล้ว!',
+          },
+          {
+            speaker: 'เฮียตี๋ & ป้าบัว',
+            role: 'ชาวบ้านในวงสายสิญจน์',
+            portrait: 'tom',
+            text: 'จำไว้ให้ขึ้นใจนะหนุ่ม — ตราบใดที่ยืนอยู่ใน "วงสายสิญจน์" นี้ทุกคนจะปลอดภัย ผีกระสือไม่มีวันฝ่าด้ายขาวเข้ามาได้เด็ดขาด! แต่ถ้ามึงเดินออกไปนอกวงกลางทุ่งนาเมื่อไหร่แล้วโดนไล่ รีบวิ่งกลับมาเหยียบเข้าในวงนี้ให้ทัน! เอ้านี่ รับม้วนสายสิญจน์ปลุกเสกพกติดตัวไว้ด้วย แล้วรีบขึ้นกุฏิหลวงพี่ฝั่งขวาเลย!',
+          },
+        ]);
+      });
       this.saveGame();
       return;
     }
@@ -1441,20 +1465,22 @@ export class Chapter2Engine {
       this.addItem('holy_water');
       this.addItem('sacred_knife');
       this.addClue('monk_ritual');
-      this.startDialogue([
-        {
-          speaker: 'หลวงพี่',
-          role: 'พระวิปัสสนา กุฏิวัดป่าบ้านทุ่ง',
-          portrait: 'uncle',
-          text: 'สาธุ... โยมนำเชี่ยนหมากเงินกลับมาได้ทันเวลา เห็นชื่อ "แก้ว" จารึกไว้ชัดเจน... อาตมาจะสวดถอนอาคมให้เดี๋ยวนี้!',
-        },
-        {
-          speaker: 'หลวงพี่',
-          role: 'พระวิปัสสนา กุฏิวัดป่าบ้านทุ่ง',
-          portrait: 'uncle',
-          text: 'โยมจงรับ "ธูปสะกดวิญญาณ" "น้ำมนต์ปลุกเสก" และ "มีดหมอลงอาคม" ไป... จำคำอาตมาให้แม่นนะโยม เมื่อไปถึง "โกศอัฐิหมายเลข 4" หลังวัด: ให้ปักธูปสะกดและสาดน้ำมนต์ล้างอาคมก่อน แล้วค่อยใช้มีดหมอฟันตัดสายใย! แวะกลับไปปลอบแม่กับน้องแก้วบนเรือนสักคำ แล้วรีบไปปิดฉากที่ป่าช้าวัดเสีย!',
-        },
-      ]);
+      this.playCutscene('monk_blessing', () => {
+        this.startDialogue([
+          {
+            speaker: 'หลวงพี่',
+            role: 'พระวิปัสสนา กุฏิวัดป่าบ้านทุ่ง',
+            portrait: 'uncle',
+            text: 'สาธุ... โยมนำเชี่ยนหมากเงินกลับมาได้ทันเวลา เห็นชื่อ "แก้ว" จารึกไว้ชัดเจน... อาตมาจะสวดถอนอาคมให้เดี๋ยวนี้!',
+          },
+          {
+            speaker: 'หลวงพี่',
+            role: 'พระวิปัสสนา กุฏิวัดป่าบ้านทุ่ง',
+            portrait: 'uncle',
+            text: 'โยมจงรับ "ธูปสะกดวิญญาณ" "น้ำมนต์ปลุกเสก" และ "มีดหมอลงอาคม" ไป... จำคำอาตมาให้แม่นนะโยม เมื่อไปถึง "โกศอัฐิหมายเลข 4" หลังวัด: ให้ปักธูปสะกดและสาดน้ำมนต์ล้างอาคมก่อน แล้วค่อยใช้มีดหมอฟันตัดสายใย! แวะกลับไปปลอบแม่กับน้องแก้วบนเรือนสักคำ แล้วรีบไปปิดฉากที่ป่าช้าวัดเสีย!',
+          },
+        ]);
+      });
       this.saveGame();
       return;
     }
@@ -1487,20 +1513,22 @@ export class Chapter2Engine {
     this.krasueX = 24.5;
     this.sound.playScare();
 
-    this.startDialogue([
-      {
-        speaker: 'หนุ่ม',
-        role: 'ข้างศาลปู่ตากลางทุ่งนายามวิกาล',
-        portrait: 'player',
-        text: 'ใต้แผ่นอิฐหลังศาลปู่ตา... เจอ "เชี่ยนหมากเงินโบราณ" ที่หลวงพี่บอกจริงๆ ด้วย! พอแง้มฝาดูข้างในมีใบข่อยเขียนรายชื่อผู้รับทายาทกระสือมาสามรุ่น... บรรทัดสุดท้ายเขียนด้วยเลือดสดๆ ว่า "แก้ว"!!',
-      },
-      {
-        speaker: 'หนุ่ม',
-        role: 'ขนลุกทั้งตัว!',
-        portrait: 'player',
-        text: 'เฮ้ย! นั่นแสงสีเขียวลอยพุ่งมาจากยอดตาลทางขวาแล้ว!! ต้องรีบถือเชี่ยนหมากเงินกลับขึ้นกุฏิให้หลวงพี่ทำพิธีปลุกเสกของขลังเดี๋ยวนี้!',
-      },
-    ]);
+    this.playCutscene('paddy_shrine_dug', () => {
+      this.startDialogue([
+        {
+          speaker: 'หนุ่ม',
+          role: 'ข้างศาลปู่ตากลางทุ่งนายามวิกาล',
+          portrait: 'player',
+          text: 'ใต้แผ่นอิฐหลังศาลปู่ตา... เจอ "เชี่ยนหมากเงินโบราณ" ที่หลวงพี่บอกจริงๆ ด้วย! พอแง้มฝาดูข้างในมีใบข่อยเขียนรายชื่อผู้รับทายาทกระสือมาสามรุ่น... บรรทัดสุดท้ายเขียนด้วยเลือดสดๆ ว่า "แก้ว"!!',
+        },
+        {
+          speaker: 'หนุ่ม',
+          role: 'ขนลุกทั้งตัว!',
+          portrait: 'player',
+          text: 'เฮ้ย! นั่นแสงสีเขียวลอยพุ่งมาจากยอดตาลทางขวาแล้ว!! ต้องรีบถือเชี่ยนหมากเงินกลับขึ้นกุฏิให้หลวงพี่ทำพิธีปลุกเสกของขลังเดี๋ยวนี้!',
+        },
+      ]);
+    });
     this.saveGame();
   }
 
@@ -1575,26 +1603,28 @@ export class Chapter2Engine {
               const endType: EndingType = perfect ? 'true' : 'normal';
               this.saveGame();
               this.sound.playClueChime();
-              this.startDialogue([
-                {
-                  speaker: 'รุ่งเช้า — พิธีบายศรีสู่ขวัญบนเรือนไม้บ้านทุ่ง',
-                  role: 'หมู่บ้านกลับมามีชีวิตชีวาอีกครั้ง',
-                  portrait: 'vendor',
-                  text: 'พอตัดสายใยอาคมขาดสะบั้น เสียงกรีดร้องของผีกระสือก็สลายหายไปพร้อมรุ่งอรุณ... แม่คำ น้องแก้ว ตาชม ป้าบัว เฮียตี๋ และหลวงพี่ช่วยกันจัด "พานบายศรีสู่ขวัญ" ผูกฝ้ายขาวรับขวัญให้หนุ่มและน้องแก้วกลางเรือนไม้!',
-                },
-                {
-                  speaker: 'น้องแก้ว & ชาวบ้าน',
-                  role: 'งานวัดและเสียงรถแห่กลับมาดังก้องทุ่งนา',
-                  portrait: 'prim',
-                  text: '"มาเด้อขวัญเอ๊ย... ขวัญเจ้ามาอยู่กับเนื้อกับตัว!" นอกเรือนไม้ รถสองแถว รถแห่หมอลำ และไฟชิงช้าสวรรค์งานวัดป่ากลับมาคึกคักอบอุ่นดังเดิม!',
-                  choices: [
-                    {
-                      label: 'ปิดฉาก Chapter 2 อย่างภาคภูมิใจ',
-                      action: () => this.triggerEnding(endType),
-                    },
-                  ],
-                },
-              ]);
+              this.playCutscene('banish_ritual', () => {
+                this.startDialogue([
+                  {
+                    speaker: 'รุ่งเช้า — พิธีบายศรีสู่ขวัญบนเรือนไม้บ้านทุ่ง',
+                    role: 'หมู่บ้านกลับมามีชีวิตชีวาอีกครั้ง',
+                    portrait: 'vendor',
+                    text: 'พอตัดสายใยอาคมขาดสะบั้น เสียงกรีดร้องของผีกระสือก็สลายหายไปพร้อมรุ่งอรุณ... แม่คำ น้องแก้ว ตาชม ป้าบัว เฮียตี๋ และหลวงพี่ช่วยกันจัด "พานบายศรีสู่ขวัญ" ผูกฝ้ายขาวรับขวัญให้หนุ่มและน้องแก้วกลางเรือนไม้!',
+                  },
+                  {
+                    speaker: 'น้องแก้ว & ชาวบ้าน',
+                    role: 'งานวัดและเสียงรถแห่กลับมาดังก้องทุ่งนา',
+                    portrait: 'prim',
+                    text: '"มาเด้อขวัญเอ๊ย... ขวัญเจ้ามาอยู่กับเนื้อกับตัว!" นอกเรือนไม้ รถสองแถว รถแห่หมอลำ และไฟชิงช้าสวรรค์งานวัดป่ากลับมาคึกคักอบอุ่นดังเดิม!',
+                    choices: [
+                      {
+                        label: 'ปิดฉาก Chapter 2 อย่างภาคภูมิใจ',
+                        action: () => this.triggerEnding(endType),
+                      },
+                    ],
+                  },
+                ]);
+              });
             },
           },
           {
@@ -2026,20 +2056,22 @@ export class Chapter2Engine {
       this.state.flags.inspectedTakian = true;
       this.addClue('takian_clue');
       this.addItem('takian_charm');
-      this.startDialogue([
-        {
-          speaker: 'เสียงกระซิบจากใต้ต้นตะเคียนคู่',
-          role: 'สิ่งลี้ลับปากหมู่บ้าน',
-          portrait: 'narrator',
-          text: 'ลมเย็นยะเยือกพัดผ้าเจ็ดสีปลิวไสว กลิ่นดอกมะลิปนธูปโบราณโชยมา... "มีดวงวิญญาณอาฆาตกำลังตามกลิ่นเด็กสาวเข้าเรือนไม้ในคืนนี้! จงนำผ้าเจ็ดสีผืนนี้ติดตัวไว้ แล้วรีบกลับขึ้นเรือนเฝ้าหน้าต่างยามดึกก่อนที่มันจะคายน้ำลายสืบทายาทสำเร็จ!"',
-        },
-        {
-          speaker: 'หนุ่ม',
-          role: 'ลูกชายคนโต',
-          portrait: 'player',
-          text: 'เจ้าแม่ตะเคียนทองกำลังเตือนเราแน่ๆ... เก็บผ้าเจ็ดสีนี้ติดตัวไว้ แล้วคืนนี้ต้องขึ้นไปเฝ้าดูที่หน้าต่างเรือนให้เห็นกับตา!',
-        },
-      ]);
+      this.playCutscene('takian_shrine', () => {
+        this.startDialogue([
+          {
+            speaker: 'เสียงกระซิบจากใต้ต้นตะเคียนคู่',
+            role: 'สิ่งลี้ลับปากหมู่บ้าน',
+            portrait: 'narrator',
+            text: 'ลมเย็นยะเยือกพัดผ้าเจ็ดสีปลิวไสว กลิ่นดอกมะลิปนธูปโบราณโชยมา... "มีดวงวิญญาณอาฆาตกำลังตามกลิ่นเด็กสาวเข้าเรือนไม้ในคืนนี้! จงนำผ้าเจ็ดสีผืนนี้ติดตัวไว้ แล้วรีบกลับขึ้นเรือนเฝ้าหน้าต่างยามดึกก่อนที่มันจะคายน้ำลายสืบทายาทสำเร็จ!"',
+          },
+          {
+            speaker: 'หนุ่ม',
+            role: 'ลูกชายคนโต',
+            portrait: 'player',
+            text: 'เจ้าแม่ตะเคียนทองกำลังเตือนเราแน่ๆ... เก็บผ้าเจ็ดสีนี้ติดตัวไว้ แล้วคืนนี้ต้องขึ้นไปเฝ้าดูที่หน้าต่างเรือนให้เห็นกับตา!',
+          },
+        ]);
+      });
       this.saveGame();
     } else {
       this.showToast('พวงมาลัยและผ้าเจ็ดสีปลิวไหวเบาๆ เหมือนกำลังคุ้มครองคุณอยู่');
@@ -2111,14 +2143,16 @@ export class Chapter2Engine {
     if (!this.state.flags.ateSomtam) {
       this.state.flags.ateSomtam = true;
       this.adjustSanity(25);
-      this.startDialogue([
-        {
-          speaker: 'แม่ลำไย',
-          role: 'แม่ค้าส้มตำครกไม้-ไก่ย่าง',
-          portrait: 'vendor',
-          text: 'อ้าวหนุ่ม! กลับจากเมืองกรุงแล้วบ่ มาๆ กินส้มตำปูปลาร้ากับไก่ย่างฮ้อนๆ ให้เซาเมื่อย แม่แถมข้าวเหนียวห่อนึงเลย (+25 สติ) ช่วงนี้ตลาดคึกคักแต่อย่าเดินเลยไปแถวบ้านยายสายตอนมืดเด้อหล่า!',
-        },
-      ]);
+      this.playCutscene('somtam_feast', () => {
+        this.startDialogue([
+          {
+            speaker: 'แม่ลำไย',
+            role: 'แม่ค้าส้มตำครกไม้-ไก่ย่าง',
+            portrait: 'vendor',
+            text: 'อ้าวหนุ่ม! กลับจากเมืองกรุงแล้วบ่ มาๆ กินส้มตำปูปลาร้ากับไก่ย่างฮ้อนๆ ให้เซาเมื่อย แม่แถมข้าวเหนียวห่อนึงเลย (+25 สติ) ช่วงนี้ตลาดคึกคักแต่อย่าเดินเลยไปแถวบ้านยายสายตอนมืดเด้อหล่า!',
+          },
+        ]);
+      });
     } else {
       this.showToast('แม่ลำไยตำส้มตำครกไม้เสียงดังโป๊กๆ กลิ่นไก่ย่างหอมฟุ้งไปทั่วตลาด');
     }
@@ -2130,12 +2164,14 @@ export class Chapter2Engine {
       return;
     }
     if (this.state.flags.caughtPondFishDay1 && (!this.state.flags.finishedDay1Dinner || this.state.inventory.includes('fresh_fish'))) {
-      this.adjustSanity(10);
-      this.showToast(
-        this.state.inventory.includes('fresh_fish')
-          ? 'มีปลาช่อนสดในกระเป๋าแล้ว เอาไปขายให้ป้าบัวที่ตลาดได้ (+60 ฿)!'
-          : 'นั่งรับลมริมหนองน้ำดูชาวบ้านหว่านแหจับปลา (+10 สติ)'
-      );
+      this.playCutscene('cast_net_fishing', () => {
+        this.adjustSanity(10);
+        this.showToast(
+          this.state.inventory.includes('fresh_fish')
+            ? 'มีปลาช่อนสดในกระเป๋าแล้ว เอาไปขายให้ป้าบัวที่ตลาดได้ (+60 ฿)!'
+            : 'ดูชาวบ้านหว่านแหริมหนองน้ำบ้านทุ่งอย่างเพลิดเพลิน (+10 สติ)'
+        );
+      });
       return;
     }
     this.sound.playUIClick();
@@ -2174,16 +2210,18 @@ export class Chapter2Engine {
       this.state.flags.caughtPondFishDay1 = true;
       this.addItem('fresh_fish');
       this.closeModal();
-      this.startDialogue([
-        {
-          speaker: 'หนุ่ม',
-          role: 'บนท่าน้ำไม้หนองน้ำบ้านทุ่ง',
-          portrait: 'player',
-          text: pos >= 34 && pos <= 64
-            ? 'เย้!! วัดเบ็ดจังหวะเป๊ะ ได้ "ปลาช่อนนา" ตัวเบ้อเริ่มเลย! เอาไปฝากแม่คำเฮ็ดต้มยำปลาแซ่บๆ มื้อแลงนี้แน่นอน!'
-            : 'ฮึบ! เกือบหลุดมือแต่ลุงชาวบ้านช่วยช้อนแหขึ้นมาได้ทัน! ได้ "ปลาช่อนสดหนองน้ำ" ตัวโตฝากแม่คำแล้ว!',
-        },
-      ]);
+      this.playCutscene('cast_net_fishing', () => {
+        this.startDialogue([
+          {
+            speaker: 'หนุ่ม',
+            role: 'บนท่าน้ำไม้หนองน้ำบ้านทุ่ง',
+            portrait: 'player',
+            text: pos >= 34 && pos <= 64
+              ? 'เย้!! วัดเบ็ดจังหวะเป๊ะ ได้ "ปลาช่อนนา" ตัวเบ้อเริ่มเลย! เอาไปฝากแม่คำเฮ็ดต้มยำปลาแซ่บๆ มื้อแลงนี้แน่นอน!'
+              : 'ฮึบ! เกือบหลุดมือแต่ลุงชาวบ้านช่วยหว่านแหช้อนขึ้นมาได้ทัน! ได้ "ปลาช่อนสดหนองน้ำ" ตัวโตฝากแม่คำแล้ว!',
+          },
+        ]);
+      });
       this.saveGame();
     });
   }
@@ -2215,14 +2253,16 @@ export class Chapter2Engine {
       this.adjustSanity(20);
       this.addClue('fair_rumor');
       this.closeModal();
-      this.startDialogue([
-        {
-          speaker: 'โฆษกงานวัด & ชาวบ้าน',
-          role: 'ซุ้มปาลูกโป่งงานวัดป่า',
-          portrait: 'tom',
-          text: 'ปัง! ปัง! แม่นหลายไอ้หนุ่ม ปาแตก 3 ลูกรวดเลย (+20 สติ)! ช่วงนี้ม่วนซื่นเต็มที่เด้อ แต่อย่าเผลอเดินเลยซุ้มประตูไปป่าช้าหลังวัดตอนดึกล่ะ มีคนเล่าเรื่องลี้ลับหนาหูเหลือเกิน!',
-        },
-      ]);
+      this.playCutscene('temple_fair', () => {
+        this.startDialogue([
+          {
+            speaker: 'โฆษกงานวัด & ชาวบ้าน',
+            role: 'ซุ้มปาลูกโป่งงานวัดป่า',
+            portrait: 'tom',
+            text: 'ปัง! ปัง! แม่นหลายไอ้หนุ่ม ปาแตก 3 ลูกรวดเลย (+20 สติ)! ช่วงนี้ม่วนซื่นเต็มที่เด้อ แต่อย่าเผลอเดินเลยซุ้มประตูไปป่าช้าหลังวัดตอนดึกล่ะ มีคนเล่าเรื่องลี้ลับหนาหูเหลือเกิน!',
+          },
+        ]);
+      });
       this.saveGame();
     });
     document.getElementById('btn-fair-soidao')?.addEventListener('click', () => {
@@ -2230,15 +2270,17 @@ export class Chapter2Engine {
       this.state.flags.visitedFair = true;
       this.addClue('fair_rumor');
       this.closeModal();
-      if (!this.state.flags.wonFairPrize) {
-        this.state.flags.wonFairPrize = true;
-        this.addItem('fair_amulet');
-        this.showToast('🎉 สอยดาวได้รางวัลใหญ่: "เหรียญหลวงพ่อวัดป่า" พกไว้กันขวัญหนีดีฝ่อ!');
-      } else {
-        this.adjustSanity(10);
-        this.showToast('🎈 ชมชิงช้าสวรรค์และรำวงหมอลำหน้าเวที (+10 สติ)');
-      }
-      this.saveGame();
+      this.playCutscene('temple_fair', () => {
+        if (!this.state.flags.wonFairPrize) {
+          this.state.flags.wonFairPrize = true;
+          this.addItem('fair_amulet');
+          this.showToast('🎉 สอยดาวได้รางวัลใหญ่: "เหรียญหลวงพ่อวัดป่า" พกไว้กันขวัญหนีดีฝ่อ!');
+        } else {
+          this.adjustSanity(10);
+          this.showToast('🎈 ชมชิงช้าสวรรค์และรำวงหมอลำหน้าเวที (+10 สติ)');
+        }
+        this.saveGame();
+      });
     });
   }
 
@@ -2264,8 +2306,10 @@ export class Chapter2Engine {
     if (this.getVillageMood() === 'lockdown') {
       this.showToast('ลานบั้งไฟเงียบวังเวงไร้ผู้คนเพราะข่าวลือผีกระสือ');
     } else {
-      this.adjustSanity(8);
-      this.showToast('ซุ้มบั้งไฟพญานาคประจำหมู่บ้านประดับลายกนกทองสวยงาม — ประเพณีขอฝนชาวอีสาน (+8 สติ)');
+      this.playCutscene('bangfai_festival', () => {
+        this.adjustSanity(8);
+        this.showToast('ซุ้มบั้งไฟพญานาคพุ่งทะยานสู่ฟ้า — ประเพณีขอฝนชาวอีสาน (+8 สติ)');
+      });
     }
   }
 
@@ -2434,18 +2478,22 @@ export class Chapter2Engine {
     this.sound.playClueChime();
     if (!f.gaveAlmsMorning) {
       f.gaveAlmsMorning = true;
-      this.startDialogue([
-        {
-          speaker: 'หลวงพี่ (ออกบิณฑบาตยามเช้า)',
-          role: 'ถนนหน้าหมู่บ้านบ้านทุ่ง',
-          portrait: 'uncle',
-          text: 'สาธุ... บุญรักษาโยมหนุ่ม ตื่นเช้ามาใส่บาตรให้ใจผ่องใส (+40 สติ) แบ่งปันกุศลให้เจ้ากรรมนายเวรในบ้านทุ่งด้วยเถิดโยม',
-        },
-      ]);
+      this.playCutscene('morning_alms', () => {
+        this.startDialogue([
+          {
+            speaker: 'หลวงพี่ (ออกบิณฑบาตยามเช้า)',
+            role: 'ถนนหน้าหมู่บ้านบ้านทุ่ง',
+            portrait: 'uncle',
+            text: 'สาธุ... บุญรักษาโยมหนุ่ม ตื่นเช้ามาใส่บาตรให้ใจผ่องใส (+40 สติ) แบ่งปันกุศลให้เจ้ากรรมนายเวรในบ้านทุ่งด้วยเถิดโยม',
+          },
+        ]);
+      });
       this.saveGame();
       return;
     }
-    this.showToast('ใส่บาตรรับศีลรับพรจากหลวงพี่ยามเช้า (+40 สติ)');
+    this.playCutscene('morning_alms', () => {
+      this.showToast('ใส่บาตรรับศีลรับพรจากหลวงพี่ยามเช้า (+40 สติ)');
+    });
   }
 
   private interactHideSpot(spotName: string): void {
@@ -2751,7 +2799,7 @@ export class Chapter2Engine {
     this.lastTime = now;
 
     if (!this.paused) {
-      const canMove = !this.modalOpen && this.activeDialogue.length === 0;
+      const canMove = !this.modalOpen && this.activeDialogue.length === 0 && !this.cutscene.isPlaying();
       this.mobileControls.classList.toggle('overlay-paused', !canMove);
       this.interactPrompt.classList.toggle('overlay-paused', !canMove);
       this.invBar.classList.toggle('overlay-paused', !canMove);
@@ -2909,13 +2957,24 @@ export class Chapter2Engine {
       }
 
       const villageMood = this.getVillageMood();
+      const outdoorQuiet = this.currentRoom === 'outside' && !this.krasueChase && !this.cutscene.isPlaying();
       this.sound.updateAmbience(dt, this.state.weather, period, this.state.sanity, 0 as FloorIndex, this.krasueChase);
       this.sound.updateIsaanAmbience(dt, period, this.currentRoom === 'outside', this.krasueChase);
       this.sound.updateRotHaeMusic(
         dt,
         Math.abs(this.state.x - this.world.getRotHaeX()),
-        this.currentRoom === 'outside' && villageMood === 'festive',
+        outdoorQuiet && villageMood === 'festive',
         this.krasueChase
+      );
+      this.sound.updateIsaanMarketAmbience(
+        dt,
+        Math.abs(this.state.x - (-42.0)),
+        outdoorQuiet && villageMood !== 'lockdown'
+      );
+      this.sound.updateTempleFairAmbience(
+        dt,
+        Math.abs(this.state.x - 76.0),
+        outdoorQuiet && villageMood === 'festive'
       );
 
       this.world.update(

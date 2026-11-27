@@ -267,7 +267,12 @@ export class GameEngine {
     this.invBar.classList.remove('hidden');
 
     const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0 || window.innerWidth <= 900;
+    this.isSprintingTouch = false;
     const touchSprint = document.getElementById('touch-sprint');
+    if (touchSprint) {
+      touchSprint.textContent = '🏃 วิ่ง';
+      touchSprint.classList.remove('active');
+    }
     if (isTouch) {
       this.mobileControls.classList.remove('hidden');
       this.touchFlashlight.classList.remove('hidden');
@@ -340,8 +345,6 @@ export class GameEngine {
     window.addEventListener('blur', () => {
       this.codes.clear();
       this.touchMoveDir = 0;
-      this.isSprintingTouch = false;
-      document.getElementById('touch-sprint')?.classList.remove('pressed');
     }, sig);
 
     bindCameraZoomControls(
@@ -507,26 +510,18 @@ export class GameEngine {
       this.toggleFlashlight();
     }, sig);
     const touchSprintBtn = document.getElementById('touch-sprint');
-    if (touchSprintBtn) {
-      let spId: number | null = null;
-      const spStart = (ev: PointerEvent) => {
-        ev.preventDefault();
-        spId = ev.pointerId;
-        this.isSprintingTouch = true;
-        touchSprintBtn.classList.add('pressed');
-        try { touchSprintBtn.setPointerCapture(ev.pointerId); } catch {}
-      };
-      const spEnd = (ev: PointerEvent) => {
-        if (spId !== null && ev.pointerId !== spId) return;
-        ev.preventDefault();
-        spId = null;
-        this.isSprintingTouch = false;
-        touchSprintBtn.classList.remove('pressed');
-      };
-      touchSprintBtn.addEventListener('pointerdown', spStart as EventListener, sig);
-      touchSprintBtn.addEventListener('pointerup', spEnd as EventListener, sig);
-      touchSprintBtn.addEventListener('pointercancel', spEnd as EventListener, sig);
-    }
+    touchSprintBtn?.addEventListener(
+      'click',
+      () => {
+        this.sound.init();
+        this.sound.playUIClick();
+        this.isSprintingTouch = !this.isSprintingTouch;
+        touchSprintBtn.classList.toggle('active', this.isSprintingTouch);
+        touchSprintBtn.textContent = this.isSprintingTouch ? '🏃 วิ่ง ✓' : '🏃 วิ่ง';
+        this.showToast(this.isSprintingTouch ? 'เปิดโหมดวิ่งแล้ว! กดเดินเพื่อวิ่งเร็วอัตโนมัติ' : 'สลับเป็นโหมดเดินปกติแล้ว');
+      },
+      sig
+    );
     this.interactPrompt.addEventListener('click', () => {
       this.sound.init();
       if (this.activeDialogue.length > 0 || this.modalOpen) return;
