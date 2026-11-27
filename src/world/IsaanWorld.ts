@@ -476,6 +476,8 @@ export class IsaanWorld {
   private animClock = 0;
   private zoomFactor = 1.0;
   private targetCamZ = 13.4;
+  private culledPointLights: THREE.PointLight[] = [];
+  private tmpLightPos = new THREE.Vector3();
 
   constructor(canvas: HTMLCanvasElement) {
     this.scene = new THREE.Scene();
@@ -570,6 +572,11 @@ export class IsaanWorld {
     const extObjs = this.scene.children.slice(preExt);
     extObjs.forEach((o) => this.exteriorGroup.add(o));
     this.scene.add(this.exteriorGroup);
+    this.exteriorGroup.traverse((obj) => {
+      if (obj instanceof THREE.PointLight && obj !== this.saiSinLight) {
+        this.culledPointLights.push(obj);
+      }
+    });
 
     this.buildInteriors();
 
@@ -2615,6 +2622,14 @@ export class IsaanWorld {
     this.camera.position.y = THREE.MathUtils.lerp(this.camera.position.y, 2.2, camAlpha);
     this.camera.position.z = THREE.MathUtils.lerp(this.camera.position.z, this.targetCamZ, camZAlpha);
     this.camera.lookAt(this.camera.position.x, this.camera.position.y - 0.2, 0);
+    if (!isInside) {
+      const cx = this.camera.position.x;
+      for (let i = 0; i < this.culledPointLights.length; i++) {
+        const l = this.culledPointLights[i];
+        l.getWorldPosition(this.tmpLightPos);
+        l.visible = Math.abs(this.tmpLightPos.x - cx) < 34;
+      }
+    }
     this.renderer.render(this.scene, this.camera);
   }
 

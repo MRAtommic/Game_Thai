@@ -292,6 +292,7 @@ export interface RuralActorsController {
   saleng: { group: THREE.Group; wheels: THREE.Group[]; x: number; dir: 1 | -1 };
   schoolSwing: THREE.Group;
   schoolActors: THREE.Group[];
+  pretaShadow: THREE.Group;
   morningMonk: { group: THREE.Group; x: number; dir: 1 | -1 };
   rocketFestival: {
     rocketGroup: THREE.Group;
@@ -1722,6 +1723,45 @@ export function buildTrafficAndParkedVehicles(scene: THREE.Scene): MovingVehicle
         drunkGroup.position.set(-71.0, 0, -0.35);
         scene.add(drunkGroup);
 
+        // 11) Towering Thai Preta Ghost Silhouette (เงาเปรตตัวสูงเท่าต้นตาลหลังฉากตอนกลางคืน)
+        const pretaShadow = new THREE.Group();
+        const pretaMat = new THREE.MeshBasicMaterial({ color: '#030407', transparent: true, opacity: 0.78 });
+        // Gaunt 4.4m long legs
+        [-0.24, 0.24].forEach((lx) => {
+          const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.055, 4.4, 7), pretaMat);
+          leg.position.set(lx, 2.2, 0);
+          pretaShadow.add(leg);
+        });
+        // Skinny elongated torso & rib shoulders
+        const pretaTorso = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.16, 2.25, 8), pretaMat);
+        pretaTorso.position.set(0, 5.45, 0);
+        pretaShadow.add(pretaTorso);
+        // Long thin neck + tiny head with glowing pinhole eyes & tiny wailing mouth
+        const pretaNeck = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.075, 1.0, 7), pretaMat);
+        pretaNeck.position.set(0, 7.05, 0);
+        const pretaHead = new THREE.Mesh(new THREE.SphereGeometry(0.21, 9, 8), pretaMat);
+        pretaHead.position.set(0, 7.7, 0);
+        pretaShadow.add(pretaNeck, pretaHead);
+        [-0.07, 0.07].forEach((ex) => {
+          const eye = new THREE.Mesh(new THREE.SphereGeometry(0.025, 6, 6), new THREE.MeshBasicMaterial({ color: '#fca5a5' }));
+          eye.position.set(ex, 7.73, 0.19);
+          pretaShadow.add(eye);
+        });
+        const mouth = new THREE.Mesh(new THREE.CircleGeometry(0.032, 8), new THREE.MeshBasicMaterial({ color: '#ef4444' }));
+        mouth.position.set(0, 7.62, 0.2);
+        pretaShadow.add(mouth);
+        // Long dangling arms with clawed hands
+        [-0.36, 0.36].forEach((ax, ai) => {
+          const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.04, 3.3, 7), pretaMat);
+          arm.name = ai === 0 ? 'pretaArmL' : 'pretaArmR';
+          arm.position.set(ax, 4.85, 0.08);
+          arm.rotation.z = ai === 0 ? 0.12 : -0.12;
+          pretaShadow.add(arm);
+        });
+        pretaShadow.position.set(22, 0, -9.2);
+        pretaShadow.visible = false;
+        scene.add(pretaShadow);
+
         // 5) 6 Animated Market Shoppers walking back & forth along the Big Market (-57 .. -26)
         const shopperDefs = [
           { baseX: -53.5, range: 3.4, speed: 0.95, shirt: '#f43f5e', z: -0.25 },
@@ -1780,6 +1820,7 @@ export function buildTrafficAndParkedVehicles(scene: THREE.Scene): MovingVehicle
           saleng: { group: salengGrp, wheels: salengWheels, x: 12, dir: -1 },
           schoolSwing,
           schoolActors,
+          pretaShadow,
           morningMonk: { group: monkGrp, x: -18, dir: 1 },
           rocketFestival: {
             rocketGroup,
@@ -2065,6 +2106,17 @@ export function buildTrafficAndParkedVehicles(scene: THREE.Scene): MovingVehicle
             act.rotation.z = Math.sin(clock * 1.8 + idx) * 0.025;
           }
         });
+
+        // 9B) Towering Preta ghost silhouette lurking & swaying in the night background mist
+        rural.pretaShadow.visible = isNight;
+        if (isNight) {
+          rural.pretaShadow.position.x = 10 + Math.sin(clock * 0.085) * 44;
+          rural.pretaShadow.rotation.z = Math.sin(clock * 0.9) * 0.045;
+          const pArmL = rural.pretaShadow.getObjectByName('pretaArmL');
+          const pArmR = rural.pretaShadow.getObjectByName('pretaArmR');
+          if (pArmL) pArmL.rotation.x = Math.sin(clock * 1.4) * 0.22;
+          if (pArmR) pArmR.rotation.x = -Math.sin(clock * 1.4) * 0.22;
+        }
 
         // 10) Morning almsgiving monk (พระสงฆ์ออกบิณฑบาตช่วง 05:30 - 07:45 น.)
         const hr = gameMinutes / 60;

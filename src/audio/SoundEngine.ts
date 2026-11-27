@@ -21,6 +21,7 @@ export class SoundEngine {
   private chaseMusicTimer = 0.15;
   private chaseMusicStep = 0;
   private howlTimer = 8;
+  private pretaWailTimer = 11;
   private heartbeatTimer = 0;
   private chaseStepTimer = 0;
   private chaseStepIndex = 0;
@@ -189,7 +190,7 @@ export class SoundEngine {
       }
     }
 
-    // Occasional distant Thai dog howl at night
+    // Occasional distant Thai dog howl & Preta ghost wail at night
     if (period === 'night') {
       this.howlTimer -= dt;
       if (this.howlTimer <= 0) {
@@ -197,6 +198,11 @@ export class SoundEngine {
         if (Math.random() < 0.6) {
           this.playDistantHowl();
         }
+      }
+      this.pretaWailTimer -= dt;
+      if (this.pretaWailTimer <= 0) {
+        this.pretaWailTimer = 15 + Math.random() * 14;
+        this.playPretaWail();
       }
     }
 
@@ -304,6 +310,48 @@ export class SoundEngine {
     gain.connect(this.masterGain);
     osc.start(now);
     osc.stop(now + 2.4);
+  }
+
+  /** Plays a thin, high-pitched trembling Thai Preta ghost wail in the distance. */
+  public playPretaWail(): void {
+    if (!this.ctx || !this.masterGain || this.muted) return;
+    const now = this.ctx.currentTime;
+
+    const osc = this.ctx.createOscillator();
+    const lfo = this.ctx.createOscillator();
+    const lfoGain = this.ctx.createGain();
+    const filter = this.ctx.createBiquadFilter();
+    const gain = this.ctx.createGain();
+
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(610, now);
+    osc.frequency.exponentialRampToValueAtTime(960, now + 0.75);
+    osc.frequency.exponentialRampToValueAtTime(790, now + 1.8);
+    osc.frequency.exponentialRampToValueAtTime(490, now + 3.25);
+
+    lfo.type = 'sine';
+    lfo.frequency.value = 6.8;
+    lfoGain.gain.value = 22;
+    lfo.connect(lfoGain);
+    lfoGain.connect(osc.frequency);
+
+    filter.type = 'bandpass';
+    filter.frequency.value = 820;
+    filter.Q.value = 2.4;
+
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.linearRampToValueAtTime(0.06, now + 0.45);
+    gain.gain.setValueAtTime(0.052, now + 1.8);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 3.35);
+
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(this.masterGain);
+
+    lfo.start(now);
+    osc.start(now);
+    lfo.stop(now + 3.4);
+    osc.stop(now + 3.4);
   }
 
   public playFootstep(surface: 'concrete' | 'wood' | 'wet'): void {

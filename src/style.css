@@ -1571,8 +1571,6 @@ body.ui-transparent .hud-card {
   background: linear-gradient(180deg, rgba(12, 14, 20, 0.36), rgba(8, 10, 14, 0.42));
   border-color: rgba(208, 166, 94, 0.28);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.28);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
 }
 
 body.ui-transparent .hud-card,
@@ -1586,22 +1584,16 @@ body.ui-transparent .hud-extra {
 body.ui-transparent .icon-btn {
   background: rgba(12, 14, 20, 0.38);
   border-color: rgba(208, 166, 94, 0.3);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
 }
 
 body.ui-transparent #inventory-bar {
   background: rgba(10, 12, 18, 0.36);
   border-color: rgba(208, 166, 94, 0.26);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
 }
 
 body.ui-transparent .touch-btn {
   background: rgba(14, 17, 24, 0.34);
   border-color: rgba(235, 205, 145, 0.32);
-  backdrop-filter: blur(3px);
-  -webkit-backdrop-filter: blur(3px);
 }
 
 body.ui-transparent .touch-btn:active {
