@@ -638,30 +638,32 @@ export class DormWorld {
     road.receiveShadow = true;
     this.scene.add(road);
 
-    // Open Side-Street T-Junction (ซอยแยกเข้าซอย 9) at x = -30.2 .. -24.2 heading deep into -Z
-    const crossRoad = new THREE.Mesh(new THREE.BoxGeometry(6.2, 0.39, 19.5), roadMat);
-    crossRoad.position.set(-27.2, -0.202, -9.2);
+    // Open Side-Street T-Junction (ซอยแยกเข้าซอย 9) at x = -30.2 .. -24.2 stretching deep to horizon (-30m)!
+    const crossRoad = new THREE.Mesh(new THREE.BoxGeometry(6.2, 0.39, 32.0), roadMat);
+    crossRoad.position.set(-27.2, -0.202, -15.4);
     crossRoad.receiveShadow = true;
     this.scene.add(crossRoad);
     // Raised concrete corner curbs flanking the side-street opening & dashed center road line
     [-30.35, -24.05].forEach((cx) => {
-      this.addBox(this.scene, 0.3, 0.2, 16.5, '#646c78', cx, 0.1, -10.5);
+      this.addBox(this.scene, 0.3, 0.2, 28.0, '#646c78', cx, 0.1, -16.2);
     });
-    for (let dz = -2.0; dz >= -17.5; dz -= 2.4) {
+    for (let dz = -2.0; dz >= -28.5; dz -= 2.4) {
       this.addBox(this.scene, 0.12, 0.02, 1.15, '#eab308', -27.2, 0.005, dz);
     }
-    // Deep alley streetlamp illuminating the side-street recess
-    const alleyPole = this.addBox(this.scene, 0.22, 5.2, 0.22, '#525862', -24.5, 2.6, -9.5);
-    alleyPole.castShadow = false;
-    const alleyBulb = new THREE.Mesh(
-      new THREE.BoxGeometry(0.32, 0.08, 0.4),
-      new THREE.MeshBasicMaterial({ color: '#ffd580' })
-    );
-    alleyBulb.position.set(-25.1, 4.95, -9.5);
-    this.scene.add(alleyBulb);
-    const alleyLight = new THREE.PointLight('#ffd580', 8.5, 18, 0.9);
-    alleyLight.position.set(-27.0, 4.7, -9.5);
-    this.scene.add(alleyLight);
+    // Deep alley streetlamps illuminating the side-street corridor
+    [-9.5, -20.5].forEach((lz) => {
+      const alleyPole = this.addBox(this.scene, 0.22, 5.2, 0.22, '#525862', -24.5, 2.6, lz);
+      alleyPole.castShadow = false;
+      const alleyBulb = new THREE.Mesh(
+        new THREE.BoxGeometry(0.32, 0.08, 0.4),
+        new THREE.MeshBasicMaterial({ color: '#ffd580' })
+      );
+      alleyBulb.position.set(-25.1, 4.95, lz);
+      this.scene.add(alleyBulb);
+      const alleyLight = new THREE.PointLight('#ffd580', 8.5, 18, 0.9);
+      alleyLight.position.set(-27.0, 4.7, lz);
+      this.scene.add(alleyLight);
+    });
 
     // Dorm private concrete courtyard & raised curb (clearly separates dorm from public road!)
     const yardMat = new THREE.MeshStandardMaterial({
@@ -2370,17 +2372,17 @@ export class DormWorld {
             v.group.position.z = v.baseZ;
             v.group.rotation.y = 0;
           } else {
-            // Curve smoothly left down the open asphalt lane (x = -26.0, heading into -Z)
+            // Curve smoothly left down the open asphalt lane (x = -26.0, heading deep into -Z skyline)
             v.group.position.x = THREE.MathUtils.lerp(v.group.position.x, -26.0, Math.min(1, dt * 4.2));
             v.group.position.z -= v.speed * 0.92 * dt;
             v.group.rotation.y = THREE.MathUtils.lerp(v.group.rotation.y, Math.PI / 2, Math.min(1, dt * 5.5));
-            if (v.group.position.z < -16.5) {
+            if (v.group.position.z < -27.5) {
               v.group.position.set(v.minX, 0, v.baseZ);
               v.group.rotation.y = 0;
             }
           }
         } else {
-          // Westbound traffic: drives OUT from deep inside the side-alley (-28.3, z = -16.5), turns West onto Soi 9
+          // Westbound traffic: drives OUT from deep inside the open side-alley (-28.3, z = -27.5), turns West onto Soi 9
           if (v.group.position.x > -29.8 && v.group.position.z < v.baseZ - 0.15) {
             v.group.position.z += v.speed * 0.88 * dt;
             if (v.group.position.z > 0.2) {
@@ -2395,7 +2397,7 @@ export class DormWorld {
             v.group.position.z = THREE.MathUtils.lerp(v.group.position.z, v.baseZ, Math.min(1, dt * 6));
             v.group.rotation.y = THREE.MathUtils.lerp(v.group.rotation.y, 0, Math.min(1, dt * 6));
             if (v.group.position.x < v.minX) {
-              v.group.position.set(-28.3, 0, -16.5);
+              v.group.position.set(-28.3, 0, -27.5);
               v.group.rotation.y = Math.PI / 2;
             }
           }

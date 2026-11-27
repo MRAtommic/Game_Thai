@@ -88,8 +88,8 @@ export function buildDormDistrictExtension(
   for (let px = -126; px <= 44; px += 17) {
     addBox(exteriorGroup, 1.25, 11.0, 1.25, '#252a34', px, 5.2, -11.5, 0.92);
   }
-  // Distant glowing Bangkok condos & office towers (z = -17)
-  [-118, -94, -70, -48, -28, -4, 18, 38].forEach((tx, idx) => {
+  // Distant glowing Bangkok condos & office towers (strictly clear of the open Side-Street corridor -31..-23!)
+  [-118, -94, -70, -48, -37, -14, 10, 34].forEach((tx, idx) => {
     const h = 15 + (idx % 3) * 5;
     addBox(exteriorGroup, 8.5, h, 3.0, '#0b1120', tx, h / 2 - 0.5, -17.5, 1.0);
     for (let wy = 4; wy < h - 2; wy += 2.2) {
