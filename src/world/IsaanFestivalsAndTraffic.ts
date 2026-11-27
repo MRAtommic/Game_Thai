@@ -1562,12 +1562,23 @@ export function buildTrafficAndParkedVehicles(scene: THREE.Scene): MovingVehicle
           });
           rotHae.dancers.forEach((d) => {
             d.group.position.x = rotHae.x + d.offsetX * rotHae.dir;
-            d.group.position.y = Math.abs(Math.sin(clock * 7.2 + d.phase)) * 0.14;
-            d.group.rotation.z = Math.sin(clock * 5.8 + d.phase) * 0.12;
+            d.group.position.y = Math.abs(Math.sin(clock * 6.0 + d.phase)) * 0.07;
+            d.group.rotation.z = Math.sin(clock * 3.8 + d.phase) * 0.03;
+            d.group.rotation.y = Math.sin(clock * 2.8 + d.phase) * 0.22;
             const armL = d.group.getObjectByName('armL');
             const armR = d.group.getObjectByName('armR');
-            if (armL) armL.rotation.z = 1.9 + Math.sin(clock * 9.0 + d.phase) * 0.65;
-            if (armR) armR.rotation.z = -1.9 - Math.cos(clock * 9.0 + d.phase) * 0.65;
+            const legL = d.group.getObjectByName('legL');
+            const legR = d.group.getObjectByName('legR');
+            if (armL) {
+              armL.rotation.z = -0.95 - Math.sin(clock * 6.4 + d.phase) * 0.4;
+              armL.rotation.x = -0.35 + Math.cos(clock * 5.0 + d.phase) * 0.25;
+            }
+            if (armR) {
+              armR.rotation.z = 0.95 + Math.cos(clock * 6.4 + d.phase) * 0.4;
+              armR.rotation.x = -0.35 + Math.sin(clock * 5.0 + d.phase) * 0.25;
+            }
+            if (legL) legL.rotation.x = Math.sin(clock * 6.0 + d.phase) * 0.28;
+            if (legR) legR.rotation.x = -Math.sin(clock * 6.0 + d.phase) * 0.28;
           });
         }
 
