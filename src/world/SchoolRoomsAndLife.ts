@@ -536,6 +536,9 @@ export function buildCampusGroundProps(
   addBox(exteriorGroup, 3.2, 0.046, 2.6, '#991b1b', 96.6, 0.035, 0.45);
   addBox(exteriorGroup, 21.2, 0.05, 0.1, '#f8fafc', 88, 0.04, 3.5);
   addBox(exteriorGroup, 21.2, 0.05, 0.1, '#f8fafc', 88, 0.04, -2.55);
+  addBox(exteriorGroup, 0.1, 0.05, 6.1, '#f8fafc', 77.4, 0.04, 0.45); // endlines
+  addBox(exteriorGroup, 0.1, 0.05, 6.1, '#f8fafc', 98.6, 0.04, 0.45);
+  addBox(exteriorGroup, 0.08, 0.05, 6.1, '#f8fafc', 88, 0.04, 0.45);  // halfcourt line
   const centerCircle = new THREE.Mesh(
     new THREE.RingGeometry(1.05, 1.18, 28),
     new THREE.MeshBasicMaterial({ color: '#f8fafc', side: THREE.DoubleSide })
@@ -543,6 +546,20 @@ export function buildCampusGroundProps(
   centerCircle.rotation.x = -Math.PI / 2;
   centerCircle.position.set(88, 0.055, 0.45);
   exteriorGroup.add(centerCircle);
+
+  // Semicircle 3-point arcs at both ends
+  [
+    { x: 78.6, start: -Math.PI / 2, len: Math.PI },
+    { x: 97.4, start: Math.PI / 2, len: Math.PI },
+  ].forEach((arcDef) => {
+    const arcMesh = new THREE.Mesh(
+      new THREE.RingGeometry(2.35, 2.46, 24, 1, arcDef.start, arcDef.len),
+      new THREE.MeshBasicMaterial({ color: '#f8fafc', side: THREE.DoubleSide })
+    );
+    arcMesh.rotation.x = -Math.PI / 2;
+    arcMesh.position.set(arcDef.x, 0.055, 0.25);
+    exteriorGroup.add(arcMesh);
+  });
 
   // Both Left (+78.0) and Right (+98.0) Standard Basketball Hoops (Backboard + Red Shooter Box + Rim + Net!)
   const bbTex = createBackboardTexture();
@@ -593,9 +610,25 @@ export function buildCampusGroundProps(
     { mesh: makeNpc('student_girl', 90.2, 0, -0.25, -1), baseX: 90.2, phase: 3.1, facing: -1 },
     { mesh: makeNpc('student_boy', 93.4, 0, 0.55, -1), baseX: 93.4, phase: 4.5, facing: -1 },
   ];
+  const bbCanv = document.createElement('canvas');
+  bbCanv.width = 64;
+  bbCanv.height = 64;
+  const bbCtx = bbCanv.getContext('2d')!;
+  bbCtx.fillStyle = '#ea580c';
+  bbCtx.fillRect(0, 0, 64, 64);
+  bbCtx.strokeStyle = '#1f2937';
+  bbCtx.lineWidth = 4;
+  bbCtx.beginPath();
+  bbCtx.moveTo(0, 32);
+  bbCtx.lineTo(64, 32);
+  bbCtx.moveTo(32, 0);
+  bbCtx.lineTo(32, 64);
+  bbCtx.stroke();
+  const bbBallTex = new THREE.CanvasTexture(bbCanv);
+  bbBallTex.colorSpace = THREE.SRGBColorSpace;
   const basketballMesh = new THREE.Mesh(
-    new THREE.SphereGeometry(0.18, 14, 14),
-    new THREE.MeshStandardMaterial({ color: '#ea580c', roughness: 0.45 })
+    new THREE.SphereGeometry(0.18, 16, 16),
+    new THREE.MeshStandardMaterial({ map: bbBallTex, roughness: 0.45 })
   );
   basketballMesh.position.set(88, 1.2, 0.25);
   exteriorGroup.add(basketballMesh);
@@ -814,22 +847,80 @@ export function animateSchoolLife(
   refs.janitorMesh.visible = !inNight || hour >= 20.0;
 
   if (!isInside) {
-    // Active Basketball Players & Arcing Orange Basketball!
-    refs.basketballMesh.visible = schoolHours || hour < 18.5;
-    refs.bballPlayers.forEach((bp, idx) => {
-      bp.mesh.visible = schoolHours || hour < 18.5;
-      if (!bp.mesh.visible) return;
-      const dx = Math.sin(clock * 2.0 + bp.phase) * 1.6;
-      const jump = Math.max(0, Math.sin(clock * 3.8 + bp.phase)) * 0.45;
-      bp.mesh.position.set(bp.baseX + dx, 0.96 + jump, idx % 2 === 0 ? -0.35 : 0.65);
-      bp.mesh.scale.x = bp.facing;
-      (bp.mesh.material as THREE.MeshStandardMaterial).map = charFrames[idx === 2 ? 'student_girl' : 'student_boy'][Math.floor(clock * 7) % 4];
-    });
-    if (refs.basketballMesh.visible) {
-      const arc = (clock * 0.85) % 1;
-      refs.basketballMesh.position.x = 79.0 + Math.abs(Math.sin(clock * 1.4)) * 18.2;
-      refs.basketballMesh.position.y = 0.25 + Math.abs(Math.sin(arc * Math.PI * 2)) * 2.9;
-      refs.basketballMesh.position.z = 0.2 + Math.cos(clock * 2) * 0.45;
+    // Natural Pickup Basketball Game: Dribble down court -> Jump Shot release -> True Parabolic Arc -> Net Swish & Rebound!
+    const bballActive = schoolHours || hour < 18.5;
+    refs.basketballMesh.visible = bballActive;
+    if (bballActive) {
+      const cycle = clock % 8.0;
+      const goingRight = cycle < 4.0;
+      const dir: 1 | -1 = goingRight ? 1 : -1;
+      const p = (cycle % 4.0) / 4.0;
+      const startX = goingRight ? 82.0 : 94.0;
+      const shootX = goingRight ? 91.5 : 84.5;
+      const rimX = goingRight ? 97.42 : 78.58;
+
+      let ballX = shootX;
+      let ballY = 0.25;
+      let ballZ = 0.2;
+      let shooterJump = 0;
+      let defenderJump = 0;
+
+      if (p < 0.45) {
+        // Dribble advance down court toward shooting spot
+        const t = p / 0.45;
+        const hx = startX + (shootX - startX) * t;
+        ballX = hx + dir * 0.45;
+        ballY = 0.2 + Math.abs(Math.sin(t * Math.PI * 5.0)) * 0.88;
+        ballZ = 0.15 + Math.sin(t * Math.PI) * 0.25;
+      } else if (p < 0.56) {
+        // Gather & jump shot release
+        const t = (p - 0.45) / 0.11;
+        shooterJump = Math.sin(t * Math.PI) * 0.58;
+        defenderJump = Math.sin(t * Math.PI) * 0.42;
+        ballX = shootX + dir * (0.3 + t * 0.4);
+        ballY = 1.45 + t * 0.72 + shooterJump * 0.4;
+        ballZ = 0.2;
+      } else if (p < 0.82) {
+        // High parabolic shot arc directly into hoop rim (3.12m)
+        const s = (p - 0.56) / 0.26;
+        const relX = shootX + dir * 0.7;
+        ballX = relX + (rimX - relX) * s;
+        ballY = 2.17 + (3.12 - 2.17) * s + Math.sin(s * Math.PI) * 1.85;
+        ballZ = 0.2;
+        refs.basketballMesh.rotation.z -= dir * dt * 11;
+      } else {
+        // Clean swish falling straight down through net & single natural floor bounce
+        const sw = (p - 0.82) / 0.18;
+        ballX = rimX - dir * sw * 0.85;
+        ballY = sw < 0.55 ? 3.12 - Math.pow(sw / 0.55, 1.5) * 2.9 : 0.22 + Math.sin(((sw - 0.55) / 0.45) * Math.PI) * 0.65;
+        ballZ = 0.2;
+      }
+
+      refs.basketballMesh.position.set(ballX, ballY, ballZ);
+      const handlerIdx = goingRight ? 1 : 2;
+      const handlerX = p < 0.45 ? startX + (shootX - startX) * (p / 0.45) : shootX;
+      refs.bballPlayers.forEach((bp, idx) => {
+        bp.mesh.visible = true;
+        const isHandler = idx === handlerIdx;
+        const isDefender = idx === (goingRight ? 2 : 1);
+        const targetX = isHandler
+          ? handlerX
+          : isDefender
+          ? handlerX + dir * (p < 0.45 ? 2.4 : 1.75)
+          : idx === 0
+          ? 83.2 + Math.sin(clock * 1.1 + bp.phase) * 2.2
+          : 93.0 + Math.sin(clock * 1.1 + bp.phase) * 2.2;
+        const jY = isHandler ? shooterJump : isDefender ? defenderJump : 0;
+        const playerZ = isHandler ? 0.15 : isDefender ? 0.28 : idx === 0 ? -0.75 : 0.95;
+        bp.mesh.position.set(targetX, 0.96 + jY, playerZ);
+        bp.mesh.scale.x = isHandler ? dir : isDefender ? -dir : targetX < ballX ? 1 : -1;
+        const running = p < 0.45 && (isHandler || isDefender || Math.abs(Math.cos(clock * 1.1 + bp.phase)) > 0.35);
+        (bp.mesh.material as THREE.MeshStandardMaterial).map = charFrames[idx === 2 ? 'student_girl' : 'student_boy'][
+          running ? Math.floor(clock * 8) % 4 : 0
+        ];
+      });
+    } else {
+      refs.bballPlayers.forEach((bp) => (bp.mesh.visible = false));
     }
 
     // Roaming Campus Students
