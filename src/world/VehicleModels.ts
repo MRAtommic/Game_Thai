@@ -226,9 +226,10 @@ export function buildRealisticCar(opts: CarOptions): CarBuildResult {
     // Sedan / Taxi / Police Car sculpted body (rear trunk, white doors for police, sloped hood)
     if (variant === 'police') {
       addMesh(grp, new THREE.BoxGeometry(1.18, 0.54, 1.5), '#7f1d1d', 1.22, 0.54, 0, 0.32, 0.28); // maroon hood
-      addMesh(grp, new THREE.BoxGeometry(1.52, 0.56, 1.52), '#f8fafc', -0.02, 0.55, 0, 0.25, 0.2); // white patrol doors
+      addMesh(grp, new THREE.BoxGeometry(1.52, 0.56, 1.52), '#f8fafc', -0.02, 0.55, 0, 0.25, 0.2); // crisp clean white patrol doors
       addMesh(grp, new THREE.BoxGeometry(0.92, 0.56, 1.5), '#7f1d1d', -1.24, 0.55, 0, 0.32, 0.28); // maroon trunk
-      addMesh(grp, new THREE.BoxGeometry(3.54, 0.05, 1.54), '#eab308', 0, 0.77, 0, 0.25); // upper gold patrol pin-stripe above door emblem
+      addMesh(grp, new THREE.BoxGeometry(1.18, 0.045, 1.52), '#eab308', 1.22, 0.76, 0, 0.25); // hood gold trim stripe
+      addMesh(grp, new THREE.BoxGeometry(0.92, 0.045, 1.52), '#eab308', -1.24, 0.76, 0, 0.25); // trunk gold trim stripe
     } else {
       addMesh(grp, new THREE.BoxGeometry(3.56, 0.54, 1.5), bodyCol, 0, 0.54, 0, 0.3, 0.28);
     }

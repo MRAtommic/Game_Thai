@@ -728,16 +728,16 @@ export class IsaanWorld {
       this.addBox(this.scene, 0.28, 0.1, 0.8, '#6b4226', x + 2.05 + (4 - s) * 0.22, 0.22 + s * 0.32, z + 0.88);
     }
 
-    // Upper teak house walls with horizontal wooden plank siding & teak door + twin windows!
+    // Upper teak house walls with recessed horizontal clapboard siding (strictly behind door/window plane!)
     this.addBox(this.scene, 5.1, 2.05, 1.65, '#422a1b', x, 2.78, z - 0.12);
     [2.1, 2.45, 2.8, 3.15, 3.5].forEach((py) => {
-      this.addBox(this.scene, 5.16, 0.055, 0.05, '#5c3a22', x, py, z + 0.72);
+      this.addBox(this.scene, 5.12, 0.055, 0.03, '#5c3a22', x, py, z + 0.71);
     });
     const bDoor = new THREE.Mesh(
       new THREE.PlaneGeometry(0.92, 1.55),
       new THREE.MeshStandardMaterial({ map: createThaiDoorTexture('เรือนไทย', false), roughness: 0.78 })
     );
-    bDoor.position.set(x + 1.15, 2.58, z + 0.72);
+    bDoor.position.set(x + 1.15, 2.58, z + 0.75);
     this.scene.add(bDoor);
     // Protruding porch eave overhang & symmetrical gable roof
     this.addBox(this.scene, 5.6, 0.1, 0.9, '#6b4226', x, 3.72, z + 0.9);
@@ -763,7 +763,7 @@ export class IsaanWorld {
         new THREE.PlaneGeometry(1.15, 0.9),
         new THREE.MeshStandardMaterial({ map: createThaiWindowTexture(true), emissive: '#3b2408', emissiveIntensity: 0.65 })
       );
-      w.position.set(x - 1.15, 2.86, z + 0.72);
+      w.position.set(x - 1.15, 2.86, z + 0.75);
       this.scene.add(w);
       // Warm hanging bulb underneath house deck lighting up the under-stilt bamboo bed, hammock & jar!
       const underBulb = new THREE.Mesh(new THREE.SphereGeometry(0.08, 8, 8), new THREE.MeshBasicMaterial({ color: '#fde68a' }));

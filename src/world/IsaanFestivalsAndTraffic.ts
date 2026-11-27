@@ -820,8 +820,16 @@ export function buildTrafficAndParkedVehicles(scene: THREE.Scene): MovingVehicle
         addPart(scene, 5.4, 0.12, 2.2, '#e2e8f0', 96.0, 0.06, -2.3, 0.35);
         [93.45, 98.55].forEach((cx) => addPart(scene, 0.32, 2.9, 2.2, '#f1f5f9', cx, 1.45, -2.3, 0.55));
         addPart(scene, 5.8, 0.18, 2.7, '#0f766e', 96.0, 3.0, -2.25, 0.55);
-        addPart(scene, 2.4, 0.85, 0.55, '#0f766e', 96.0, 0.44, -2.55, 0.45); // reception desk inside clinic
-        addPart(scene, 1.6, 1.5, 0.35, '#ffffff', 97.4, 0.85, -2.95, 0.35); // glowing medicine cabinet inside
+  addPart(scene, 2.2, 0.85, 0.55, '#0f766e', 95.3, 0.44, -2.4, 0.45); // reception desk inside clinic
+  addPart(scene, 0.42, 0.24, 0.3, '#f8fafc', 94.8, 0.98, -2.35, 0.3); // first-aid kit on counter
+  addPart(scene, 1.45, 1.6, 0.35, '#e2e8f0', 97.4, 0.88, -2.95, 0.35); // glowing medicine cabinet inside
+  [96.95, 97.4, 97.85].forEach((mx, mi) => {
+    addPart(scene, 0.16, 0.28, 0.16, ['#38bdf8', '#22c55e', '#ef4444'][mi], mx, 1.32, -2.82, 0.25);
+    addPart(scene, 0.16, 0.26, 0.16, '#f8fafc', mx, 0.86, -2.82, 0.3);
+  });
+  const medic = makeVillagerFigure('#ffffff', '#0f766e');
+  medic.position.set(95.3, 0.1, -2.92);
+  scene.add(medic);
         const clinicGlass = new THREE.Mesh(new THREE.BoxGeometry(4.6, 2.2, 0.03), sGlassMat);
         clinicGlass.position.set(96.0, 1.25, -1.25);
         scene.add(clinicGlass);
