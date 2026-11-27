@@ -1017,6 +1017,7 @@ export class Chapter4Engine {
       moving,
       this.state.isRowing,
       this.state.torchOn,
+      this.state.inventory.includes('namphi_sword'),
       this.state.gameMinutes,
       this.state.weather,
       mood

@@ -95,7 +95,7 @@ export function buildAyutthayaLandmarks(scene: THREE.Scene): AyutthayaLandmarkHa
   addBox(scene, 270, 0.3, 14, '#4b3726', 0, -0.15, -3.2, 0.95); // packed clay village road & yards
   const canalWater = new THREE.Mesh(
     new THREE.PlaneGeometry(270, 8.5),
-    new THREE.MeshStandardMaterial({ color: '#0f3b4c', roughness: 0.18, metalness: 0.45 })
+    new THREE.MeshStandardMaterial({ color: '#0f3b4c', roughness: 0.46, metalness: 0.12 })
   );
   canalWater.rotation.x = -Math.PI / 2;
   canalWater.position.set(0, -0.22, 7.1);
@@ -106,14 +106,16 @@ export function buildAyutthayaLandmarks(scene: THREE.Scene): AyutthayaLandmarkHa
     addBox(scene, 0.18, 0.85, 0.18, '#2b180e', px, -0.02, 2.95, 0.95);
   }
 
-  // 5 Wooden Boat Piers (ท่าน้ำ) extending over the canal at key districts
+  // 5 Wooden Boat Piers (ท่าน้ำ) with grounded left-side signboard post clear of dock & canal boats
   [-112, -52, 22, 74, 116].forEach((px, idx) => {
-    addBox(scene, 3.6, 0.14, 2.2, '#6b3e22', px, 0.08, 3.65, 0.85);
+    addBox(scene, 3.6, 0.14, 2.1, '#6b3e22', px, 0.08, 3.6, 0.85);
     [-1.4, 1.4].forEach((ox) => {
-      addBox(scene, 0.16, 1.45, 0.16, '#3f2210', px + ox, 0.52, 4.55, 0.9);
+      addBox(scene, 0.16, 1.25, 0.16, '#3f2210', px + ox, 0.42, 4.48, 0.9);
     });
+    // Left bank post dedicated to pier sign (no floating signs or overlap with dock moorings!)
+    addBox(scene, 0.1, 1.55, 0.1, '#451a03', px - 2.05, 0.78, 2.7, 0.9);
     const pierSign = new THREE.Mesh(
-      new THREE.PlaneGeometry(1.7, 0.46),
+      new THREE.PlaneGeometry(1.65, 0.44),
       new THREE.MeshBasicMaterial({
         map: makeAyutthayaSignTex(
           '#451a03',
@@ -124,7 +126,7 @@ export function buildAyutthayaLandmarks(scene: THREE.Scene): AyutthayaLandmarkHa
         side: THREE.DoubleSide,
       })
     );
-    pierSign.position.set(px, 1.55, 4.55);
+    pierSign.position.set(px - 2.05, 1.38, 2.76);
     scene.add(pierSign);
   });
 
@@ -156,13 +158,13 @@ export function buildAyutthayaLandmarks(scene: THREE.Scene): AyutthayaLandmarkHa
   stalls.forEach((st) => {
     addBox(scene, 5.2, 0.14, 2.3, '#57361e', st.x, 0.07, -2.1, 0.9);
     [-2.4, 2.4].forEach((sx) => {
-      addBox(scene, 0.14, 2.55, 0.14, '#452613', st.x + sx, 1.28, -3.1, 0.88);
-      addBox(scene, 0.14, 2.45, 0.14, '#452613', st.x + sx, 1.22, -1.1, 0.88);
+      addBox(scene, 0.14, 2.95, 0.14, '#452613', st.x + sx, 1.48, -3.1, 0.88);
+      addBox(scene, 0.14, 2.85, 0.14, '#452613', st.x + sx, 1.42, -1.1, 0.88);
     });
-    const rfF = addBox(scene, 5.6, 0.08, 1.55, st.roof, st.x, 2.7, -1.55, 0.82);
-    rfF.rotation.x = 0.36;
-    const rfB = addBox(scene, 5.6, 0.08, 1.55, st.roof, st.x, 2.7, -2.65, 0.82);
-    rfB.rotation.x = -0.36;
+    const rfF = addBox(scene, 5.6, 0.08, 1.55, st.roof, st.x, 3.08, -1.55, 0.82);
+    rfF.rotation.x = 0.34;
+    const rfB = addBox(scene, 5.6, 0.08, 1.55, st.roof, st.x, 3.08, -2.65, 0.82);
+    rfB.rotation.x = -0.34;
     addBox(scene, 4.4, 0.78, 0.72, '#6b3e22', st.x, 0.45, -1.55, 0.84);
     st.items.forEach((ic, ii) => {
       const prop = new THREE.Mesh(
@@ -180,7 +182,7 @@ export function buildAyutthayaLandmarks(scene: THREE.Scene): AyutthayaLandmarkHa
       new THREE.PlaneGeometry(3.2, 0.68),
       new THREE.MeshBasicMaterial({ map: makeAyutthayaSignTex('#451a03', '#facc15', '#fffbeb', st.name) })
     );
-    sign.position.set(st.x, 2.38, -0.92);
+    sign.position.set(st.x, 2.38, -0.82);
     scene.add(sign);
   });
 
@@ -207,25 +209,38 @@ export function buildAyutthayaLandmarks(scene: THREE.Scene): AyutthayaLandmarkHa
     addBox(hGrp, 4.7, 0.14, 2.8, '#5c361d', 0, 1.46, 0, 0.85);
     addBox(hGrp, 4.3, 1.55, 2.35, '#784626', 0, 2.28, 0, 0.84);
     [-1.1, 1.1].forEach((wx) => addBox(hGrp, 0.72, 0.66, 0.08, '#3f2210', wx, 2.35, 1.18, 0.8));
-    // Multi-tiered Thai gable roof (ทรงไทย)
+    // Multi-tiered Thai gable roof with enclosed triangular gable walls (ทรงไทยจั่วเต็ม)
     const rF = addBox(hGrp, 5.2, 0.1, 1.9, hi === 0 ? '#7c2d12' : '#572814', 0, 3.45, 0.78, 0.78);
     rF.rotation.x = 0.48;
     const rB = addBox(hGrp, 5.2, 0.1, 1.9, hi === 0 ? '#7c2d12' : '#572814', 0, 3.45, -0.78, 0.78);
     rB.rotation.x = -0.48;
     addBox(hGrp, 5.3, 0.14, 0.2, '#9a3412', 0, 3.88, 0, 0.72);
+    [-2.12, 2.12].forEach((gx) => {
+      const gable = new THREE.Mesh(
+        new THREE.ConeGeometry(1.22, 0.85, 4),
+        new THREE.MeshStandardMaterial({ color: '#6b3e22', roughness: 0.85 })
+      );
+      gable.rotation.y = Math.PI / 4;
+      gable.scale.set(0.14, 1, 1.42);
+      gable.position.set(gx, 3.42, 0);
+      hGrp.add(gable);
+    });
     scene.add(hGrp);
   });
 
-  // Open Blacksmith Forge (โรงตีดาบลุงสิน x = -46)
+  // Open Blacksmith Forge (โรงตีดาบหลวงลุงสิน x = -46) — raised pitched Thai roof well clear of sign!
   const forgeX = -46;
   const fGrp = new THREE.Group();
   fGrp.position.set(forgeX, 0, -2.5);
   addBox(fGrp, 5.8, 0.16, 2.6, '#44403c', 0, 0.08, 0, 0.92);
-  addBox(fGrp, 5.6, 2.75, 0.18, '#4a2b17', 0, 1.45, -1.2, 0.88);
-  [-2.7, 2.7].forEach((px) => addBox(fGrp, 0.2, 2.8, 0.2, '#3b2112', px, 1.4, 1.1, 0.88));
-  const fRoof = addBox(fGrp, 6.2, 0.12, 3.0, '#7c2d12', 0, 2.95, 0, 0.82);
-  fRoof.rotation.x = 0.18;
-  // Brick hearth + glowing embers + iron anvil + quench tub + training dummy!
+  addBox(fGrp, 5.6, 3.05, 0.18, '#4a2b17', 0, 1.6, -1.2, 0.88);
+  [-2.7, 2.7].forEach((px) => addBox(fGrp, 0.2, 3.05, 0.2, '#3b2112', px, 1.52, 1.1, 0.88));
+  const fRoofF = addBox(fGrp, 6.2, 0.1, 1.75, '#7c2d12', 0, 3.28, 0.72, 0.82);
+  fRoofF.rotation.x = 0.34;
+  const fRoofB = addBox(fGrp, 6.2, 0.1, 1.75, '#7c2d12', 0, 3.28, -0.72, 0.82);
+  fRoofB.rotation.x = -0.34;
+  addBox(fGrp, 6.25, 0.12, 0.18, '#9a3412', 0, 3.58, 0, 0.75);
+  // Brick hearth + glowing embers + iron anvil + quench tub
   const hearth = new THREE.Mesh(new THREE.BoxGeometry(1.4, 1.15, 0.95), brickMat);
   hearth.position.set(-1.55, 0.65, -0.55);
   fGrp.add(hearth);
@@ -235,13 +250,14 @@ export function buildAyutthayaLandmarks(scene: THREE.Scene): AyutthayaLandmarkHa
   fGrp.add(coals);
   addBox(fGrp, 0.65, 0.55, 0.42, '#1e293b', 0.2, 0.42, -0.3, 0.4, 0.85); // steel anvil
   addBox(fGrp, 0.95, 0.48, 0.65, '#451a03', 1.45, 0.36, -0.3, 0.85); // quench tub
-  // Sword rack + straw training dummy outside (-42.2)
+  // Sword rack + clearly framed Blacksmith sign cleanly below roof eaves!
   addBox(fGrp, 1.2, 1.35, 0.12, '#78350f', 2.0, 0.82, -1.0, 0.8);
+  addBox(fGrp, 5.6, 0.12, 0.1, '#3b2112', 0, 2.75, 1.12, 0.88);
   const forgeSign = new THREE.Mesh(
     new THREE.PlaneGeometry(3.1, 0.68),
     new THREE.MeshBasicMaterial({ map: makeAyutthayaSignTex('#450a0a', '#facc15', '#fef08a', 'โรงตีดาบหลวงลุงสิน', 'ตีดาบน้ำพี้ • เติมลูกดอก • ปราบห่า') })
   );
-  forgeSign.position.set(0, 2.65, 1.28);
+  forgeSign.position.set(0, 2.48, 1.26);
   fGrp.add(forgeSign);
   scene.add(fGrp);
 
@@ -422,11 +438,12 @@ export function buildAyutthayaLandmarks(scene: THREE.Scene): AyutthayaLandmarkHa
     pitSmoke.push(sm);
   });
 
+  [-1.2, 1.2].forEach((ox) => addBox(scene, 0.1, 1.85, 0.1, '#451a03', pitX - 4.6 + ox, 0.92, -1.16, 0.9));
   const pitSign = new THREE.Mesh(
     new THREE.PlaneGeometry(3.3, 0.68),
     new THREE.MeshBasicMaterial({ map: makeAyutthayaSignTex('#450a0a', '#ef4444', '#fecaca', 'หลุมฝังกลบศพโรคห่า', 'เขตอันตราย — ห้ามเข้าใกล้หลังตะวันตกดิน') })
   );
-  pitSign.position.set(pitX - 4.6, 1.45, -1.1);
+  pitSign.position.set(pitX - 4.6, 1.52, -1.1);
   scene.add(pitSign);
 
   const pitLight = new THREE.PointLight('#fb923c', 1.2, 14, 1.15);

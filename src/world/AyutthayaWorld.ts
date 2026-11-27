@@ -81,6 +81,9 @@ export class AyutthayaWorld {
   private playerShadow: THREE.Mesh;
   private playerBoat: { group: THREE.Group; oarL?: THREE.Group; oarR?: THREE.Group };
   private dockedPierBoat: THREE.Group;
+  private playerTorchGroup: THREE.Group;
+  private playerTorchFlame: THREE.Mesh;
+  private playerSwordMesh: THREE.Group;
   private slashArcMesh: THREE.Mesh;
   private slashTimer = 0;
   private slashDir = 1;
@@ -163,8 +166,8 @@ export class AyutthayaWorld {
     // Straw combat training dummy beside Blacksmith Forge (x = -41.4)
     this.trainingDummy = new THREE.Group();
     this.trainingDummy.position.set(-41.4, 0, -0.85);
-    const dPost = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.07, 1.8, 6), new THREE.MeshStandardMaterial({ color: '#5c3a21' }));
-    dPost.position.y = 0.9;
+    const dPost = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.07, 2.15, 6), new THREE.MeshStandardMaterial({ color: '#5c3a21' }));
+    dPost.position.y = 1.08;
     const dBody = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.24, 0.95, 8), new THREE.MeshStandardMaterial({ color: '#ca8a04', roughness: 0.95 }));
     dBody.position.y = 1.2;
     const dArm = new THREE.Mesh(new THREE.BoxGeometry(0.95, 0.1, 0.1), new THREE.MeshStandardMaterial({ color: '#a16207' }));
@@ -173,17 +176,17 @@ export class AyutthayaWorld {
       new THREE.PlaneGeometry(1.3, 0.35),
       new THREE.MeshBasicMaterial({ map: makeAyutthayaSignTex('#451a03', '#facc15', '#ffffff', 'หุ่นซ้อมดาบ [F]') })
     );
-    dSign.position.set(0, 2.02, 0.12);
+    dSign.position.set(0, 2.02, 0.1);
     this.trainingDummy.add(dPost, dBody, dArm, dSign);
     this.scene.add(this.trainingDummy);
 
-    // Docked spare boat at Blacksmith Pier & Player's navigable Boat
+    // Docked spare boat neatly moored in canal beside Blacksmith Pier & Player's navigable Boat
     this.dockedPierBoat = makeAyutthayaBoat(3.9, false).group;
-    this.dockedPierBoat.position.set(-52, -0.14, 4.6);
+    this.dockedPierBoat.position.set(-51.6, -0.14, 5.65);
     this.scene.add(this.dockedPierBoat);
 
     this.playerBoat = makeAyutthayaBoat(4.1, false);
-    this.playerBoat.group.position.set(-52, -0.14, 5.2);
+    this.playerBoat.group.position.set(-51.6, -0.14, 5.65);
     this.playerBoat.group.visible = false;
     this.scene.add(this.playerBoat.group);
 
@@ -193,6 +196,43 @@ export class AyutthayaWorld {
     this.playerShadow = this.makeShadow(shadowTex);
     this.playerShadow.position.set(-46, 0.02, 0.85);
     this.scene.add(this.playerMesh, this.playerShadow);
+
+    // Visible 3D held flaming resin torch (ไต้ไฟถือในมือ) & optional held Ayutthaya steel sword!
+    this.playerTorchGroup = new THREE.Group();
+    const tStick = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.032, 0.025, 0.56, 6),
+      new THREE.MeshStandardMaterial({ color: '#5c3a21', roughness: 0.9 })
+    );
+    tStick.rotation.z = -0.32;
+    const tWrap = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.055, 0.045, 0.14, 7),
+      new THREE.MeshStandardMaterial({ color: '#451a03', roughness: 0.95 })
+    );
+    tWrap.position.set(0.08, 0.24, 0);
+    tWrap.rotation.z = -0.32;
+    this.playerTorchFlame = new THREE.Mesh(
+      new THREE.ConeGeometry(0.085, 0.24, 7),
+      new THREE.MeshBasicMaterial({ color: '#fb923c' })
+    );
+    this.playerTorchFlame.position.set(0.11, 0.38, 0);
+    const tCore = new THREE.Mesh(new THREE.ConeGeometry(0.045, 0.15, 6), new THREE.MeshBasicMaterial({ color: '#fef08a' }));
+    tCore.position.y = -0.02;
+    this.playerTorchFlame.add(tCore);
+    this.playerTorchGroup.add(tStick, tWrap, this.playerTorchFlame);
+    this.playerTorchGroup.visible = false;
+    this.scene.add(this.playerTorchGroup);
+
+    this.playerSwordMesh = new THREE.Group();
+    const sHilt = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.04, 0.04), new THREE.MeshStandardMaterial({ color: '#eab308' }));
+    const sBlade = new THREE.Mesh(
+      new THREE.BoxGeometry(0.045, 0.62, 0.025),
+      new THREE.MeshStandardMaterial({ color: '#e2e8f0', metalness: 0.72, roughness: 0.25 })
+    );
+    sBlade.position.set(0.06, 0.3, 0);
+    sBlade.rotation.z = -0.25;
+    this.playerSwordMesh.add(sHilt, sBlade);
+    this.playerSwordMesh.visible = false;
+    this.scene.add(this.playerSwordMesh);
 
     // Sword slash effect arc + reusable arrow pool
     this.slashArcMesh = new THREE.Mesh(
@@ -468,6 +508,7 @@ export class AyutthayaWorld {
     isMoving: boolean,
     isRowing: boolean,
     torchOn: boolean,
+    hasSword: boolean,
     gameMinutes: number,
     weather: WeatherType,
     mood: AyutthayaMood
@@ -514,8 +555,21 @@ export class AyutthayaWorld {
       this.playerBoat.group.scale.x = playerFacing;
     }
 
-    this.torchLight.intensity = torchOn ? 4.8 + Math.sin(this.animClock * 16) * 0.6 : 0;
-    this.torchLight.position.set(playerX + playerFacing * 0.55, 1.5, playerZ + 0.5);
+    this.torchLight.intensity = torchOn ? 3.1 + Math.sin(this.animClock * 16) * 0.45 : 0;
+    this.torchLight.position.set(playerX + playerFacing * 0.48, 1.48, playerZ - 0.15);
+
+    this.playerTorchGroup.visible = torchOn;
+    if (torchOn) {
+      this.playerTorchGroup.position.set(playerX + playerFacing * 0.36, playerY + 0.02, playerZ + 0.16);
+      this.playerTorchGroup.scale.x = playerFacing;
+      this.playerTorchFlame.scale.setScalar(0.88 + Math.sin(this.animClock * 20) * 0.16);
+    }
+
+    this.playerSwordMesh.visible = hasSword && !isRowing;
+    if (this.playerSwordMesh.visible) {
+      this.playerSwordMesh.position.set(playerX - playerFacing * 0.28, playerY - 0.08, playerZ + 0.12);
+      this.playerSwordMesh.scale.x = playerFacing;
+    }
 
     if (this.slashTimer > 0) {
       this.slashTimer -= dt;

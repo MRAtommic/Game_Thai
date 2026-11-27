@@ -27,7 +27,7 @@ interface Ch4Palette {
 }
 
 const PALETTES: Record<Ch4CharacterKind, Ch4Palette> = {
-  man: { skin: '#b97f56', shirt: '#f1e6d2', jong: '#7c2d12', sash: '#ca8a04', hair: '#18181b', hasSword: true },
+  man: { skin: '#b97f56', shirt: '#f1e6d2', jong: '#7c2d12', sash: '#ca8a04', hair: '#18181b' },
   smith: { skin: '#9a6544', shirt: '#44403c', jong: '#292524', sash: '#78350f', hair: '#9ca3af', headband: '#92400e' },
   phudsorn: { skin: '#cf9b72', shirt: '#be185d', jong: '#4c1d95', sash: '#f472b6', hair: '#1c1917', isFemale: true },
   khun_ram: { skin: '#a8704a', shirt: '#991b1b', jong: '#7f1d1d', sash: '#facc15', hair: '#111827', headband: '#b91c1c', hasSword: true },

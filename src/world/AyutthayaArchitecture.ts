@@ -173,24 +173,24 @@ export function makeAyutthayaBoat(length = 4.2, withRower = false, rowerShirt = 
   const darkWood = new THREE.MeshStandardMaterial({ color: '#452613', roughness: 0.85 });
   const plankWood = new THREE.MeshStandardMaterial({ color: '#6e3d20', roughness: 0.8 });
 
-  // Hollow boat hull: keel/floor + curved side gunwales + pointed bow & stern
-  const floor = new THREE.Mesh(new THREE.BoxGeometry(length * 0.72, 0.08, 0.92), darkWood);
-  floor.position.y = 0.06;
+  // Hollow boat hull: flat keel, curved planked sides, tapered front & stern decks
+  const floor = new THREE.Mesh(new THREE.BoxGeometry(length * 0.72, 0.08, 0.96), darkWood);
+  floor.position.y = 0.08;
   g.add(floor);
 
   [-0.48, 0.48].forEach((sz) => {
-    const gunwale = new THREE.Mesh(new THREE.BoxGeometry(length * 0.74, 0.3, 0.07), plankWood);
-    gunwale.position.set(0, 0.2, sz);
+    const gunwale = new THREE.Mesh(new THREE.BoxGeometry(length * 0.76, 0.28, 0.07), plankWood);
+    gunwale.position.set(0, 0.22, sz);
     g.add(gunwale);
   });
 
   [-1, 1].forEach((endDir) => {
-    const prow = new THREE.Mesh(new THREE.ConeGeometry(0.42, length * 0.26, 4), plankWood);
-    prow.rotation.z = endDir * (-Math.PI / 2);
-    prow.rotation.x = Math.PI / 4;
-    prow.scale.set(0.55, 1, 1.15);
-    prow.position.set(endDir * (length * 0.45), 0.26, 0);
-    g.add(prow);
+    const prowDeck = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.48, length * 0.26, 4), plankWood);
+    prowDeck.rotation.z = endDir * (Math.PI / 2);
+    prowDeck.rotation.x = Math.PI / 4;
+    prowDeck.scale.set(0.65, 1, 1.08);
+    prowDeck.position.set(endDir * (length * 0.46), 0.24, 0);
+    g.add(prowDeck);
   });
 
   // Wooden cross-thwart benches inside hull
@@ -200,12 +200,15 @@ export function makeAyutthayaBoat(length = 4.2, withRower = false, rowerShirt = 
     g.add(seat);
   });
 
-  // Hanging brass oil lantern at the bow
-  const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 0.65, 6), darkWood);
-  pole.position.set(length * 0.36, 0.56, 0);
-  const glow = new THREE.Mesh(new THREE.SphereGeometry(0.08, 8, 8), new THREE.MeshBasicMaterial({ color: '#fde68a' }));
-  glow.position.set(length * 0.38, 0.86, 0);
-  g.add(pole, glow);
+  // Hanging brass oil lantern mounted directly on bow post
+  const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 0.56, 6), darkWood);
+  pole.position.set(length * 0.34, 0.52, 0);
+  const lanternBody = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.075, 0.06, 0.14, 8),
+    new THREE.MeshBasicMaterial({ color: '#fde68a' })
+  );
+  lanternBody.position.set(length * 0.34, 0.82, 0);
+  g.add(pole, lanternBody);
 
   let oarL: THREE.Group | undefined;
   let oarR: THREE.Group | undefined;
@@ -267,27 +270,75 @@ export function buildAyutthayaFoliage(scene: THREE.Scene): void {
     scene.add(grp);
   });
 
-  // Canal-bank Coconut Palms (ต้นมะพร้าวริมน้ำ)
-  const palmXs = [-122, -104, -86, -64, -40, -14, 18, 48, 76, 104, 120];
+  // Distant Ayutthaya Horizon: Temple spires & lush dark tree line (fills background sky naturally!)
+  const horizonMat = new THREE.MeshStandardMaterial({ color: '#1b2824', roughness: 0.95 });
+  const distantPrangMat = new THREE.MeshStandardMaterial({ color: '#3b2419', roughness: 0.92 });
+  for (let hx = -126; hx <= 126; hx += 9) {
+    const mound = new THREE.Mesh(new THREE.DodecahedronGeometry(3.2 + (Math.abs(hx) % 3) * 0.7, 0), horizonMat);
+    mound.scale.set(1.6, 0.75, 0.9);
+    mound.position.set(hx, 1.3, -10.5);
+    scene.add(mound);
+    if (Math.abs(hx) % 27 === 0) {
+      const chedi = new THREE.Mesh(new THREE.ConeGeometry(1.1, 4.8, 8), distantPrangMat);
+      chedi.position.set(hx + 2.5, 4.2, -12.0);
+      scene.add(chedi);
+    }
+  }
+
+  // Canal-bank Coconut Palms with natural arched drooping fronds + coconut clusters!
+  const palmXs = [-122, -104, -86, -64, -38, -14, 18, 48, 76, 104, 120];
   palmXs.forEach((px, idx) => {
     const grp = new THREE.Group();
-    grp.position.set(px, 0, idx % 2 === 0 ? -0.9 : 2.35);
-    const h = 4.6 + (idx % 3) * 0.7;
+    grp.position.set(px, 0, idx % 2 === 0 ? -1.4 : 2.35);
+    const h = 4.4 + (idx % 3) * 0.65;
+    const tilt = idx % 2 === 0 ? 0.08 : -0.07;
     const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.19, h, 7), trunkMat);
     stem.position.y = h / 2;
-    stem.rotation.z = idx % 2 === 0 ? 0.08 : -0.07;
+    stem.rotation.z = tilt;
     grp.add(stem);
-    const topX = Math.sin(stem.rotation.z) * -h * 0.5;
-    for (let f = 0; f < 6; f++) {
-      const ang = (f / 6) * Math.PI * 2;
-      const frond = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.04, 1.55), leafBright);
-      frond.position.set(topX + Math.sin(ang) * 0.7, h - 0.1, Math.cos(ang) * 0.7);
-      frond.rotation.y = ang;
-      frond.rotation.x = 0.28;
-      grp.add(frond);
+
+    // Compute exact crown apex from trunk lean
+    const crown = new THREE.Group();
+    crown.position.set(-Math.sin(tilt) * h * 0.5, Math.cos(tilt) * h, 0);
+    // Cluster of coconuts at crown base
+    [[-0.12, -0.1, 0.08], [0.12, -0.1, -0.06], [0, -0.14, 0.12]].forEach(([cx, cy, cz]) => {
+      const nut = new THREE.Mesh(new THREE.SphereGeometry(0.11, 6, 6), leafDark);
+      nut.position.set(cx, cy, cz);
+      crown.add(nut);
+    });
+    // 7 gracefully arching palm fronds (inner rising arch + drooping leaf tip!)
+    for (let f = 0; f < 7; f++) {
+      const ang = (f / 7) * Math.PI * 2;
+      const frondGrp = new THREE.Group();
+      frondGrp.rotation.y = ang;
+      const seg1 = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.04, 0.9), leafBright);
+      seg1.position.set(0, 0.12, 0.44);
+      seg1.rotation.x = -0.22;
+      const seg2 = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.035, 0.95), leafMid);
+      seg2.position.set(0, -0.02, 1.25);
+      seg2.rotation.x = 0.48;
+      frondGrp.add(seg1, seg2);
+      crown.add(frondGrp);
     }
+    grp.add(crown);
     scene.add(grp);
   });
+
+  // Canal lotus pads & pink lotus flowers drifting along shallow water edge
+  for (let lx = -118; lx <= 118; lx += 7.5) {
+    const pad = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.32, 0.32, 0.02, 8),
+      new THREE.MeshStandardMaterial({ color: '#15803d', roughness: 0.75 })
+    );
+    pad.position.set(lx, -0.2, 3.35 + (Math.abs(lx) % 2) * 0.4);
+    scene.add(pad);
+    if (Math.floor(lx) % 2 === 0) {
+      const bloom = new THREE.Mesh(new THREE.ConeGeometry(0.09, 0.14, 6), new THREE.MeshStandardMaterial({ color: '#f472b6', roughness: 0.5 }));
+      bloom.rotation.x = Math.PI;
+      bloom.position.set(lx + 0.08, -0.12, pad.position.z);
+      scene.add(bloom);
+    }
+  }
 
   // Dense Bamboo Clusters (กอไผ่รอบป่าช้าและท้ายหมู่บ้าน)
   [-68, -28, 36, 84, 92, 106, 114].forEach((bx, idx) => {
