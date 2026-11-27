@@ -1128,19 +1128,51 @@ export class IsaanWorld {
       this.scene.add(sign);
     };
 
-    // 1) Yai Sai's Creepy Wooden Shack + Jar at -52.5 (set back cleanly behind walkway)
-    this.addBox(this.scene, 4.8, 3.2, 2.2, '#29221d', -52.5, 1.6, -2.35);
-    const yaiRoof = new THREE.Mesh(new THREE.BoxGeometry(5.4, 0.14, 2.8), zincMat);
-    yaiRoof.position.set(-52.5, 3.3, -2.15);
-    yaiRoof.rotation.x = 0.14;
-    this.scene.add(yaiRoof);
+    // 1) Rich 2.5D Yai Sai's Rustic Timber Cottage & Covered Porch at -52.5 (replaces flat black box!)
+    // Raised teak veranda plinth, wooden stairs & front porch pillars supporting sloped tin porch roof
+    this.addBox(this.scene, 5.1, 0.26, 2.75, '#4f311c', -52.5, 0.13, -1.95, 0.88); // wooden veranda deck
+    this.addBox(this.scene, 1.35, 0.14, 0.42, '#6b4226', -53.35, 0.08, -0.45, 0.85); // wooden front step
+    this.addBox(this.scene, 4.75, 2.9, 1.75, '#422a1b', -52.5, 1.7, -2.55, 0.88); // warm aged teak cabin
+    // Horizontal teak clapboard siding ribs & vertical corner frame beams for rich architectural depth
+    [0.65, 1.05, 1.45, 1.85, 2.25, 2.65].forEach((py) => {
+      this.addBox(this.scene, 4.82, 0.07, 0.06, '#5c3a22', -52.5, py, -1.66, 0.82);
+    });
+    [-54.82, -52.5, -50.18].forEach((px) => {
+      this.addBox(this.scene, 0.16, 2.9, 0.16, '#2b190e', px, 1.7, -1.66, 0.85);
+      if (px !== -52.5) this.addBox(this.scene, 0.14, 2.55, 0.14, '#3b2416', px, 1.4, -0.82, 0.85); // front porch pillars
+    });
+    // Sloped porch tin awning + symmetrical Thai Gable Roof above!
+    const yaiPorchRoof = new THREE.Mesh(new THREE.BoxGeometry(5.2, 0.1, 1.45), zincMat);
+    yaiPorchRoof.position.set(-52.5, 2.72, -1.22);
+    yaiPorchRoof.rotation.x = 0.22;
+    this.scene.add(yaiPorchRoof);
+    this.addThaiGableRoof(this.scene, -52.5, 3.18, -2.55, 5.2, 2.35, 1.45, '#592c1b', '#78350f', '#2b180d');
+    // Detailed weathered wooden door + warm amber glowing louvered shutter window + bamboo porch bench + hanging lantern!
+    const yaiDoor = new THREE.Mesh(
+      new THREE.PlaneGeometry(1.12, 2.05),
+      new THREE.MeshStandardMaterial({ map: createThaiDoorTexture('เรือนยายสาย', true), roughness: 0.78 })
+    );
+    yaiDoor.position.set(-53.35, 1.28, -1.65);
+    const yaiWin = new THREE.Mesh(
+      new THREE.PlaneGeometry(1.38, 1.08),
+      new THREE.MeshStandardMaterial({ map: createThaiWindowTexture(true), emissive: '#522c08', emissiveIntensity: 0.65 })
+    );
+    yaiWin.position.set(-51.45, 1.72, -1.65);
+    this.scene.add(yaiDoor, yaiWin);
+    this.addBox(this.scene, 1.2, 0.08, 0.42, '#854d0e', -51.4, 0.62, -1.12, 0.8); // porch bamboo bench
+    const yaiBulb = new THREE.Mesh(new THREE.SphereGeometry(0.1, 8, 8), new THREE.MeshBasicMaterial({ color: '#fde68a' }));
+    yaiBulb.position.set(-52.45, 2.48, -0.92);
+    const yaiLantern = new THREE.PointLight('#ff9a3c', 3.6, 10, 1.05);
+    yaiLantern.position.set(-52.45, 2.35, 0.85);
+    this.scene.add(yaiBulb, yaiLantern);
+    // Big earthen herb jar on veranda side
     const jar = new THREE.Mesh(
       new THREE.CylinderGeometry(0.32, 0.24, 0.72, 12),
-      new THREE.MeshStandardMaterial({ color: '#452b1c', roughness: 0.7 })
+      new THREE.MeshStandardMaterial({ color: '#5c3822', roughness: 0.7 })
     );
-    jar.position.set(-50.2, 0.36, -0.95);
+    jar.position.set(-50.2, 0.62, -1.05);
     this.scene.add(jar);
-    this.addBox(this.scene, 0.65, 0.08, 0.65, '#e2e8f0', -50.2, 0.74, -0.95);
+    this.addBox(this.scene, 0.65, 0.08, 0.65, '#e2e8f0', -50.2, 1.0, -1.05);
 
     // 2) Pork Butcher Stall (-44.0): round chopping block + meat cleaver + layered pork belly slabs + overhead hanging hook bar!
     buildStallStructure(-44.0, paintSignTex('#7f1d1d', '#facc15', '#fef9c3', 'เขียงหมูเฮียตี๋'), '#69442a', 0.88);

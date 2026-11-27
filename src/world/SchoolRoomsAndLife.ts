@@ -335,18 +335,58 @@ export function buildCampusGroundProps(
     return m;
   };
 
-  // Protagonist House (-110) + Parked Bicycle (-104.5)
-  addBox(exteriorGroup, 10.5, 4.8, 3.0, '#fef3c7', -110, 2.4, -1.9, 0.85);
-  addBox(exteriorGroup, 11.4, 1.35, 3.6, '#9a3412', -110, 5.2, -1.9, 0.7);
-  addBox(exteriorGroup, 1.4, 2.3, 0.14, '#78350f', -110, 1.15, -0.35);
+  // Rich 2.5D Two-Story Home of Protagonist Peem (-110) with Pitched Tiled Roof, Front Porch, Windows & Balcony!
+  addBox(exteriorGroup, 10.6, 4.9, 2.8, '#fef3c7', -110, 2.45, -2.1, 0.82);
+  addBox(exteriorGroup, 11.2, 0.18, 3.4, '#e2e8f0', -110, 4.92, -1.95, 0.6); // concrete eave molding
+  // Two-tier sloped Thai terracotta roof instead of flat rectangular box!
+  const roofPitchF = addBox(exteriorGroup, 11.4, 0.22, 2.4, '#9a3412', -110, 5.42, -1.05, 0.55);
+  roofPitchF.rotation.x = 0.42;
+  const roofPitchB = addBox(exteriorGroup, 11.4, 0.22, 2.4, '#7c2d12', -110, 5.42, -2.85, 0.6);
+  roofPitchB.rotation.x = -0.42;
+  addBox(exteriorGroup, 11.5, 0.2, 0.3, '#c2410c', -110, 5.95, -1.95, 0.45); // ridge cap
+  // Protruding Front Porch Canopy, Pillars, Concrete Steps & Recessed Carved Entrance Door
+  addBox(exteriorGroup, 3.6, 0.14, 1.35, '#cbd5e1', -110, 0.07, -0.35, 0.65);
+  addBox(exteriorGroup, 3.8, 0.24, 1.5, '#7c2d12', -110, 2.68, -0.35, 0.6);
+  [-111.65, -108.35].forEach((px) => addBox(exteriorGroup, 0.18, 2.55, 0.18, '#f8fafc', px, 1.35, 0.25, 0.55));
+  const homeDoor = new THREE.Mesh(
+    new THREE.PlaneGeometry(1.32, 2.24),
+    new THREE.MeshStandardMaterial({ map: createThaiDoorTexture('บ้านภีม', false), roughness: 0.72 })
+  );
+  homeDoor.position.set(-110, 1.24, -0.68);
+  exteriorGroup.add(homeDoor);
+  // Warm 1st-floor transparent living room glass window + 2nd-floor balcony railing & glowing upstairs windows!
+  const houseGlassMat = new THREE.MeshStandardMaterial({
+    color: '#bae6fd',
+    transparent: true,
+    opacity: 0.28,
+    roughness: 0.08,
+    depthWrite: false,
+  });
+  [-113.4, -106.6].forEach((wx) => {
+    addBox(exteriorGroup, 1.85, 1.25, 0.12, '#0f172a', wx, 1.52, -0.68, 0.35);
+    addBox(exteriorGroup, 1.65, 1.05, 0.04, '#fde68a', wx, 1.52, -0.72, 0.4); // warm living room glow behind glass
+    const wg = new THREE.Mesh(new THREE.BoxGeometry(1.68, 1.08, 0.03), houseGlassMat);
+    wg.position.set(wx, 1.52, -0.64);
+    exteriorGroup.add(wg);
+    addBox(exteriorGroup, 1.85, 1.25, 0.1, '#fef08a', wx, 3.85, -0.68, 0.35);
+    addBox(exteriorGroup, 2.0, 0.12, 0.22, '#9a3412', wx, 3.2, -0.64, 0.6);
+  });
+  addBox(exteriorGroup, 6.2, 0.55, 0.14, '#e2e8f0', -110, 3.05, -0.15, 0.7); // 2nd-floor front balcony parapet
+  // Front garden brick fence wings & bougainvillea bush flanking porch
+  [-113.8, -106.2].forEach((fx) => {
+    addBox(exteriorGroup, 2.8, 0.75, 0.22, '#cbd5e1', fx, 0.38, 0.25, 0.8);
+    const shrub = new THREE.Mesh(new THREE.SphereGeometry(0.42, 8, 7), new THREE.MeshStandardMaterial({ color: '#15803d', roughness: 0.85 }));
+    shrub.position.set(fx, 0.92, 0.25);
+    exteriorGroup.add(shrub);
+  });
   const homeSign = new THREE.Mesh(
-    new THREE.PlaneGeometry(2.6, 0.82),
+    new THREE.PlaneGeometry(2.6, 0.76),
     new THREE.MeshBasicMaterial({ map: createSchoolSignTexture('บ้านของภีม', 'ซอยจันทรารัตน์ 5', '#0f766e', '#115e59', '#fde68a') })
   );
-  homeSign.position.set(-110, 3.05, -0.32);
+  homeSign.position.set(-110, 2.74, 0.44);
   exteriorGroup.add(homeSign);
-  const homeLight = new THREE.PointLight('#fde68a', 4.8, 16, 1.1);
-  homeLight.position.set(-110, 3.2, 1.4);
+  const homeLight = new THREE.PointLight('#fde68a', 5.2, 16, 1.05);
+  homeLight.position.set(-110, 3.2, 1.65);
   exteriorGroup.add(homeLight);
   const momHomeMesh = makeNpc('mom_ch3', -107.6, 0, -0.05, -1);
 
