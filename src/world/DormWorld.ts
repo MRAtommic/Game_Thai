@@ -196,7 +196,7 @@ export class DormWorld {
       antialias: !isMobileOrTablet,
       powerPreference: 'high-performance',
     });
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobileOrTablet ? 1.25 : 2));
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobileOrTablet ? 1.0 : 2));
     this.renderer.setSize(window.innerWidth, window.innerHeight);
     this.renderer.shadowMap.enabled = !isMobileOrTablet;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -282,6 +282,16 @@ export class DormWorld {
     const extObjects = this.scene.children.slice(preExteriorCount);
     extObjects.forEach((obj) => this.exteriorGroup.add(obj));
     this.scene.add(this.exteriorGroup);
+    if (isMobileOrTablet) {
+      let keepIdx = 0;
+      this.exteriorGroup.traverse((obj) => {
+        if (obj instanceof THREE.PointLight) {
+          if (keepIdx % 4 !== 0) obj.visible = false;
+          keepIdx++;
+        }
+      });
+      this.hemiLight.intensity += 0.16;
+    }
 
     this.buildRoomInteriors();
     buildRooftopRoom(this.scene, this.roomGroups, this.roomLights, this.addBox.bind(this));
@@ -3003,7 +3013,7 @@ export class DormWorld {
   public resize(): void {
     this.updateCameraFraming(true);
     const isMobileOrTablet = window.matchMedia('(pointer: coarse)').matches || navigator.maxTouchPoints > 0;
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobileOrTablet ? 1.25 : 2));
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobileOrTablet ? 1.0 : 2));
     this.renderer.setSize(Math.max(1, window.innerWidth), Math.max(1, window.innerHeight));
   }
 

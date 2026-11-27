@@ -476,8 +476,6 @@ export class IsaanWorld {
   private animClock = 0;
   private zoomFactor = 1.0;
   private targetCamZ = 13.4;
-  private culledPointLights: THREE.PointLight[] = [];
-  private tmpLightPos = new THREE.Vector3();
 
   constructor(canvas: HTMLCanvasElement) {
     this.scene = new THREE.Scene();
@@ -493,7 +491,7 @@ export class IsaanWorld {
       antialias: !isMobileOrTablet,
       powerPreference: 'high-performance',
     });
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobileOrTablet ? 1.25 : 2));
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobileOrTablet ? 1.0 : 2));
     this.renderer.setSize(window.innerWidth, window.innerHeight);
     this.renderer.shadowMap.enabled = !isMobileOrTablet;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -572,11 +570,19 @@ export class IsaanWorld {
     const extObjs = this.scene.children.slice(preExt);
     extObjs.forEach((o) => this.exteriorGroup.add(o));
     this.scene.add(this.exteriorGroup);
-    this.exteriorGroup.traverse((obj) => {
-      if (obj instanceof THREE.PointLight && obj !== this.saiSinLight) {
-        this.culledPointLights.push(obj);
-      }
-    });
+    // On mobile/tablet, permanently trim static PointLights once at startup (avoids both 45-light GPU bottleneck & shader recompilation)
+    if (isMobileOrTablet) {
+      let keepIdx = 0;
+      this.exteriorGroup.traverse((obj) => {
+        if (obj instanceof THREE.PointLight && obj !== this.saiSinLight) {
+          if (keepIdx % 4 !== 0) {
+            obj.visible = false;
+          }
+          keepIdx++;
+        }
+      });
+      this.hemiLight.intensity += 0.16;
+    }
 
     this.buildInteriors();
 
@@ -2622,14 +2628,6 @@ export class IsaanWorld {
     this.camera.position.y = THREE.MathUtils.lerp(this.camera.position.y, 2.2, camAlpha);
     this.camera.position.z = THREE.MathUtils.lerp(this.camera.position.z, this.targetCamZ, camZAlpha);
     this.camera.lookAt(this.camera.position.x, this.camera.position.y - 0.2, 0);
-    if (!isInside) {
-      const cx = this.camera.position.x;
-      for (let i = 0; i < this.culledPointLights.length; i++) {
-        const l = this.culledPointLights[i];
-        l.getWorldPosition(this.tmpLightPos);
-        l.visible = Math.abs(this.tmpLightPos.x - cx) < 34;
-      }
-    }
     this.renderer.render(this.scene, this.camera);
   }
 
@@ -2671,7 +2669,7 @@ export class IsaanWorld {
   public resize(): void {
     this.updateCameraFraming(true);
     const isMobileOrTablet = window.matchMedia('(pointer: coarse)').matches || navigator.maxTouchPoints > 0;
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobileOrTablet ? 1.25 : 2));
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobileOrTablet ? 1.0 : 2));
     this.renderer.setSize(Math.max(1, window.innerWidth), Math.max(1, window.innerHeight));
   }
 
