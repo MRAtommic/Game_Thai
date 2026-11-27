@@ -1733,8 +1733,33 @@ export function buildTrafficAndParkedVehicles(scene: THREE.Scene): MovingVehicle
         ];
         const shoppers = shopperDefs.map((sd, idx) => {
           const sg = makeVillagerFigure(sd.shirt, '#1e293b', idx % 2 === 0 ? '#a16207' : undefined);
-          // Woven market basket on arm
-          addPart(sg, 0.2, 0.2, 0.2, '#b45309', -0.28, 0.55, 0.12);
+          // Detailed woven Thai bamboo market basket with curved handle & veggies held in hand
+          const basket = new THREE.Group();
+          basket.position.set(-0.25, 0.62, 0.04);
+          const bBody = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.12, 0.085, 0.18, 10),
+            new THREE.MeshStandardMaterial({ color: '#b45309', roughness: 0.85 })
+          );
+          const bRim = new THREE.Mesh(
+            new THREE.TorusGeometry(0.12, 0.018, 6, 12),
+            new THREE.MeshStandardMaterial({ color: '#78350f', roughness: 0.8 })
+          );
+          bRim.rotation.x = Math.PI / 2;
+          bRim.position.y = 0.09;
+          const bHandle = new THREE.Mesh(
+            new THREE.TorusGeometry(0.11, 0.015, 6, 12, Math.PI),
+            new THREE.MeshStandardMaterial({ color: '#92400e', roughness: 0.78 })
+          );
+          bHandle.rotation.y = Math.PI / 2;
+          bHandle.position.y = 0.09;
+          const bVeggies = new THREE.Mesh(
+            new THREE.SphereGeometry(0.08, 7, 6),
+            new THREE.MeshStandardMaterial({ color: '#22c55e', roughness: 0.75 })
+          );
+          bVeggies.scale.set(1.1, 0.65, 1.0);
+          bVeggies.position.y = 0.09;
+          basket.add(bBody, bRim, bHandle, bVeggies);
+          sg.add(basket);
           sg.position.set(sd.baseX, 0, sd.z);
           scene.add(sg);
           return { group: sg, baseX: sd.baseX, range: sd.range, speed: sd.speed, phase: idx * 1.35 };
