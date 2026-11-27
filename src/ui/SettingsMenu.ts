@@ -1,3 +1,4 @@
+import type { SoundEngine } from '../audio/SoundEngine';
 import { isVoiceMuted, setVoiceMuted } from '../audio/VoiceActor';
 
 const UI_TRANS_KEY = 'reuan_chan_ui_transparent';
@@ -30,18 +31,31 @@ function markSegmented(groupId: string, activeVal: string): void {
  * Binds the #btn-settings modal menu with tactile segmented controls
  * synchronized with existing HUD audio, voice, zoom, rules, and transparency state.
  */
-export function bindSettingsMenu(): void {
+export function bindSettingsMenu(sound?: SoundEngine): void {
   setUiTransparent(isUiTransparent());
 
   const overlay = document.getElementById('settings-overlay');
   const openBtn = document.getElementById('btn-settings');
   const closeBtn = document.getElementById('settings-close');
 
+  const btnMusic = document.getElementById('btn-music');
   const btnSound = document.getElementById('btn-sound');
   const btnVoice = document.getElementById('btn-voice');
   const btnZoom = document.getElementById('btn-zoom');
   const btnRules = document.getElementById('btn-rules');
   const setRulesBtn = document.getElementById('set-rules');
+
+  const getMusicOn = (): boolean =>
+    sound ? sound.isMusicEnabled() : localStorage.getItem('reuan_chan_music_muted') !== '1';
+  const applyMusicOn = (on: boolean) => {
+    sound?.init();
+    if (sound) sound.setMusicEnabled(on);
+    else localStorage.setItem('reuan_chan_music_muted', on ? '0' : '1');
+    const span = btnMusic?.querySelector('span');
+    if (span) span.textContent = on ? 'ดนตรี: เปิด' : 'ดนตรี: ปิด';
+    btnMusic?.classList.toggle('muted', !on);
+    markSegmented('seg-music', on ? 'on' : 'off');
+  };
 
   const getSoundOn = (): boolean => {
     if (localStorage.getItem('reuan_chan_sound_muted') === '1') return false;
@@ -52,6 +66,11 @@ export function bindSettingsMenu(): void {
 
   const syncStates = () => {
     markSegmented('seg-ui-trans', document.body.classList.contains('ui-transparent') ? '1' : '0');
+    const musicOn = getMusicOn();
+    markSegmented('seg-music', musicOn ? 'on' : 'off');
+    const mSpan = btnMusic?.querySelector('span');
+    if (mSpan) mSpan.textContent = musicOn ? 'ดนตรี: เปิด' : 'ดนตรี: ปิด';
+    btnMusic?.classList.toggle('muted', !musicOn);
     markSegmented('seg-sound', getSoundOn() ? 'on' : 'off');
     markSegmented('seg-voice', isVoiceMuted() ? 'off' : 'on');
     markSegmented('seg-zoom', getZoomName());
@@ -75,6 +94,17 @@ export function bindSettingsMenu(): void {
     if (e.key === 'Escape' && overlay && !overlay.classList.contains('hidden')) {
       closeModal();
     }
+  });
+
+  btnMusic?.addEventListener('click', () => {
+    (document.activeElement as HTMLElement | null)?.blur();
+    applyMusicOn(!getMusicOn());
+  });
+
+  document.getElementById('seg-music')?.addEventListener('click', (e) => {
+    const btn = (e.target as HTMLElement).closest<HTMLButtonElement>('.seg-btn');
+    if (!btn) return;
+    applyMusicOn(btn.dataset.val === 'on');
   });
 
   document.getElementById('seg-ui-trans')?.addEventListener('click', (e) => {

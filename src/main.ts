@@ -220,7 +220,7 @@ btnContinueCh4.addEventListener('click', () => {
 });
 
 bindVoiceToggleButton();
-bindSettingsMenu();
+bindSettingsMenu(sharedSound);
 
 if (sessionStorage.getItem('reuan_chan_active_session') === '1' && localStorage.getItem('reuan_chan_dorm_save_v1')) {
   launchChapter1(true);

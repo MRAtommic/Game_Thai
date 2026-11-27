@@ -1198,7 +1198,14 @@ export class Chapter4Engine {
     );
 
     const period = this.getPeriod();
+    const musicHr = (this.state.gameMinutes % 1440) / 60;
     this.sound.updateAmbience(dt, this.state.weather, period, this.state.sanity, 0 as FloorIndex, this.state.flags.act >= 3, false);
+    this.sound.updateAyutthayaMusic(
+      dt,
+      mood,
+      musicHr >= 18.5 || musicHr < 5.5,
+      this.currentRoom === 'royal_palace' || this.currentRoom === 'temple_ubosot'
+    );
 
     const near = !paused ? this.getNearestAction() : null;
     if (near) {

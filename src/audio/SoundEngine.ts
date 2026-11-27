@@ -3,11 +3,15 @@ import { TimePeriod, WeatherType } from '../types';
 export class SoundEngine {
   private ctx: AudioContext | null = null;
   private masterGain: GainNode | null = null;
+  private musicGain: GainNode | null = null;
   private rainGain: GainNode | null = null;
   private windGain: GainNode | null = null;
   private droneGain: GainNode | null = null;
   private muted = typeof localStorage !== 'undefined' && localStorage.getItem('reuan_chan_sound_muted') === '1';
+  private musicEnabled = typeof localStorage === 'undefined' || localStorage.getItem('reuan_chan_music_muted') !== '1';
   private initialized = false;
+  private ayutthayaMusicTimer = 0.25;
+  private ayutthayaMusicStep = 0;
   private cricketTimer = 0;
   private ruralTimer = 2.5;
   private rotHaeBeatTimer = 0;
@@ -42,6 +46,10 @@ export class SoundEngine {
     this.masterGain.gain.value = this.muted ? 0 : 0.72;
     this.masterGain.connect(this.ctx.destination);
 
+    this.musicGain = this.ctx.createGain();
+    this.musicGain.gain.value = this.musicEnabled ? 0.85 : 0;
+    this.musicGain.connect(this.masterGain);
+
     this.setupAmbienceLayers();
     this.initialized = true;
   }
@@ -58,6 +66,20 @@ export class SoundEngine {
 
   public isMuted(): boolean {
     return this.muted;
+  }
+
+  public setMusicEnabled(enabled: boolean): void {
+    this.musicEnabled = enabled;
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem('reuan_chan_music_muted', enabled ? '0' : '1');
+    }
+    if (this.musicGain && this.ctx) {
+      this.musicGain.gain.setTargetAtTime(enabled ? 0.85 : 0, this.ctx.currentTime, 0.08);
+    }
+  }
+
+  public isMusicEnabled(): boolean {
+    return this.musicEnabled;
   }
 
   private createNoiseBuffer(seconds = 3): AudioBuffer | null {
@@ -1102,7 +1124,7 @@ export class SoundEngine {
    * Lively spatial Temple Fair & Mor Lam Stage music (Khaen/Phin + Ramwong drum) around x = +76.
    */
   public updateTempleFairAmbience(dt: number, distanceToFair: number, active: boolean): void {
-    if (!this.ctx || !this.masterGain || !this.initialized || !active || this.muted) return;
+    if (!this.ctx || !this.masterGain || !this.initialized || !active || this.muted || !this.musicEnabled) return;
     const proximity = Math.max(0, 1 - distanceToFair / 32);
     if (proximity <= 0.02) return;
 
@@ -1233,7 +1255,7 @@ export class SoundEngine {
     isHaunted: boolean,
     isChasing: boolean
   ): void {
-    if (!this.ctx || !this.masterGain || !this.initialized || this.muted) return;
+    if (!this.ctx || !this.masterGain || !this.initialized || this.muted || !this.musicEnabled) return;
     const p = Math.max(0, Math.min(1, proximity));
     if (p <= 0.03) return;
 
@@ -1300,6 +1322,132 @@ export class SoundEngine {
     }
   }
 
+  /**
+   * Authentic Ayutthaya Kingdom Thai Classical Ensemble (ปี่พาทย์-มโหรีอโยธยา):
+   * Ranat Ek xylophone, breathy Khlui flute, deep Khong Wong gong, Ching cymbals & Taphon war drum.
+   */
+  public updateAyutthayaMusic(
+    dt: number,
+    mood: 'prosperous' | 'plague' | 'riot' | 'climax',
+    isNight: boolean,
+    inSanctuary: boolean
+  ): void {
+    if (!this.ctx || !this.musicGain || !this.initialized || this.muted || !this.musicEnabled) return;
+
+    const isWar = mood === 'riot' || mood === 'climax';
+    const isSolemn = !inSanctuary && (mood === 'plague' || isNight) && !isWar;
+
+    this.ayutthayaMusicTimer -= dt;
+    if (this.ayutthayaMusicTimer > 0) return;
+    this.ayutthayaMusicTimer = isWar ? 0.24 : isSolemn ? 0.44 : 0.34;
+
+    const now = this.ctx.currentTime;
+    const step = this.ayutthayaMusicStep % 24;
+    this.ayutthayaMusicStep++;
+    const out = this.musicGain;
+
+    // Traditional Thai 5-tone melody (F / G pentatonic) adapting to court peace, sorrow or war
+    const peacefulNotes = [
+      392, 440, 493.88, 587.33, 659.25, 587.33, 493.88, 440,
+      523.25, 587.33, 659.25, 783.99, 659.25, 587.33, 523.25, 440,
+      392, 493.88, 587.33, 440, 392, 329.63, 293.66, 392,
+    ];
+    const solemnNotes = [
+      293.66, 329.63, 392, 440, 392, 329.63, 261.63, 293.66,
+      329.63, 392, 440, 392, 329.63, 293.66, 261.63, 220,
+      261.63, 293.66, 329.63, 293.66, 261.63, 220, 196, 293.66,
+    ];
+    const warNotes = [
+      392, 587.33, 440, 587.33, 523.25, 659.25, 587.33, 493.88,
+      392, 493.88, 587.33, 783.99, 659.25, 587.33, 440, 523.25,
+      440, 392, 329.63, 392, 587.33, 493.88, 440, 392,
+    ];
+    const freq = (isWar ? warNotes : isSolemn ? solemnNotes : peacefulNotes)[step];
+
+    // 1) Ranat Ek (ระนาดเอก): crisp teakwood tone + resonant woody harmonic overtone
+    const ranat = this.ctx.createOscillator();
+    const overtone = this.ctx.createOscillator();
+    const flt = this.ctx.createBiquadFilter();
+    const rg = this.ctx.createGain();
+    ranat.type = 'triangle';
+    overtone.type = 'sine';
+    ranat.frequency.setValueAtTime(freq, now);
+    overtone.frequency.setValueAtTime(freq * 2.75, now);
+    flt.type = 'lowpass';
+    flt.frequency.value = isSolemn ? 1350 : 2100;
+    rg.gain.setValueAtTime(0.001, now);
+    rg.gain.linearRampToValueAtTime(isWar ? 0.068 : 0.055, now + 0.01);
+    rg.gain.exponentialRampToValueAtTime(0.0001, now + (isSolemn ? 0.42 : 0.28));
+    ranat.connect(flt);
+    overtone.connect(flt);
+    flt.connect(rg);
+    rg.connect(out);
+    ranat.start(now);
+    overtone.start(now);
+    ranat.stop(now + 0.45);
+    overtone.stop(now + 0.45);
+
+    // 2) Breathy Khlui Flute (ขลุ่ยเพียงออ) sustaining softly across every 3rd beat
+    if (step % 3 === 0) {
+      const khlui = this.ctx.createOscillator();
+      const kg = this.ctx.createGain();
+      khlui.type = 'sine';
+      khlui.frequency.setValueAtTime(freq * (isSolemn ? 1 : 0.5), now);
+      khlui.frequency.linearRampToValueAtTime(freq * (isSolemn ? 1.008 : 0.504), now + 0.35);
+      kg.gain.setValueAtTime(0.001, now);
+      kg.gain.linearRampToValueAtTime(isSolemn ? 0.048 : 0.036, now + 0.12);
+      kg.gain.exponentialRampToValueAtTime(0.0001, now + 0.85);
+      khlui.connect(kg);
+      kg.connect(out);
+      khlui.start(now);
+      khlui.stop(now + 0.88);
+    }
+
+    // 3) Khong Wong Yai (ฆ้องวงใหญ่) deep temple resonance every 6th beat
+    if (step % 6 === 0) {
+      const gong = this.ctx.createOscillator();
+      const gg = this.ctx.createGain();
+      gong.type = 'sine';
+      gong.frequency.setValueAtTime(isSolemn ? freq * 0.5 : 196, now);
+      gg.gain.setValueAtTime(0.001, now);
+      gg.gain.linearRampToValueAtTime(0.075, now + 0.025);
+      gg.gain.exponentialRampToValueAtTime(0.0001, now + 0.95);
+      gong.connect(gg);
+      gg.connect(out);
+      gong.start(now);
+      gong.stop(now + 0.98);
+    }
+
+    // 4) Authentic Ching ("ชิ่ง" open shimmer / "ฉับ" dampened stroke) + Taphon Drum during war
+    if (step % 2 === 0) {
+      const isOpen = step % 4 === 0;
+      const ching = this.ctx.createOscillator();
+      const cg = this.ctx.createGain();
+      ching.type = 'sine';
+      ching.frequency.setValueAtTime(isOpen ? 3180 : 2420, now);
+      cg.gain.setValueAtTime(isOpen ? 0.022 : 0.018, now);
+      cg.gain.exponentialRampToValueAtTime(0.0001, now + (isOpen ? 0.24 : 0.06));
+      ching.connect(cg);
+      cg.connect(out);
+      ching.start(now);
+      ching.stop(now + 0.26);
+    }
+    if (isWar && step % 2 === 0) {
+      const drum = this.ctx.createOscillator();
+      const dg = this.ctx.createGain();
+      drum.type = 'sine';
+      drum.frequency.setValueAtTime(step % 4 === 0 ? 96 : 128, now);
+      drum.frequency.exponentialRampToValueAtTime(42, now + 0.14);
+      dg.gain.setValueAtTime(0.001, now);
+      dg.gain.linearRampToValueAtTime(0.085, now + 0.01);
+      dg.gain.exponentialRampToValueAtTime(0.0001, now + 0.16);
+      drum.connect(dg);
+      dg.connect(out);
+      drum.start(now);
+      drum.stop(now + 0.17);
+    }
+  }
+
   /** Lively daytime school campus murmur, chatter, sports whistle & basketball bounce */
   public updateSchoolCrowdAmbience(dt: number, proximity: number, active: boolean): void {
     if (!this.ctx || !this.masterGain || !this.initialized || !active || this.muted) return;
@@ -1353,7 +1501,7 @@ export class SoundEngine {
 
   /** Intense Ghost Dancer Thriller Chase Score: pounding bass drum + screeching dissonant Ranat + ankle bells */
   public updateSchoolChaseMusic(dt: number, isChasing: boolean): void {
-    if (!this.ctx || !this.masterGain || !this.initialized || !isChasing || this.muted) return;
+    if (!this.ctx || !this.masterGain || !this.initialized || !isChasing || this.muted || !this.musicEnabled) return;
     this.chaseMusicTimer -= dt;
     if (this.chaseMusicTimer > 0) return;
     this.chaseMusicTimer = 0.185; // ~162 BPM adrenaline pulse
