@@ -188,10 +188,32 @@ export function buildSiaMansionWorld(
       }
     }
 
-    // Round Fluted Roman End Columns framing the building corners!
+    // Side walls with real openings: Grand open arched Mansion Entryway on Floor 1 Left (-12.15) & Gold-Framed Side Windows on upper/right walls!
     [-12.15, 12.15].forEach((cx) => {
       addCylinder(group, 0.34, 0.38, MANSION_FLOOR_H, '#f1f5f9', cx, yb + MANSION_FLOOR_H / 2, 2.45, 0.35, 0.1, 16);
       addCylinder(group, 0.46, 0.38, 0.24, '#eab308', cx, yb + MANSION_FLOOR_H - 0.18, 2.45, 0.25, 0.75, 16);
+      if (cx === -12.15 && fl === 0) {
+        // Open arched front entry doorway (clear walk-through at z = -0.5 .. +1.4!)
+        addBox(group, 0.38, MANSION_FLOOR_H, 1.9, wallCols[fl], cx, yb + MANSION_FLOOR_H / 2, -1.65, 0.65);
+        addBox(group, 0.38, 1.25, 2.8, wallCols[fl], cx, yb + 3.55, 0.7, 0.65); // lintel header above doorway
+        addBox(group, 0.46, 0.16, 2.2, '#eab308', cx, yb + 2.95, 0.45, 0.25, 0.72); // gold door arch trim
+        // Open double mahogany doors swung inward
+        addBox(group, 0.75, 2.75, 0.12, '#451a03', cx + 0.45, yb + 1.4, -0.62, 0.55);
+      } else {
+        // Side wall piers framing a recessed transparent side window!
+        addBox(group, 0.36, MANSION_FLOOR_H, 1.8, wallCols[fl], cx, yb + MANSION_FLOOR_H / 2, -1.6, 0.65);
+        addBox(group, 0.36, MANSION_FLOOR_H, 1.4, wallCols[fl], cx, yb + MANSION_FLOOR_H / 2, 1.65, 0.65);
+        addBox(group, 0.36, 1.1, 1.7, wallCols[fl], cx, yb + 0.55, 0.1, 0.65);
+        addBox(group, 0.36, 1.15, 1.7, wallCols[fl], cx, yb + 3.6, 0.1, 0.65);
+        addBox(group, 0.42, 0.1, 1.72, '#ca8a04', cx, yb + 1.12, 0.1, 0.3, 0.65); // gold window sill
+        addBox(group, 0.42, 0.1, 1.72, '#ca8a04', cx, yb + 3.0, 0.1, 0.3, 0.65);  // gold window lintel
+        const sidePane = new THREE.Mesh(
+          new THREE.BoxGeometry(0.06, 1.85, 1.6),
+          new THREE.MeshStandardMaterial({ color: '#bae6fd', transparent: true, opacity: 0.24, roughness: 0.08, depthWrite: false })
+        );
+        sidePane.position.set(cx, yb + 2.06, 0.1);
+        group.add(sidePane);
+      }
     });
 
     // Multi-tier Crystal Chandeliers (brass rings + crystal octahedrons + candle bulbs)
