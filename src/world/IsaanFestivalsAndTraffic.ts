@@ -291,6 +291,7 @@ export interface RuralActorsController {
   taniLight: THREE.PointLight;
   saleng: { group: THREE.Group; wheels: THREE.Group[]; x: number; dir: 1 | -1 };
   schoolSwing: THREE.Group;
+  schoolActors: THREE.Group[];
   morningMonk: { group: THREE.Group; x: number; dir: 1 | -1 };
   rocketFestival: {
     rocketGroup: THREE.Group;
@@ -994,24 +995,124 @@ export function buildTrafficAndParkedVehicles(scene: THREE.Scene): MovingVehicle
 
       /** Builds School & Haunted Swing (-112), Welcome Arch (-104.5), Takian (-96.5), Show-huay Store (-89.5), Bang Fai (-67.5), PA Tower (-8.6), Granary (-11.4), Clinic (+96), Lotus Bridge, Morning Monk, Tani, and Saleng. */
       export function buildExpandedVillageLife(scene: THREE.Scene, awningMat: THREE.Material): RuralActorsController {
-        // 00) Ban Thung Primary School & Eerie Playground Swing (โรงเรียนประถมบ้านทุ่ง x = -112.5)
-        addPart(scene, 5.8, 2.8, 2.2, '#e2e8f0', -113.5, 1.4, -2.4, 0.88);
-        addPart(scene, 6.2, 0.16, 2.6, '#1e3a8a', -113.5, 2.95, -2.4, 0.7);
-        addPart(scene, 2.0, 1.05, 0.08, '#14532d', -112.2, 1.55, -1.26, 0.8); // green chalkboard!
+        // 00) Deep 2.5D Ban Thung Primary Schoolhouse, Classroom with Students & Playground (โรงเรียนบ้านทุ่งวิทยา x = -113.5)
+        const schGrp = new THREE.Group();
+        const schX = -113.5;
+        schGrp.position.set(schX, 0, -2.4);
+
+        // Raised school concrete veranda + front entry steps + warm tiled classroom floor
+        addPart(schGrp, 6.2, 0.18, 2.5, '#cbd5e1', 0, 0.09, 0.05, 0.72);
+        addPart(schGrp, 1.5, 0.1, 0.42, '#94a3b8', 0, 0.05, 1.38, 0.78);
+        // Cream back wall + side walls with wooden louver windows
+        addPart(schGrp, 6.0, 2.65, 0.16, '#fef3c7', 0, 1.48, -1.08, 0.85);
+        [-2.92, 2.92].forEach((wx) => {
+          addPart(schGrp, 0.18, 2.65, 2.24, '#f3e8c8', wx, 1.48, 0, 0.85);
+          addPart(schGrp, 0.22, 0.95, 1.05, '#78350f', wx, 1.55, 0, 0.75); // wooden shutter frame
+          addPart(schGrp, 0.24, 0.75, 0.85, '#92400e', wx, 1.55, 0, 0.72);
+        });
+        // Front veranda pillars & low waist-high classroom railing on outer bays
+        [-2.88, -0.95, 0.95, 2.88].forEach((px) => {
+          addPart(schGrp, 0.18, 2.7, 0.18, '#f8fafc', px, 1.5, 1.16, 0.55);
+          addPart(schGrp, 0.22, 0.36, 0.22, '#1e3a8a', px, 0.36, 1.16, 0.55);
+        });
+        [-1.92, 1.92].forEach((rx) => {
+          addPart(schGrp, 1.76, 0.55, 0.1, '#f8fafc', rx, 0.46, 1.16, 0.7);
+          addPart(schGrp, 1.78, 0.08, 0.14, '#1e3a8a', rx, 0.76, 1.16, 0.55);
+        });
+
+        // Sloped Thai terracotta school roof with white fascia & ridge cap
+        const schRoofFront = addPart(schGrp, 6.65, 0.1, 1.75, '#991b1b', 0, 3.12, 0.65, 0.65);
+        schRoofFront.rotation.x = 0.34;
+        const schRoofBack = addPart(schGrp, 6.65, 0.1, 1.75, '#991b1b', 0, 3.12, -0.65, 0.65);
+        schRoofBack.rotation.x = -0.34;
+        addPart(schGrp, 6.72, 0.12, 0.18, '#7f1d1d', 0, 3.42, 0, 0.6);
+        addPart(schGrp, 6.5, 0.16, 0.12, '#f8fafc', 0, 2.8, 1.36, 0.55); // front fascia beam
+
         const schSign = new THREE.Mesh(
-          new THREE.PlaneGeometry(2.5, 0.65),
-          new THREE.MeshBasicMaterial({ map: makeBannerTex('#1e3a8a', '#facc15', '#ffffff', 'โรงเรียนบ้านทุ่งวิทยา', 'กระดานดำ & สนามเด็กเล่น') })
+          new THREE.PlaneGeometry(2.65, 0.64),
+          new THREE.MeshBasicMaterial({ map: makeBannerTex('#1e3a8a', '#facc15', '#ffffff', 'โรงเรียนบ้านทุ่งวิทยา', 'กระดานดำ • ห้องเรียน • สนามเด็กเล่น') })
         );
-        schSign.position.set(-113.5, 2.55, -1.24);
-        scene.add(schSign);
-        // Thai Flagpole + Swinging Playground Frame (-109.2)
-        addPart(scene, 0.08, 4.6, 0.08, '#f8fafc', -109.8, 2.3, -1.4);
-        addPart(scene, 0.55, 0.34, 0.03, '#dc2626', -109.5, 4.35, -1.4);
-        addPart(scene, 0.55, 0.12, 0.04, '#1d4ed8', -109.5, 4.35, -1.39);
-        [-109.1, -107.7].forEach((sx) => addPart(scene, 0.08, 2.2, 0.08, '#dc2626', sx, 1.1, -1.6));
-        addPart(scene, 1.6, 0.08, 0.08, '#facc15', -108.4, 2.2, -1.6);
+        schSign.position.set(0, 2.86, 1.44);
+        schGrp.add(schSign);
+
+        // Interior framed green chalkboard + chalk ledge + clock above it
+        addPart(schGrp, 2.5, 1.15, 0.08, '#78350f', 0.2, 1.62, -0.98, 0.75);
+        addPart(schGrp, 2.32, 0.98, 0.05, '#14532d', 0.2, 1.62, -0.95, 0.85);
+        addPart(schGrp, 2.36, 0.05, 0.1, '#92400e', 0.2, 1.11, -0.92, 0.75);
+        // Chalkboard writing lines
+        [-0.5, 0.1, 0.65].forEach((cx, ci) => {
+          addPart(schGrp, 0.52, 0.035, 0.02, '#fef9c3', cx, 1.78 - ci * 0.14, -0.92, 0.3);
+        });
+        const schClock = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.18, 0.18, 0.05, 12),
+          new THREE.MeshStandardMaterial({ color: '#f8fafc', roughness: 0.4 })
+        );
+        schClock.rotation.x = Math.PI / 2;
+        schClock.position.set(0.2, 2.42, -0.96);
+        schGrp.add(schClock);
+
+        // Interior classroom warm fluorescent light
+        const schLight = new THREE.PointLight('#fef3c7', 2.4, 7.5, 1.2);
+        schLight.position.set(0, 2.55, 0.15);
+        schGrp.add(schLight);
+
+        // Wooden student desks + notebooks inside the open classroom
+        const deskPositions = [
+          [-1.35, -0.05],
+          [0.05, -0.05],
+          [1.45, -0.05],
+          [-0.65, 0.62],
+          [0.85, 0.62],
+        ];
+        deskPositions.forEach(([dx, dz]) => {
+          addPart(schGrp, 0.68, 0.05, 0.42, '#a16207', dx, 0.72, dz, 0.72); // desktop
+          addPart(schGrp, 0.62, 0.52, 0.05, '#78350f', dx, 0.45, dz - 0.16, 0.8);
+          addPart(schGrp, 0.06, 0.54, 0.36, '#78350f', dx - 0.28, 0.45, dz, 0.8);
+          addPart(schGrp, 0.06, 0.54, 0.36, '#78350f', dx + 0.28, 0.45, dz, 0.8);
+          addPart(schGrp, 0.24, 0.025, 0.18, '#f8fafc', dx, 0.76, dz, 0.5); // open notebook!
+        });
+        scene.add(schGrp);
+
+        // School Teacher & Thai Students studying inside classroom + reading by flagpole!
+        const schoolActors: THREE.Group[] = [];
+        const addStudent = (wx: number, wy: number, wz: number, yaw: number, isGirl: boolean, raiseHand = false) => {
+          const st = makeVillagerFigure('#f8fafc', isGirl ? '#1e3a8a' : '#78350f');
+          st.scale.setScalar(0.84);
+          st.position.set(wx, wy, wz);
+          st.rotation.y = yaw;
+          if (raiseHand) {
+            const armR = st.getObjectByName('armR');
+            if (armR) {
+              armR.rotation.z = 2.6;
+              armR.rotation.x = -0.35;
+            }
+          }
+          scene.add(st);
+          schoolActors.push(st);
+        };
+        // Teacher standing near the chalkboard
+        const teacher = makeVillagerFigure('#f5d0a9', '#334155');
+        teacher.position.set(schX - 1.9, 0.18, -2.95);
+        teacher.rotation.y = 0.55;
+        scene.add(teacher);
+        schoolActors.push(teacher);
+        // 4 Students seated/studying at desks facing the chalkboard (Math.PI = -Z)
+        addStudent(schX - 1.35, 0.18, -2.22, Math.PI, false, false);
+        addStudent(schX + 0.05, 0.18, -2.22, Math.PI, true, true);
+        addStudent(schX + 1.45, 0.18, -2.22, Math.PI, false, false);
+        addStudent(schX + 0.85, 0.18, -1.55, Math.PI, true, false);
+        // 1 Student standing near the flagpole reading a book
+        addStudent(schX + 3.25, 0, -0.78, -0.5, false, false);
+
+        // Thai Flagpole (5-stripe Trairanga flag) + Swinging Playground Frame (-109.0)
+        addPart(scene, 0.08, 4.7, 0.08, '#f8fafc', -109.75, 2.35, -1.25);
+        addPart(scene, 0.62, 0.38, 0.03, '#dc2626', -109.42, 4.42, -1.25); // red
+        addPart(scene, 0.62, 0.25, 0.035, '#f8fafc', -109.42, 4.42, -1.25); // white
+        addPart(scene, 0.62, 0.13, 0.04, '#1d4ed8', -109.42, 4.42, -1.25); // navy center
+        [-109.05, -107.65].forEach((sx) => addPart(scene, 0.08, 2.2, 0.08, '#dc2626', sx, 1.1, -1.55));
+        addPart(scene, 1.6, 0.08, 0.08, '#facc15', -108.35, 2.2, -1.55);
         const schoolSwing = new THREE.Group();
-        schoolSwing.position.set(-108.4, 2.18, -1.6);
+        schoolSwing.position.set(-108.35, 2.18, -1.55);
         addPart(schoolSwing, 0.03, 1.45, 0.03, '#94a3b8', -0.26, -0.72, 0);
         addPart(schoolSwing, 0.03, 1.45, 0.03, '#94a3b8', 0.26, -0.72, 0);
         addPart(schoolSwing, 0.62, 0.06, 0.28, '#92400e', 0, -1.46, 0);
@@ -1653,6 +1754,7 @@ export function buildTrafficAndParkedVehicles(scene: THREE.Scene): MovingVehicle
           taniLight,
           saleng: { group: salengGrp, wheels: salengWheels, x: 12, dir: -1 },
           schoolSwing,
+          schoolActors,
           morningMonk: { group: monkGrp, x: -18, dir: 1 },
           rocketFestival: {
             rocketGroup,
@@ -1661,7 +1763,7 @@ export function buildTrafficAndParkedVehicles(scene: THREE.Scene): MovingVehicle
             skyFlashLight,
             smokePuffs,
             spectators,
-            baseX: bfX - 0.1,
+            baseX: bfX,
             baseY: 2.55,
             angle: rocketAngle,
           },
@@ -1929,9 +2031,15 @@ export function buildTrafficAndParkedVehicles(scene: THREE.Scene): MovingVehicle
           w.mesh.position.y = w.baseY + Math.sin(clock * 1.9 + w.phase) * 0.35;
         });
 
-        // 9) Haunted school swing gently rocks on its own in uneasy/lockdown nights!
+        // 9) Haunted school swing + students studying inside classroom
         rural.schoolSwing.rotation.x =
           isNight && mood !== 'festive' ? Math.sin(clock * 2.2) * 0.28 : Math.sin(clock * 0.9) * 0.03;
+        rural.schoolActors.forEach((act, idx) => {
+          act.visible = !isLockdown;
+          if (!isLockdown) {
+            act.rotation.z = Math.sin(clock * 1.8 + idx) * 0.025;
+          }
+        });
 
         // 10) Morning almsgiving monk (พระสงฆ์ออกบิณฑบาตช่วง 05:30 - 07:45 น.)
         const hr = gameMinutes / 60;
