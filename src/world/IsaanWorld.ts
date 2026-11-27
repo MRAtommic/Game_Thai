@@ -711,22 +711,66 @@ export class IsaanWorld {
   }
 
   private addBackgroundStiltHouse(x: number, z: number, roofCol: string, lit: boolean): void {
+    // 6 Tall teak stilts resting on concrete footings + raised teak veranda deck + wooden front stairs
     [-2.4, 0, 2.4].forEach((dx) => {
-      this.addBox(this.scene, 0.24, 3.5, 0.24, '#362115', x + dx, 1.75, z + 0.75);
-      this.addBox(this.scene, 0.24, 3.5, 0.24, '#362115', x + dx, 1.75, z - 0.85);
+      this.addBox(this.scene, 0.34, 0.16, 0.34, '#94a3b8', x + dx, 0.08, z + 0.78);
+      this.addBox(this.scene, 0.22, 3.6, 0.22, '#3b2416', x + dx, 1.8, z + 0.78);
+      this.addBox(this.scene, 0.22, 3.6, 0.22, '#3b2416', x + dx, 1.8, z - 0.88);
     });
-    this.addBox(this.scene, 5.8, 0.18, 2.2, '#4f311c', x, 1.65, z);
-    this.addBox(this.scene, 5.2, 2.0, 1.8, '#3b2416', x, 2.75, z - 0.05);
-    this.addThaiGableRoof(this.scene, x, 3.75, z - 0.05, 5.4, 2.2, 1.45, roofCol, '#5c3c20', '#2b180d');
+    this.addBox(this.scene, 5.9, 0.18, 2.5, '#593722', x, 1.68, z + 0.05); // wide veranda floor
+    // Open front balcony handrail + wooden balusters on veranda edge
+    this.addBox(this.scene, 5.5, 0.07, 0.08, '#854d0e', x, 2.24, z + 1.2);
+    for (let bx = -2.4; bx <= 1.6; bx += 0.5) {
+      this.addBox(this.scene, 0.06, 0.5, 0.06, '#78350f', x + bx, 1.98, z + 1.2);
+    }
+    // Wooden stairs descending smoothly from veranda right edge (+2.1)
+    for (let s = 0; s < 5; s++) {
+      this.addBox(this.scene, 0.28, 0.1, 0.8, '#6b4226', x + 2.05 + (4 - s) * 0.22, 0.22 + s * 0.32, z + 0.88);
+    }
+
+    // Upper teak house walls with horizontal wooden plank siding & teak door + twin windows!
+    this.addBox(this.scene, 5.1, 2.05, 1.65, '#422a1b', x, 2.78, z - 0.12);
+    [2.1, 2.45, 2.8, 3.15, 3.5].forEach((py) => {
+      this.addBox(this.scene, 5.16, 0.055, 0.05, '#5c3a22', x, py, z + 0.72);
+    });
+    const bDoor = new THREE.Mesh(
+      new THREE.PlaneGeometry(0.92, 1.55),
+      new THREE.MeshStandardMaterial({ map: createThaiDoorTexture('เรือนไทย', false), roughness: 0.78 })
+    );
+    bDoor.position.set(x + 1.15, 2.58, z + 0.72);
+    this.scene.add(bDoor);
+    // Protruding porch eave overhang & symmetrical gable roof
+    this.addBox(this.scene, 5.6, 0.1, 0.9, '#6b4226', x, 3.72, z + 0.9);
+    this.addThaiGableRoof(this.scene, x, 3.78, z - 0.12, 5.4, 2.15, 1.45, roofCol, '#78350f', '#2b180d');
+
+    // Authentic Lived-In Isaan Under-Stilt Details (ใต้ถุนบ้าน: แคร่ไม้ไผ่ + เปลญวน + โอ่งมังกร + กองฟืน + หลอดไฟใต้ถุน)!
+    // 1) Bamboo daybed (แคร่) + rolled reed mat on left
+    this.addBox(this.scene, 1.95, 0.1, 1.05, '#8c6239', x - 1.2, 0.48, z - 0.1);
+    [-2.0, -0.4].forEach((lx) => this.addBox(this.scene, 0.09, 0.45, 0.95, '#593722', x + lx, 0.24, z - 0.1));
+    this.addBox(this.scene, 0.36, 0.12, 0.42, '#dc2626', x - 1.8, 0.58, z - 0.1); // red khit pillow
+    // 2) Slung woven Pha Khao Ma hammock (เปลญวน) on right stilt bay
+    this.addBox(this.scene, 1.8, 0.08, 0.52, '#b91c1c', x + 1.15, 0.72, z - 0.15).rotation.z = 0.08;
+    // 3) Glazed ceramic Thai water jar (ตุ่มน้ำ) + wooden firewood stack
+    const jar = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.28, 0.2, 0.62, 12),
+      new THREE.MeshStandardMaterial({ color: '#7c2d12', roughness: 0.55 })
+    );
+    jar.position.set(x - 0.05, 0.31, z + 0.18);
+    this.scene.add(jar);
+
     if (lit) {
       const w = new THREE.Mesh(
-        new THREE.PlaneGeometry(1.1, 0.9),
-        new THREE.MeshBasicMaterial({ map: createThaiWindowTexture(true) })
+        new THREE.PlaneGeometry(1.15, 0.9),
+        new THREE.MeshStandardMaterial({ map: createThaiWindowTexture(true), emissive: '#3b2408', emissiveIntensity: 0.65 })
       );
-      w.position.set(x - 0.9, 2.8, z + 0.86);
+      w.position.set(x - 1.15, 2.86, z + 0.72);
       this.scene.add(w);
-      const l = new THREE.PointLight('#ffbf69', 2.4, 8.5, 1.3);
-      l.position.set(x, 2.3, z + 1.4);
+      // Warm hanging bulb underneath house deck lighting up the under-stilt bamboo bed, hammock & jar!
+      const underBulb = new THREE.Mesh(new THREE.SphereGeometry(0.08, 8, 8), new THREE.MeshBasicMaterial({ color: '#fde68a' }));
+      underBulb.position.set(x, 1.52, z + 0.4);
+      this.scene.add(underBulb);
+      const l = new THREE.PointLight('#ffbf69', 3.4, 10.5, 1.15);
+      l.position.set(x, 1.48, z + 1.65);
       this.scene.add(l);
     }
   }
@@ -1288,6 +1332,18 @@ export class IsaanWorld {
     [-3.4, -2.2, -1.0].forEach((lx) => this.addBox(this.scene, 0.12, 0.55, 1.35, '#5c3c20', lx, 0.28, -2.05));
     // Woven Pha Khao Ma hammock slung between stilts (เปลญวนใต้ถุน!)
     this.addBox(this.scene, 2.4, 0.1, 0.72, '#dc2626', 1.8, 0.88, -2.15).rotation.z = 0.08;
+    // Sticky-rice kratib, somtam clay mortar + woven tray & warm tungsten under-stilt lamp on main house bamboo daybed!
+    this.addBox(this.scene, 0.38, 0.1, 0.38, '#dc2626', -3.15, 0.68, -2.05); // woven reed mat & khit pillow
+    const mainKratib = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.14, 0.12, 0.2, 10),
+      new THREE.MeshStandardMaterial({ color: '#ca8a04', roughness: 0.78 })
+    );
+    mainKratib.position.set(-1.9, 0.72, -1.95);
+    const underMainBulb = new THREE.Mesh(new THREE.SphereGeometry(0.1, 8, 8), new THREE.MeshBasicMaterial({ color: '#fde68a' }));
+    underMainBulb.position.set(-0.6, 1.92, -1.35);
+    const underMainLight = new THREE.PointLight('#ffbe6b', 3.6, 12, 1.05);
+    underMainLight.position.set(-0.6, 1.8, 0.95);
+    this.scene.add(mainKratib, underMainBulb, underMainLight);
     // Twin Thai Dragon Water Jars + Blooming Pink Bougainvillea Pot beside front steps
     [3.65, 4.45].forEach((jx) => {
       const tJar = new THREE.Mesh(
