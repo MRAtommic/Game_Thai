@@ -150,7 +150,8 @@ export class SoundEngine {
     period: TimePeriod,
     sanity: number,
     floor: number,
-    isChasing = false
+    isChasing = false,
+    includePretaWail = false
   ): void {
     if (!this.ctx || !this.initialized) return;
     const now = this.ctx.currentTime;
@@ -199,10 +200,12 @@ export class SoundEngine {
           this.playDistantHowl();
         }
       }
-      this.pretaWailTimer -= dt;
-      if (this.pretaWailTimer <= 0) {
-        this.pretaWailTimer = 15 + Math.random() * 14;
-        this.playPretaWail();
+      if (includePretaWail) {
+        this.pretaWailTimer -= dt;
+        if (this.pretaWailTimer <= 0) {
+          this.pretaWailTimer = 15 + Math.random() * 14;
+          this.playPretaWail();
+        }
       }
     }
 
@@ -1405,5 +1408,104 @@ export class SoundEngine {
       bell.start(now);
       bell.stop(now + 0.13);
     }
+  }
+
+  /** Metallic whoosh of swinging an Ayutthaya steel sword. */
+  public playSwordSlash(): void {
+    if (!this.ctx || !this.masterGain || this.muted) return;
+    const now = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const flt = this.ctx.createBiquadFilter();
+    const g = this.ctx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(520, now);
+    osc.frequency.exponentialRampToValueAtTime(140, now + 0.14);
+    flt.type = 'bandpass';
+    flt.frequency.value = 950;
+    flt.Q.value = 1.6;
+    g.gain.setValueAtTime(0.09, now);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + 0.16);
+    osc.connect(flt);
+    flt.connect(g);
+    g.connect(this.masterGain);
+    osc.start(now);
+    osc.stop(now + 0.17);
+  }
+
+  /** Snappy bowstring twang for Ayutthaya crossbow/bow shot. */
+  public playBowShot(): void {
+    if (!this.ctx || !this.masterGain || this.muted) return;
+    const now = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const g = this.ctx.createGain();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(280, now);
+    osc.frequency.exponentialRampToValueAtTime(95, now + 0.12);
+    g.gain.setValueAtTime(0.11, now);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + 0.13);
+    osc.connect(g);
+    g.connect(this.masterGain);
+    osc.start(now);
+    osc.stop(now + 0.14);
+  }
+
+  /** Impact thud + steel ring when hitting a Phee Ha or bandit. */
+  public playSwordHit(): void {
+    if (!this.ctx || !this.masterGain || this.muted) return;
+    const now = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const g = this.ctx.createGain();
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(190, now);
+    osc.frequency.exponentialRampToValueAtTime(55, now + 0.11);
+    g.gain.setValueAtTime(0.12, now);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + 0.12);
+    osc.connect(g);
+    g.connect(this.masterGain);
+    osc.start(now);
+    osc.stop(now + 0.13);
+  }
+
+  /** Deep resonant Ayutthaya temple bell / alarm gong toll. */
+  public playTempleBell(): void {
+    if (!this.ctx || !this.masterGain || this.muted) return;
+    const now = this.ctx.currentTime;
+    [220, 440, 665].forEach((freq, idx) => {
+      const osc = this.ctx!.createOscillator();
+      const g = this.ctx!.createGain();
+      osc.type = idx === 0 ? 'sine' : 'triangle';
+      osc.frequency.setValueAtTime(freq, now);
+      g.gain.setValueAtTime(0.11 / (idx + 1), now);
+      g.gain.exponentialRampToValueAtTime(0.0001, now + 2.2);
+      osc.connect(g);
+      g.connect(this.masterGain!);
+      osc.start(now);
+      osc.stop(now + 2.3);
+    });
+  }
+
+  /** Cool water splash when rowing a boat or dousing an arson fire. */
+  public playWaterSplash(): void {
+    if (!this.ctx || !this.masterGain || this.muted) return;
+    const now = this.ctx.currentTime;
+    const len = Math.floor(this.ctx.sampleRate * 0.25);
+    const buf = this.ctx.createBuffer(1, len, this.ctx.sampleRate);
+    const d = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) {
+      d[i] = (Math.random() * 2 - 1) * Math.sin((i / len) * Math.PI);
+    }
+    const src = this.ctx.createBufferSource();
+    src.buffer = buf;
+    const flt = this.ctx.createBiquadFilter();
+    flt.type = 'bandpass';
+    flt.frequency.value = 1100;
+    flt.Q.value = 1.1;
+    const g = this.ctx.createGain();
+    g.gain.setValueAtTime(0.09, now);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + 0.24);
+    src.connect(flt);
+    flt.connect(g);
+    g.connect(this.masterGain);
+    src.start(now);
   }
 }

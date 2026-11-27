@@ -124,7 +124,7 @@ function classifyCharacter(speaker: string, role: string, portrait: string): Voi
   ) {
     return { kind: 'ghost', preferFemale: true, basePitch: 0.93, baseRate: 0.87, volume: 0.9 };
   }
-  if (s.includes('หลวงพี่') || s.includes('พระ')) {
+  if (s.includes('หลวงพี่') || s.includes('หลวงตา') || s.includes('พระ')) {
     return { kind: 'monk', preferFemale: false, basePitch: 0.95, baseRate: 0.91, volume: 0.94 };
   }
   if (
@@ -141,6 +141,7 @@ function classifyCharacter(speaker: string, role: string, portrait: string): Voi
     s.includes('แม่') ||
     s.includes('ป้า') ||
     s.includes('ยาย') ||
+    s.includes('พุดซ้อน') ||
     s.includes('ครูวิไล')
   ) {
     return { kind: 'mother', preferFemale: true, basePitch: 1.02, baseRate: 0.97, volume: 0.94 };
@@ -151,7 +152,8 @@ function classifyCharacter(speaker: string, role: string, portrait: string): Voi
     s.includes('ก้อง') ||
     s.includes('สมชาย') ||
     s.includes('เฮียตี๋') ||
-    s.includes('ช่าง')
+    s.includes('เสือคำ') ||
+    s.includes('โจร')
   ) {
     return { kind: 'villain', preferFemale: false, basePitch: 0.95, baseRate: 1.01, volume: 0.95 };
   }
@@ -159,6 +161,8 @@ function classifyCharacter(speaker: string, role: string, portrait: string): Voi
     portrait === 'uncle' ||
     s.includes('ลุง') ||
     s.includes('ตาชม') ||
+    s.includes('ขุนราม') ||
+    s.includes('ช่าง') ||
     s.includes('ดาบ') ||
     s.includes('ยาม')
   ) {

@@ -2965,7 +2965,7 @@ export class Chapter2Engine {
 
       const villageMood = this.getVillageMood();
       const outdoorQuiet = this.currentRoom === 'outside' && !this.krasueChase && !this.cutscene.isPlaying();
-      this.sound.updateAmbience(dt, this.state.weather, period, this.state.sanity, 0 as FloorIndex, this.krasueChase);
+      this.sound.updateAmbience(dt, this.state.weather, period, this.state.sanity, 0 as FloorIndex, this.krasueChase, this.currentRoom === 'outside');
       this.sound.updateIsaanAmbience(dt, period, this.currentRoom === 'outside', this.krasueChase);
       this.sound.updateRotHaeMusic(
         dt,

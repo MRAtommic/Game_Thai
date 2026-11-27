@@ -1,6 +1,7 @@
 import { CharacterKind, drawCharacterCanvas } from '../art/SpriteFactory';
 import { Ch2CharacterKind, drawCh2CharacterCanvas } from '../art/Chapter2Sprites';
 import { Ch3CharKind, drawCh3CharacterCanvas } from '../art/Chapter3Sprites';
+import { Ch4CharacterKind, drawCh4CharacterCanvas } from '../art/Chapter4Sprites';
 
 export type IsaanCutsceneId =
   | 'dorm_arrival'
@@ -28,7 +29,10 @@ export type IsaanCutsceneId =
   | 'music_room_ranat'
   | 'locker_hide'
   | 'dancer_finale'
-  | 'songthaew_ride';
+  | 'songthaew_ride'
+  | 'ayutthaya_life'
+  | 'ayutthaya_plague'
+  | 'ayutthaya_purify';
 
 interface CutsceneMeta {
   title: string;
@@ -271,6 +275,33 @@ const CUTSCENE_META: Record<IsaanCutsceneId, CutsceneMeta> = {
       'เอี๊ยด~ รถจอดเทียบป้ายปลายทางอย่างนุ่มนวลและปลอดภัย!',
     ],
   },
+  ayutthaya_life: {
+    title: '🎬 บทนำ บทที่ ๔ — กรุงศรีอยุธยายามรุ่งเรือง',
+    durationMs: 4900,
+    captions: [
+      'แสงทองสาดส่องเหนือลำน้ำเจ้าพระยา เรือสำเภาและเรือพายค้าขายแล่นขวักไขว่หน้าตลาดอโยธยา...',
+      'มั่น ศิษย์ช่างตีดาบหลวง ออกเดินตรวจชุมชนคู่กับเสียงค้อนทุบเหล็กกล้าแห่งโรงตีดาบลุงสิน',
+      'ทว่าเรือสำเภาต่างถิ่นที่เพิ่งเทียบท่า กำลังนำพาความหายนะแห่ง "ผีห่า" เข้าสู่พระนคร!',
+    ],
+  },
+  ayutthaya_plague: {
+    title: '🎬 คัทซีนวิปโยค — หลุมศพโรคห่าลุกเป็นผี & โจรก่อจลาจล',
+    durationMs: 5200,
+    captions: [
+      'เสียงระฆังวัดมหาธาตุดังกึกก้อง! ศพผู้ป่วยโรคห่าที่ถูกฝังรวมกันในหลุมใหญ่เริ่มกระตุกขยับ...',
+      'เหล่าซากผีห่าอโยธยาตาแดงก่ำคลานขึ้นจากกองดินพุ่งเข้าจู่โจมชาวบ้านทุกสารทิศ!',
+      'ได้เวลาชักดาบเหล็กน้ำพี้ คว้าหน้าไม้ และล่องเรือพายออกปกป้องผู้บริสุทธิ์!',
+    ],
+  },
+  ayutthaya_purify: {
+    title: '🎬 คัทซีนอโยธยา — ฝ่าเพลิงห่าคืนแสงธรรมสู่พระนคร',
+    durationMs: 5300,
+    captions: [
+      'เปลวเพลิงจลาจลมอดลงทีละย่าน ดาบกล้าและหน้าไม้ของเจ้ามั่นสยบขุนโจรเสือคำสิ้นฤทธิ์!',
+      'แสงน้ำพระพุทธมนต์และไต้ไฟลุกโชติช่วงเหนือหลุมศพใหญ่ ชำระล้างเชื้อห่าให้สิ้นซาก...',
+      'ยามรุ่งสางมาเยือน พระปรางค์วัดมหาธาตุและชาวอโยธยาที่รอดชีวิตต่างสรรเสริญผู้กล้าแห่งพระนคร!',
+    ],
+  },
 };
 
 export class CutscenePlayer {
@@ -282,6 +313,7 @@ export class CutscenePlayer {
   private ch1Cache = new Map<string, HTMLCanvasElement>();
   private ch2Cache = new Map<string, HTMLCanvasElement>();
   private ch3Cache = new Map<string, HTMLCanvasElement>();
+  private ch4Cache = new Map<string, HTMLCanvasElement>();
 
   private getCh1Sprite(kind: CharacterKind, frame = 0): HTMLCanvasElement {
     const key = `${kind}_${frame}`;
@@ -651,6 +683,15 @@ export class CutscenePlayer {
         break;
       case 'songthaew_ride':
         this.drawSongthaewRide(ctx, w, h, p, t);
+        break;
+      case 'ayutthaya_life':
+        this.drawAyutthayaScene(ctx, w, h, p, t, 'life');
+        break;
+      case 'ayutthaya_plague':
+        this.drawAyutthayaScene(ctx, w, h, p, t, 'plague');
+        break;
+      case 'ayutthaya_purify':
+        this.drawAyutthayaScene(ctx, w, h, p, t, 'purify');
         break;
     }
     ctx.restore();
@@ -1799,5 +1840,75 @@ export class CutscenePlayer {
     this.drawGlowOrb(ctx, 665, 280, 150, '254, 240, 138', 0.5);
     this.drawSprite(ctx, this.getCh1Sprite('prim', 0), 665, 395 - p * 32, 0.88, -1, 0, 0);
     ctx.restore();
+  }
+
+  private getCh4Sprite(kind: Ch4CharacterKind, frame = 0): HTMLCanvasElement {
+    const k = `${kind}_${frame}`;
+    let c = this.ch4Cache.get(k);
+    if (!c) {
+      c = document.createElement('canvas');
+      c.width = 96;
+      c.height = 128;
+      drawCh4CharacterCanvas(c.getContext('2d')!, kind, frame, 96, 128);
+      this.ch4Cache.set(k, c);
+    }
+    return c;
+  }
+
+  private drawAyutthayaScene(ctx: CanvasRenderingContext2D, w: number, h: number, p: number, t: number, mode: 'life' | 'plague' | 'purify'): void {
+    const shake = mode === 'plague' && p > 0.35 ? 6 : 0;
+    this.applyCameraTransform(ctx, w, h, 1.04 + p * 0.08, (Math.random() - 0.5) * shake, 0);
+
+    const sky = ctx.createLinearGradient(0, 0, 0, h * 0.72);
+    if (mode === 'life') {
+      sky.addColorStop(0, '#1e3a5f');
+      sky.addColorStop(1, '#d97706');
+    } else if (mode === 'plague') {
+      sky.addColorStop(0, '#090b12');
+      sky.addColorStop(1, '#7f1d1d');
+    } else {
+      sky.addColorStop(0, '#1e293b');
+      sky.addColorStop(1, '#f59e0b');
+    }
+    ctx.fillStyle = sky;
+    ctx.fillRect(0, 0, w, h);
+
+    // Distant Wat Mahathat Phra Prang silhouette & Ayutthaya brick city wall
+    ctx.fillStyle = mode === 'plague' ? '#1c1010' : '#451a03';
+    for (let tier = 0; tier < 5; tier++) {
+      const tw = 90 - tier * 16;
+      ctx.fillRect(480 - tw / 2, 260 - tier * 36, tw, 38);
+    }
+    ctx.fillStyle = '#7c2d12';
+    ctx.fillRect(0, 295, w, 90);
+    ctx.fillStyle = '#0f3b4c';
+    ctx.fillRect(0, 385, w, h - 385);
+
+    if (mode === 'life') {
+      // Sailing wooden Ayutthaya boat + golden sunshine
+      this.drawGlowOrb(ctx, 760, 120, 210, '253, 224, 71', 0.48);
+      ctx.fillStyle = '#5c2d16';
+      ctx.beginPath();
+      ctx.moveTo(220 + p * 180, 405);
+      ctx.lineTo(440 + p * 180, 405);
+      ctx.lineTo(400 + p * 180, 448);
+      ctx.lineTo(255 + p * 180, 448);
+      ctx.closePath();
+      ctx.fill();
+      this.drawSprite(ctx, this.getCh4Sprite('man', 0), 330 + p * 180, 412, 0.92, 1, 0, 0);
+      this.drawSprite(ctx, this.getCh4Sprite('phudsorn', 0), 720, 382, 0.88, -1, 0, 0);
+    } else if (mode === 'plague') {
+      // Rising Phee Ha zombies from mass grave glow & red alarm embers
+      this.drawGlowOrb(ctx, 560, 330, 240, '220, 38, 38', 0.55 + Math.sin(t * 9) * 0.2);
+      this.drawSprite(ctx, this.getCh4Sprite('phee_ha', Math.floor(t * 4) % 4), 590, 410 - p * 35, 0.96, -1, 0, 0);
+      this.drawSprite(ctx, this.getCh4Sprite('phee_ha', Math.floor(t * 4 + 1) % 4), 720, 418 - p * 25, 0.9, -1, 0, 0);
+      this.drawSprite(ctx, this.getCh4Sprite('man', 1), 280, 405, 0.94, 1, 0, 0);
+    } else {
+      // Golden purification over Ayutthaya
+      this.drawGlowOrb(ctx, 480, 240, 280, '253, 224, 71', 0.65);
+      this.drawSprite(ctx, this.getCh4Sprite('monk_khong', 0), 310, 392, 0.9, 1, 0, 0);
+      this.drawSprite(ctx, this.getCh4Sprite('man', 0), 480, 395, 0.94, 1, 0, 0);
+      this.drawSprite(ctx, this.getCh4Sprite('phudsorn', 0), 640, 392, 0.88, -1, 0, 0);
+    }
   }
 }
