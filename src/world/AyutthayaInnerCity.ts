@@ -199,20 +199,47 @@ export function buildAyutthayaInnerCity(
   const palZ = -3.8;
   addPartBox(scene, 13.5, 0.72, 4.4, whiteStuccoMat, palX, 0.36, palZ);
   addPartBox(scene, 14.2, 0.22, 4.8, goldMat, palX, 0.78, palZ);
-  // Colonnaded gilded pillars + white palace walls
+  // White marble palace approach stairway + gilded balustrades & lotus pillar bases
+  const pStair = addPartBox(scene, 2.8, 0.22, 1.5, whiteStuccoMat, palX, 0.38, palZ + 2.45);
+  pStair.rotation.x = 0.45;
+  [-1.48, 1.48].forEach((bx) => {
+    const rail = addPartBox(scene, 0.16, 0.28, 1.55, goldMat, palX + bx, 0.62, palZ + 2.45);
+    rail.rotation.x = 0.45;
+  });
   [-5.6, -2.8, 0, 2.8, 5.6].forEach((ox) => {
-    addPartBox(scene, 0.3, 3.4, 0.3, goldMat, palX + ox, 2.55, palZ + 1.9);
-    addPartBox(scene, 0.3, 3.4, 0.3, goldMat, palX + ox, 2.55, palZ - 1.9);
+    [1.9, -1.9].forEach((oz) => {
+      addPartBox(scene, 0.3, 3.4, 0.3, goldMat, palX + ox, 2.55, palZ + oz);
+      addPartBox(scene, 0.46, 0.24, 0.46, whiteStuccoMat, palX + ox, 4.18, palZ + oz); // lotus capital!
+    });
   });
   addPartBox(scene, 10.6, 3.2, 2.6, whiteStuccoMat, palX, 2.45, palZ);
-  // Layered Multi-Tiered Thai Crimson & Emerald-Bordered Palace Roofs + Golden Mondop Spire!
+  // Illuminated gilded royal throne hall windows with carved gold frames & arched portal
+  const throneGlow = new THREE.MeshBasicMaterial({ color: '#fde047' });
+  [-3.8, -1.9, 1.9, 3.8].forEach((wx) => {
+    addPartBox(scene, 0.78, 1.38, 0.1, goldMat, palX + wx, 2.45, palZ + 1.31);
+    addPartBox(scene, 0.56, 1.18, 0.12, throneGlow, palX + wx, 2.45, palZ + 1.32);
+  });
+  addPartBox(scene, 1.58, 2.22, 0.12, goldMat, palX, 1.95, palZ + 1.33);
+  addPartBox(scene, 1.16, 1.92, 0.14, throneGlow, palX, 1.85, palZ + 1.34);
+
+  // Layered Multi-Tiered Thai Crimson & Emerald-Bordered Palace Roofs + Golden Chofa Horns & Mondop Spire!
   [
     { w: 15.2, h: 0.48, d: 5.4, y: 4.5, mat: greenTrimMat },
     { w: 14.4, h: 0.56, d: 4.9, y: 4.95, mat: redTileMat },
     { w: 11.4, h: 0.52, d: 4.1, y: 5.55, mat: greenTrimMat },
     { w: 10.6, h: 0.6, d: 3.6, y: 6.0, mat: redTileMat },
     { w: 7.4, h: 0.55, d: 2.8, y: 6.65, mat: goldMat },
-  ].forEach((tier) => addPartBox(scene, tier.w, tier.h, tier.d, tier.mat, palX, tier.y, palZ));
+  ].forEach((tier, ti) => {
+    addPartBox(scene, tier.w, tier.h, tier.d, tier.mat, palX, tier.y, palZ);
+    if (ti === 1 || ti === 3) {
+      [-tier.w * 0.48, tier.w * 0.48].forEach((cx) => {
+        const chofa = new THREE.Mesh(new THREE.ConeGeometry(0.16, 0.95, 6), goldMat);
+        chofa.position.set(palX + cx, tier.y + 0.62, palZ);
+        chofa.rotation.z = cx > 0 ? -0.35 : 0.35;
+        scene.add(chofa);
+      });
+    }
+  });
   const mondopRoof = new THREE.Mesh(new THREE.ConeGeometry(2.2, 3.4, 4), goldMat);
   mondopRoof.rotation.y = Math.PI / 4;
   mondopRoof.position.set(palX, 8.6, palZ);

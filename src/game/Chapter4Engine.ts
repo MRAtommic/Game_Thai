@@ -1038,6 +1038,23 @@ export class Chapter4Engine {
 
       this.state.gameMinutes += dt * (this.state.flags.act === 1 ? 1.8 : 2.6);
       if (this.state.gameMinutes >= 1440) this.state.gameMinutes -= 1440;
+      const wHr = this.state.gameMinutes / 60;
+      this.state.weather =
+        this.state.flags.act >= 4
+          ? 'storm'
+          : this.state.flags.act === 3
+            ? wHr >= 19.5 || wHr < 4.5
+              ? 'storm'
+              : 'windy'
+            : this.state.flags.act === 2
+              ? wHr >= 15 && wHr < 19
+                ? 'rain'
+                : 'windy'
+              : wHr >= 16.8 && wHr < 18.2
+                ? 'rain'
+                : wHr >= 12.5 && wHr < 16.8
+                  ? 'windy'
+                  : 'clear';
     }
 
     const mood: AyutthayaMood =
@@ -1202,8 +1219,15 @@ export class Chapter4Engine {
     this.hudClock.textContent = `${hh}:${mm}`;
 
     const actNames: Record<number, string> = { 1: 'อยุธยารุ่งเรือง', 2: 'โรคห่าระบาด', 3: 'โจรจลาจลเผาเมือง', 4: 'ศึกหลุมศพใหญ่' };
+    const weatherLabels: Record<typeof this.state.weather, string> = {
+      clear: 'แดดอุ่น',
+      windy: 'ลมโชย',
+      rain: 'ฝนพรำ',
+      storm: 'พายุฝน',
+    };
+    const moveLabel = this.state.isRowing ? 'พายเรือ' : this.state.isRidingHorse ? 'ขี่ม้า' : 'บนฝั่ง';
     this.hudPeriod.textContent = actNames[this.state.flags.act];
-    this.hudWeather.textContent = this.state.isRowing ? 'พายเรือ' : this.state.isRidingHorse ? 'ขี่ม้า' : 'บนฝั่ง';
+    this.hudWeather.textContent = `${weatherLabels[this.state.weather]} · ${moveLabel}`;
     const nearPier = PIER_XS.some((px) => Math.abs(px - this.state.x) < 4.2);
     this.touchBike.textContent = this.state.isRowing ? '🚣✓' : nearPier ? '🚣 เรือ' : this.state.isRidingHorse ? '🐎✓' : '🐎 ขี่ม้า';
 

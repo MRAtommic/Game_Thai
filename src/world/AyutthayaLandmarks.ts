@@ -7,6 +7,7 @@ import {
   makeAyutthayaFigure,
   makeAyutthayaHorse,
   makeAyutthayaSignTex,
+  makeAyutthayaTeakHouse,
   makeRoyalSwanBarge,
 } from './AyutthayaArchitecture';
 import { AyutthayaInnerHandles, buildAyutthayaInnerCity } from './AyutthayaInnerCity';
@@ -81,7 +82,6 @@ export function buildAyutthayaLandmarks(scene: THREE.Scene): AyutthayaLandmarkHa
   const woodPlank = new THREE.MeshStandardMaterial({ color: '#784626', roughness: 0.84 });
   const thatchMat = new THREE.MeshStandardMaterial({ color: '#a16207', roughness: 0.92 });
   const redRoofMat = new THREE.MeshStandardMaterial({ color: '#7c2d12', roughness: 0.78 });
-  const goldMat = new THREE.MeshStandardMaterial({ color: '#eab308', metalness: 0.62, roughness: 0.28 });
   const ironMat = new THREE.MeshStandardMaterial({ color: '#1e293b', metalness: 0.72, roughness: 0.35 });
 
   // 1) 390m Roadway, Chao Phraya River Canal & 8 Boat Piers
@@ -181,6 +181,11 @@ export function buildAyutthayaLandmarks(scene: THREE.Scene): AyutthayaLandmarkHa
     scene.add(sign);
 
     // Floating bamboo-canopied vendor sampan moored right along the Floating Market canal!
+    // Hanging warm silk market lantern under roof eave
+    const mLantern = new THREE.Mesh(new THREE.SphereGeometry(0.11, 7, 7), new THREE.MeshBasicMaterial({ color: '#fde047' }));
+    mLantern.position.set(rc.x + 2.2, 2.52, -0.82);
+    scene.add(mLantern);
+
     const floatBoat = makeAyutthayaBoat(3.5, true, rc.col, true);
     floatBoat.group.position.set(rc.x + 1.2, -0.14, 4.15);
     floatBoat.group.scale.x = idx % 2 === 0 ? 1 : -1;
@@ -200,29 +205,14 @@ export function buildAyutthayaLandmarks(scene: THREE.Scene): AyutthayaLandmarkHa
       scene.add(stalk);
     }
   });
-  // Elevated Peasant Stilt Houses (-112, -98, -70) + Sala Waterfront (-96)
+  // Detailed Traditional Ayutthaya Peasant Stilt Houses (Fa Pakon, open lit shutters, stairs, balconies!)
   [-112, -97, -69].forEach((hx, hi) => {
-    const hGrp = new THREE.Group();
-    hGrp.position.set(hx, 0, -3.3);
-    [-2.0, 0, 2.0].forEach((px) => {
-      [-1.0, 1.0].forEach((pz) => addPartBox(hGrp, 0.18, 1.45, 0.18, woodDark, px, 0.72, pz));
-    });
-    addPartBox(hGrp, 4.7, 0.14, 2.8, woodMid, 0, 1.46, 0);
-    addPartBox(hGrp, 4.3, 1.55, 2.35, woodPlank, 0, 2.28, 0);
-    [-1.1, 1.1].forEach((wx) => addPartBox(hGrp, 0.72, 0.66, 0.08, woodDark, wx, 2.35, 1.18));
-    const rF = addPartBox(hGrp, 5.2, 0.1, 1.9, hi === 1 ? thatchMat : redRoofMat, 0, 3.45, 0.78);
-    rF.rotation.x = 0.48;
-    const rB = addPartBox(hGrp, 5.2, 0.1, 1.9, hi === 1 ? thatchMat : redRoofMat, 0, 3.45, -0.78);
-    rB.rotation.x = -0.48;
-    addPartBox(hGrp, 5.3, 0.14, 0.2, redRoofMat, 0, 3.88, 0);
-    [-2.12, 2.12].forEach((gx) => {
-      const gable = new THREE.Mesh(new THREE.ConeGeometry(1.22, 0.85, 4), woodMid);
-      gable.rotation.y = Math.PI / 4;
-      gable.scale.set(0.14, 1, 1.42);
-      gable.position.set(gx, 3.42, 0);
-      hGrp.add(gable);
-    });
-    scene.add(hGrp);
+    scene.add(
+      makeAyutthayaTeakHouse(hx, -3.4, {
+        roofColor: hi === 1 ? '#a16207' : '#7c2d12',
+        nobleGoldTrim: false,
+      })
+    );
   });
 
   // Brick Stacks & Rice Granary Yard at -104 (just like historical Ayutthaya riverside print!)
@@ -278,22 +268,17 @@ export function buildAyutthayaLandmarks(scene: THREE.Scene): AyutthayaLandmarkHa
   nobArchRoof.position.set(nobX, 4.15, -1.9);
   scene.add(nobArchRoof);
 
-  // Grand Elevated 3-House Nobleman Compound (เรือนหมู่คหบดี/ขุนนาง)
-  [-45, -38, -31].forEach((rx, ri) => {
-    const rGrp = new THREE.Group();
-    rGrp.position.set(rx, 0, -4.4);
-    addPartBox(rGrp, 5.8, 1.6, 2.8, woodMid, 0, 0.8, 0);
-    addPartBox(rGrp, 5.0, 1.8, 2.4, woodPlank, 0, 2.5, 0);
-    const rrF = addPartBox(rGrp, 6.2, 0.12, 2.0, redRoofMat, 0, 3.85, 0.82);
-    rrF.rotation.x = 0.46;
-    const rrB = addPartBox(rGrp, 6.2, 0.12, 2.0, redRoofMat, 0, 3.85, -0.82);
-    rrB.rotation.x = -0.46;
-    addPartBox(rGrp, 6.3, 0.16, 0.22, goldMat, 0, 4.3, 0); // gilded noble gable ridge!
-    if (ri === 1) {
-      addPartBox(rGrp, 8.2, 0.18, 2.4, woodMid, 0, 1.62, 1.5); // central wide wooden courtyard veranda (ชานเรือน)
-    }
-    scene.add(rGrp);
+  // Grand Elevated 3-House Nobleman Compound with carved teak panels, balconies, staircases & gold Chofa finials!
+  [-44.5, -38, -31.5].forEach((rx, ri) => {
+    scene.add(
+      makeAyutthayaTeakHouse(rx, ri === 1 ? -4.3 : -4.6, {
+        roofColor: '#991b1b',
+        nobleGoldTrim: true,
+        scale: ri === 1 ? 1.12 : 1.0,
+      })
+    );
   });
+  addPartBox(scene, 14.5, 0.16, 1.9, woodMid, nobX, 1.52, -3.1); // linking central teak courtyard terrace (ชานเรือนขุนนาง)
   const nobSign = new THREE.Mesh(
     new THREE.PlaneGeometry(3.4, 0.68),
     new THREE.MeshBasicMaterial({ map: makeAyutthayaSignTex('#451a03', '#facc15', '#fef08a', 'เรือนหมู่พระยาวิชัย (บ้านขุนนาง)', 'คฤหาสน์คหบดี & คลังโอสถหลวง') })

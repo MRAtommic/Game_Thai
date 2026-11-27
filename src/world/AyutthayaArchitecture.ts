@@ -223,6 +223,98 @@ export function makeAyutthayaFigure(
   return g;
 }
 
+/** Adds a crafted Ayutthaya teak stilt house with Fa Pakon wood panels, open lit shutters, balcony railings, stair, & Thai gable crest. */
+export function makeAyutthayaTeakHouse(
+  x: number,
+  z: number,
+  options?: { roofColor?: string; nobleGoldTrim?: boolean; scale?: number }
+): THREE.Group {
+  const g = new THREE.Group();
+  const s = options?.scale ?? 1.0;
+  g.position.set(x, 0, z);
+  g.scale.setScalar(s);
+
+  const woodDark = new THREE.MeshStandardMaterial({ color: '#3b2112', roughness: 0.9 });
+  const woodMid = new THREE.MeshStandardMaterial({ color: '#5c361d', roughness: 0.85 });
+  const woodPanel = new THREE.MeshStandardMaterial({ color: '#784626', roughness: 0.82 });
+  const frameMat = new THREE.MeshStandardMaterial({ color: '#452613', roughness: 0.86 });
+  const roofMat = new THREE.MeshStandardMaterial({ color: options?.roofColor ?? '#7c2d12', roughness: 0.76 });
+  const trimMat = new THREE.MeshStandardMaterial({
+    color: options?.nobleGoldTrim ? '#eab308' : '#9a3412',
+    metalness: options?.nobleGoldTrim ? 0.65 : 0.1,
+    roughness: options?.nobleGoldTrim ? 0.3 : 0.75,
+  });
+  const warmGlow = new THREE.MeshBasicMaterial({ color: '#f59e0b' });
+
+  // 6 sturdy stilt posts + cross-beams + under-house rice jar
+  [-2.05, 0, 2.05].forEach((px) => {
+    [-1.05, 1.05].forEach((pz) => addPartBox(g, 0.18, 1.5, 0.18, woodDark, px, 0.75, pz));
+    addPartBox(g, 0.14, 0.14, 2.35, frameMat, px, 1.38, 0);
+  });
+  const jar = new THREE.Mesh(new THREE.SphereGeometry(0.28, 10, 8), frameMat);
+  jar.scale.set(1, 1.15, 1);
+  jar.position.set(1.25, 0.3, 0.7);
+  g.add(jar);
+
+  // Elevated veranda deck + balustrade posts & front wooden staircase
+  addPartBox(g, 5.1, 0.14, 3.3, woodMid, 0, 1.5, 0.25);
+  [-2.3, -1.35, 1.35, 2.3].forEach((rx) => addPartBox(g, 0.08, 0.56, 0.08, woodDark, rx, 1.82, 1.8));
+  addPartBox(g, 1.15, 0.07, 0.09, woodDark, -1.82, 2.08, 1.8);
+  addPartBox(g, 1.15, 0.07, 0.09, woodDark, 1.82, 2.08, 1.8);
+  // Slanted wooden staircase down to ground at center-left
+  const stair = addPartBox(g, 0.75, 0.08, 1.65, woodMid, -0.45, 0.82, 2.35);
+  stair.rotation.x = 0.78;
+  [-0.85, -0.05].forEach((sx) => {
+    const rail = addPartBox(g, 0.05, 0.42, 1.65, woodDark, sx, 1.05, 2.35);
+    rail.rotation.x = 0.78;
+  });
+
+  // Main upper wall body + authentic Thai "Fa Pakon" vertical frames & recessed wood paneling
+  addPartBox(g, 4.4, 1.65, 2.35, woodPanel, 0, 2.38, -0.2);
+  [-2.18, -1.1, 0, 1.1, 2.18].forEach((bx) => addPartBox(g, 0.1, 1.68, 2.4, frameMat, bx, 2.38, -0.2));
+  [1.64, 2.15, 3.12].forEach((by) => addPartBox(g, 4.48, 0.09, 2.4, frameMat, 0, by, -0.2));
+
+  // Two open Ayutthaya wooden windows with warm interior light & flared hinged shutters!
+  [-1.55, 1.55].forEach((wx) => {
+    addPartBox(g, 0.62, 0.68, 0.06, warmGlow, wx, 2.52, 0.99);
+    const shL = addPartBox(g, 0.3, 0.68, 0.05, woodDark, wx - 0.34, 2.52, 1.12);
+    shL.rotation.y = -0.65;
+    const shR = addPartBox(g, 0.3, 0.68, 0.05, woodDark, wx + 0.34, 2.52, 1.12);
+    shR.rotation.y = 0.65;
+  });
+  // Carved teak doorway with gold trim lintel
+  addPartBox(g, 0.76, 1.28, 0.08, woodDark, 0, 2.26, 1.0);
+  addPartBox(g, 0.9, 0.12, 0.12, trimMat, 0, 2.94, 1.02);
+
+  // Sloped 2-tier Ayutthaya Gable Roof, Overhanging Veranda Eave & Gable Chofa Crest!
+  const rF = addPartBox(g, 5.4, 0.1, 1.95, roofMat, 0, 3.68, 0.64);
+  rF.rotation.x = 0.48;
+  const rB = addPartBox(g, 5.4, 0.1, 1.95, roofMat, 0, 3.68, -1.04);
+  rB.rotation.x = -0.48;
+  const porchAwning = addPartBox(g, 5.2, 0.08, 1.15, roofMat, 0, 3.12, 1.38);
+  porchAwning.rotation.x = 0.34;
+  addPartBox(g, 5.5, 0.14, 0.2, trimMat, 0, 4.12, -0.2);
+
+  // Enclosed triangular gable end boards (จั่วเรือนไทย) + carved horn Pan Lom & Chofa finials!
+  [-2.22, 2.22].forEach((gx) => {
+    const gable = new THREE.Mesh(new THREE.ConeGeometry(1.26, 0.92, 4), woodMid);
+    gable.rotation.y = Math.PI / 4;
+    gable.scale.set(0.14, 1, 1.44);
+    gable.position.set(gx, 3.62, -0.2);
+    const chofa = new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.68, 6), trimMat);
+    chofa.position.set(gx * 1.12, 4.38, -0.2);
+    chofa.rotation.z = gx > 0 ? -0.25 : 0.25;
+    g.add(gable, chofa);
+  });
+
+  // Warm hanging oil lamp on veranda post
+  const lantern = new THREE.Mesh(new THREE.SphereGeometry(0.085, 8, 8), new THREE.MeshBasicMaterial({ color: '#fde68a' }));
+  lantern.position.set(0, 2.95, 1.48);
+  g.add(lantern);
+
+  return g;
+}
+
 /** Builds a sculpted hollow Thai wooden rowing boat with optional woven bamboo canopy or seated rower. */
 export function makeAyutthayaBoat(
   length = 4.2,

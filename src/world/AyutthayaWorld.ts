@@ -103,6 +103,14 @@ export class AyutthayaWorld {
 
   private rainSystem: THREE.LineSegments;
   private smokePlumes: THREE.Mesh[] = [];
+  private skyCanvas: HTMLCanvasElement;
+  private skyTex: THREE.CanvasTexture;
+  private skyPlane: THREE.Mesh;
+  private lastSkyKey = '';
+  private celestialOrb: THREE.Mesh;
+  private celestialGlow: THREE.Mesh;
+  private cloudMat: THREE.MeshStandardMaterial;
+  private cloudClusters: { group: THREE.Group; x: number; speed: number; baseY: number }[] = [];
   private animClock = 0;
   private zoomFactor = 1.0;
   private targetCamZ = 14.2;
@@ -136,6 +144,55 @@ export class AyutthayaWorld {
     this.torchLight = new THREE.PointLight('#fb923c', 0, 14, 1.1);
     this.torchLight.position.set(-46, 1.7, 1.4);
     this.scene.add(this.torchLight);
+
+    // Dynamic Gradient Sky Backdrop, Sun/Moon Halo & Drifting Puffy 3D Clouds!
+    this.skyCanvas = document.createElement('canvas');
+    this.skyCanvas.width = 16;
+    this.skyCanvas.height = 128;
+    this.skyTex = new THREE.CanvasTexture(this.skyCanvas);
+    this.skyTex.colorSpace = THREE.SRGBColorSpace;
+    this.skyPlane = new THREE.Mesh(
+      new THREE.PlaneGeometry(460, 120),
+      new THREE.MeshBasicMaterial({ map: this.skyTex, depthWrite: false, fog: false })
+    );
+    this.skyPlane.position.set(0, 32, -38);
+    this.scene.add(this.skyPlane);
+
+    this.celestialOrb = new THREE.Mesh(
+      new THREE.CircleGeometry(3.6, 20),
+      new THREE.MeshBasicMaterial({ color: '#fef08a', fog: false })
+    );
+    this.celestialGlow = new THREE.Mesh(
+      new THREE.CircleGeometry(9.5, 20),
+      new THREE.MeshBasicMaterial({ color: '#fde68a', transparent: true, opacity: 0.25, fog: false, depthWrite: false })
+    );
+    this.celestialOrb.position.set(-40, 22, -35);
+    this.celestialGlow.position.set(-40, 22, -35.5);
+    this.scene.add(this.celestialOrb, this.celestialGlow);
+
+    this.cloudMat = new THREE.MeshStandardMaterial({ color: '#fffbf0', roughness: 0.96, metalness: 0.0, fog: false });
+    for (let ci = 0; ci < 18; ci++) {
+      const cg = new THREE.Group();
+      const scale = 0.85 + (ci % 4) * 0.35;
+      [
+        [0, 0, 0, 1.4],
+        [-1.3, -0.2, 0.2, 1.05],
+        [1.35, -0.15, -0.2, 1.1],
+        [-0.5, 0.65, 0.1, 1.0],
+        [0.65, 0.55, 0.15, 0.95],
+      ].forEach(([ox, oy, oz, rad]) => {
+        const puff = new THREE.Mesh(new THREE.DodecahedronGeometry(rad, 0), this.cloudMat);
+        puff.scale.set(1.35, 0.72, 0.8);
+        puff.position.set(ox * scale, oy * scale, oz * scale);
+        cg.add(puff);
+      });
+      const cx = -185 + ci * 22;
+      const cy = 8.4 + (ci % 4) * 1.65;
+      const cz = -19 - (ci % 3) * 4.5;
+      cg.position.set(cx, cy, cz);
+      this.scene.add(cg);
+      this.cloudClusters.push({ group: cg, x: cx, speed: 0.45 + (ci % 3) * 0.22, baseY: cy });
+    }
 
     this.initSprites();
     this.landmarks = buildAyutthayaLandmarks(this.scene);
@@ -534,23 +591,89 @@ export class AyutthayaWorld {
     const hr = (gameMinutes % 1440) / 60;
     const isNight = hr >= 18.5 || hr < 5.5;
 
-    // Sky/fog lighting progression from golden prosperous Ayutthaya -> smoky plague -> fiery riot night!
-    const bgHex =
-      mood === 'prosperous'
-        ? hr < 17
-          ? '#3b678c'
-          : '#4a2b25'
-        : mood === 'plague'
-          ? '#1e1c24'
-          : mood === 'riot'
-            ? '#240f0c'
-            : '#14111c';
-    (this.scene.background as THREE.Color).lerp(new THREE.Color(bgHex), Math.min(1, dt * 1.4));
-    (this.scene.fog as THREE.FogExp2).color.copy(this.scene.background as THREE.Color);
-    (this.scene.fog as THREE.FogExp2).density = mood === 'prosperous' ? 0.0085 : mood === 'plague' ? 0.015 : 0.017;
+    // Dynamic Sky Gradient, Sun/Moon Arc, Drifting Clouds & Natural Rain/Wind Weather!
+    const topCol =
+      weather === 'storm'
+        ? '#0f172a'
+        : mood === 'riot'
+          ? '#1c0b0a'
+          : isNight
+            ? '#080e24'
+            : hr >= 16.5
+              ? '#242b52'
+              : '#1e4e79';
+    const midCol =
+      weather === 'storm' || mood === 'plague'
+        ? '#334155'
+        : mood === 'riot'
+          ? '#4c1d12'
+          : isNight
+            ? '#132042'
+            : hr >= 16.5
+              ? '#9a4332'
+              : '#4a8ab5';
+    const horCol =
+      weather === 'storm' || weather === 'rain'
+        ? '#475569'
+        : mood === 'riot'
+          ? '#9a3412'
+          : isNight
+            ? '#1c2c4c'
+            : hr >= 16.5
+              ? '#f59e0b'
+              : '#bae6fd';
+    const skyKey = `${topCol}_${midCol}_${horCol}`;
+    if (skyKey !== this.lastSkyKey) {
+      this.lastSkyKey = skyKey;
+      const sctx = this.skyCanvas.getContext('2d')!;
+      const gr = sctx.createLinearGradient(0, 0, 0, 128);
+      gr.addColorStop(0, topCol);
+      gr.addColorStop(0.55, midCol);
+      gr.addColorStop(1, horCol);
+      sctx.fillStyle = gr;
+      sctx.fillRect(0, 0, 16, 128);
+      this.skyTex.needsUpdate = true;
+    }
 
-    this.hemiLight.intensity = mood === 'prosperous' && !isNight ? 1.5 : mood === 'riot' ? 0.92 : 0.78;
-    this.sunLight.intensity = mood === 'prosperous' && !isNight ? 1.35 : 0.35;
+    (this.scene.background as THREE.Color).lerp(new THREE.Color(horCol), Math.min(1, dt * 1.4));
+    (this.scene.fog as THREE.FogExp2).color.copy(this.scene.background as THREE.Color);
+    (this.scene.fog as THREE.FogExp2).density =
+      weather === 'rain' || weather === 'storm' ? 0.015 : mood === 'prosperous' ? 0.0075 : 0.014;
+
+    // Update Celestial Sun/Moon position & cloud lighting tint
+    const skyX = this.camera.position.x;
+    this.skyPlane.position.x = skyX;
+    const sunT = Math.max(0, Math.min(1, isNight ? (hr >= 18.5 ? hr - 18.5 : hr + 5.5) / 11 : (hr - 5.5) / 13));
+    const orbX = skyX + (sunT - 0.5) * 40;
+    const orbY = 9.5 + Math.sin(sunT * Math.PI) * 7.8;
+    this.celestialOrb.position.set(orbX, orbY, -35);
+    this.celestialGlow.position.set(orbX, orbY, -35.5);
+    (this.celestialOrb.material as THREE.MeshBasicMaterial).color.set(
+      isNight ? '#e2e8f0' : hr >= 16.5 ? '#fb923c' : '#fef08a'
+    );
+    (this.celestialGlow.material as THREE.MeshBasicMaterial).opacity = weather === 'storm' ? 0.06 : isNight ? 0.18 : 0.28;
+
+    const windMult = weather === 'windy' ? 2.4 : weather === 'storm' ? 3.2 : weather === 'rain' ? 1.8 : 1.0;
+    const cloudCol =
+      weather === 'storm' || weather === 'rain'
+        ? '#64748b'
+        : mood === 'riot'
+          ? '#b45309'
+          : isNight
+            ? '#334155'
+            : hr >= 16.5
+              ? '#fed7aa'
+              : '#fffdf7';
+    this.cloudMat.color.lerp(new THREE.Color(cloudCol), Math.min(1, dt * 2.0));
+    this.cloudClusters.forEach((cl) => {
+      cl.x += cl.speed * windMult * dt;
+      if (cl.x > CH4_MAX_X + 20) cl.x = CH4_MIN_X - 20;
+      cl.group.position.x = cl.x;
+      cl.group.position.y = cl.baseY + Math.sin(this.animClock * 0.4 + cl.x * 0.05) * 0.25;
+    });
+
+    this.hemiLight.intensity = mood === 'prosperous' && !isNight ? 1.55 : mood === 'riot' ? 0.92 : 0.82;
+    this.sunLight.intensity = weather === 'storm' ? 0.4 : mood === 'prosperous' && !isNight ? 1.35 : 0.4;
 
     // Update protagonist sprite (on shore, seated on wooden boat, OR galloping astride chestnut horse!)
     const playerZ = isRowing ? 5.15 : 0.85;
@@ -764,10 +887,11 @@ export class AyutthayaWorld {
       mesh.visible = !activeSurvIds.has(nid);
     });
 
-    // Rain visibility
+    // Rain streak falling animation
     this.rainSystem.visible = weather === 'rain' || weather === 'storm';
     if (this.rainSystem.visible) {
-      this.rainSystem.position.x = this.camera.position.x;
+      this.rainSystem.position.x = this.camera.position.x - ((this.animClock * (weather === 'storm' ? 6 : 3)) % 2);
+      this.rainSystem.position.y = -((this.animClock * 16) % 3);
     }
 
     // Smooth camera follow
