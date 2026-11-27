@@ -9,7 +9,7 @@ import { bindCameraZoomControls } from '../ui/mobileZoom';
 import { AyutthayaMood, AyutthayaWorld, CH4_MAX_X, CH4_MIN_X } from '../world/AyutthayaWorld';
 
 const CH4_SAVE_KEY = 'reuan_chan_ch4_save_v1';
-const PIER_XS = [-112, -52, 22, 74, 116];
+const PIER_XS = [-168, -128, -84, -36, 18, 72, 134, 178];
 
 interface Ch4Flags {
   act: 1 | 2 | 3 | 4;
@@ -136,7 +136,7 @@ export class Chapter4Engine {
       gameMinutes: 8 * 60 + 45,
       day: 1,
       weather: 'clear',
-      x: -48,
+      x: -84,
       hp: 100,
       sanity: 100,
       stamina: 100,
@@ -443,7 +443,7 @@ export class Chapter4Engine {
     if (this.state.isRowing) {
       const nearPier = PIER_XS.find((px) => Math.abs(px - this.state.x) < 4.5);
       if (!nearPier) {
-        this.showToast('พายไปเทียบใกล้ท่าน้ำ [ท่าเรือ ±112, -52, 22, 74, 116] ก่อนขึ้นฝั่ง!');
+        this.showToast('พายไปเทียบใกล้ท่าน้ำ [ท่าเรือ -168, -128, -84, -36, 18, 72, 134, 178] ก่อนขึ้นฝั่ง!');
         return;
       }
       this.state.isRowing = false;
@@ -467,7 +467,7 @@ export class Chapter4Engine {
   private swingSword(): void {
     if (this.swordCd > 0) return;
     if (!this.state.inventory.includes('namphi_sword')) {
-      this.showToast('ยังไม่มีดาบ! รีบไปรับดาบเหล็กน้ำพี้จากลุงสินที่โรงตีดาบ (-45 ม.)');
+      this.showToast('ยังไม่มีดาบ! รีบไปรับดาบเหล็กน้ำพี้จากลุงสินที่โรงตีดาบ (-81 ม.)');
       return;
     }
     this.swordCd = 0.34;
@@ -475,10 +475,10 @@ export class Chapter4Engine {
     this.world.triggerSwordSlash(this.state.x, this.playerFacing);
 
     // Training dummy strike in Act 1
-    if (this.state.flags.act === 1 && Math.abs(this.state.x - -41.4) < 3.0 && !this.state.flags.practicedSword) {
+    if (this.state.flags.act === 1 && Math.abs(this.state.x - -77.5) < 3.0 && !this.state.flags.practicedSword) {
       this.state.flags.practicedSword = true;
       this.sound.playSwordHit();
-      this.showToast('ฝึกฟันดาบเหล็กน้ำพี้สำเร็จ! ออกตรวจตลาดท่าเรือด้านซ้ายต่อได้');
+      this.showToast('ฝึกฟันดาบเหล็กน้ำพี้สำเร็จ! ล่องเรือหรือเดินไปตลาดน้ำอโยธยาด้านซ้ายต่อได้');
       this.saveGame();
       return;
     }
@@ -586,16 +586,16 @@ export class Chapter4Engine {
 
   private spawnAct2Actors(): void {
     this.world.clearDynamicActors();
-    this.world.addEnemyVisual('p1', 'phee_ha', 88, 70);
-    this.world.addEnemyVisual('p2', 'phee_ha', 54, 70);
-    this.world.addEnemyVisual('p3', 'phee_ha', 6, 70);
+    this.world.addEnemyVisual('p1', 'phee_ha', 152, 70);
+    this.world.addEnemyVisual('p2', 'phee_ha', 102, 70);
+    this.world.addEnemyVisual('p3', 'phee_ha', 48, 70);
     this.world.addEnemyVisual('p4', 'phee_ha', -34, 70);
-    this.world.addEnemyVisual('p5', 'phee_ha', -78, 70);
+    this.world.addEnemyVisual('p5', 'phee_ha', -148, 70);
     if (!this.state.rescuedIds.includes('phudsorn') && !this.state.deadIds.includes('phudsorn')) {
-      this.world.addSurvivorVisual('phudsorn', 'แม่พุดซ้อน (ตลาด)', 'phudsorn', -90);
+      this.world.addSurvivorVisual('phudsorn', 'แม่พุดซ้อน (ตลาดน้ำ)', 'phudsorn', -157);
     }
     if (!this.state.rescuedIds.includes('child_kla') && !this.state.deadIds.includes('child_kla')) {
-      this.world.addSurvivorVisual('child_kla', 'น้องกล้า (หมู่บ้าน)', 'child_kla', -58);
+      this.world.addSurvivorVisual('child_kla', 'น้องกล้า (หมู่บ้าน)', 'child_kla', -102);
     }
   }
 
@@ -606,17 +606,17 @@ export class Chapter4Engine {
       fv.active = !done;
       fv.extinguished = done;
     });
-    this.world.addEnemyVisual('b1', 'bandit', -84, 80);
-    this.world.addEnemyVisual('b2', 'bandit', -34, 80);
-    this.world.addEnemyVisual('b3', 'bandit', 14, 90);
-    this.world.addEnemyVisual('b4', 'bandit', -54, 80);
-    this.world.addEnemyVisual('p6', 'phee_ha', 48, 85);
-    this.world.addEnemyVisual('p7', 'phee_ha', 80, 85);
+    this.world.addEnemyVisual('b1', 'bandit', -154, 80);
+    this.world.addEnemyVisual('b2', 'bandit', -98, 80);
+    this.world.addEnemyVisual('b3', 'bandit', -35, 85);
+    this.world.addEnemyVisual('b4', 'bandit', 18, 90);
+    this.world.addEnemyVisual('p6', 'phee_ha', 66, 85);
+    this.world.addEnemyVisual('p7', 'phee_ha', 112, 85);
     [
-      { id: 'phudsorn', name: 'แม่พุดซ้อน', kind: 'phudsorn' as const, x: -91 },
-      { id: 'smith', name: 'ลุงสินช่างตีดาบ', kind: 'smith' as const, x: -46 },
-      { id: 'child_kla', name: 'น้องกล้า', kind: 'child_kla' as const, x: -58 },
-      { id: 'villager_bua', name: 'ยายบัว (หน้าประตูชัย)', kind: 'villager' as const, x: 18 },
+      { id: 'phudsorn', name: 'แม่พุดซ้อน (ตลาดน้ำ)', kind: 'phudsorn' as const, x: -157 },
+      { id: 'smith', name: 'ลุงสินช่างตีดาบ', kind: 'smith' as const, x: -82 },
+      { id: 'child_kla', name: 'น้องกล้า', kind: 'child_kla' as const, x: -102 },
+      { id: 'villager_bua', name: 'ยายบัว (ย่านขุนนาง)', kind: 'villager' as const, x: -34 },
     ].forEach((sv) => {
       if (!this.state.rescuedIds.includes(sv.id) && !this.state.deadIds.includes(sv.id)) {
         this.world.addSurvivorVisual(sv.id, sv.name, sv.kind, sv.x);
@@ -627,9 +627,9 @@ export class Chapter4Engine {
   private spawnAct4Actors(): void {
     this.world.clearDynamicActors();
     if (!this.state.flags.sueaKhamDefeated) {
-      this.world.addEnemyVisual('boss_kham', 'suea_kham', 86, 160);
-      this.world.addEnemyVisual('p8', 'phee_ha', 92, 85);
-      this.world.addEnemyVisual('p9', 'phee_ha', 102, 85);
+      this.world.addEnemyVisual('boss_kham', 'suea_kham', 148, 160);
+      this.world.addEnemyVisual('p8', 'phee_ha', 156, 85);
+      this.world.addEnemyVisual('p9', 'phee_ha', 166, 85);
     }
   }
 
@@ -682,10 +682,10 @@ export class Chapter4Engine {
     this.saveGame();
     this.startDialogue([
       {
-        speaker: 'หลวงตาคง (วัดมหาธาตุ)',
+        speaker: 'หลวงตาคง (วัดไชยวัฒนาราม)',
         role: 'เจ้าอาวาสเขตอภัยทาน',
         portrait: 'uncle',
-        text: 'เพลิงสงบแล้วโยมมั่น... แต่ขุนโจรเสือคำกำลังพาสมุนไปขุดค้นศพที่หลุมใหญ่ป่าช้า (+86 ม.)! จงรีบไปปราบมัน แล้วนำไต้ไฟกับน้ำมนต์ไปชำระหลุมศพ หรือนำชาวบ้านขึ้นเรือสำเภาอพยพที่ท่าเรือท้ายวัด!',
+        text: 'เพลิงสงบแล้วโยมมั่น... แต่ขุนโจรเสือคำกำลังพาสมุนไปขุดค้นศพที่หลุมใหญ่ป่าช้า (+148 ม.)! จงรีบไปปราบมัน แล้วนำไต้ไฟกับน้ำมนต์ไปชำระหลุมศพ (+160 ม.) หรือนำชาวบ้านขึ้นเรือสำเภาอพยพ (+178 ม.)!',
       },
     ]);
   }
@@ -713,7 +713,7 @@ export class Chapter4Engine {
       if (pier !== undefined) {
         return { label: 'เทียบท่าขึ้นฝั่ง', run: () => this.toggleBoat() };
       }
-      if (f.act === 4 && f.sueaKhamDefeated && Math.abs(px - 116) < 6) {
+      if (f.act === 4 && f.sueaKhamDefeated && Math.abs(px - 178) < 6) {
         return { label: 'นำเรือเทียบสำเภาหลวงอพยพ', run: () => this.finishChapter('normal') };
       }
       return null;
@@ -721,7 +721,7 @@ export class Chapter4Engine {
 
     // Active arson fire extinguishing
     for (const fv of this.world.getFireViews()) {
-      if (fv.active && !fv.extinguished && Math.abs(px - fv.x) < 3.6) {
+      if (fv.active && !fv.extinguished && Math.abs(px - fv.x) < 3.8) {
         return {
           label: `สาดน้ำดับ${fv.label}`,
           run: () => {
@@ -739,8 +739,8 @@ export class Chapter4Engine {
 
     // Rescue live survivors once threats around them are clear
     for (const sv of this.world.getSurvivorViews()) {
-      if (sv.alive && !sv.rescued && Math.abs(px - sv.x) < 3.0) {
-        const attackerNear = this.world.getEnemyViews().some((ev) => ev.alive && Math.abs(ev.x - sv.x) < 6.5);
+      if (sv.alive && !sv.rescued && Math.abs(px - sv.x) < 3.2) {
+        const attackerNear = this.world.getEnemyViews().some((ev) => ev.alive && Math.abs(ev.x - sv.x) < 7.0);
         return {
           label: attackerNear ? `ฟันศัตรูรอบตัว ${sv.name} ก่อน!` : `ช่วยพา ${sv.name} อพยพเข้าวัด`,
           run: () => {
@@ -750,9 +750,9 @@ export class Chapter4Engine {
             }
             sv.rescued = true;
             const slotOffset = (this.state.rescuedIds.length % 4) * 1.4;
-            sv.x = 65 + slotOffset;
+            sv.x = 134 + slotOffset;
             if (!this.state.rescuedIds.includes(sv.id)) this.state.rescuedIds.push(sv.id);
-            this.showToast(`คุ้มกัน ${sv.name} เข้าเขตอภัยทานวัดมหาธาตุปลอดภัย!`);
+            this.showToast(`คุ้มกัน ${sv.name} เข้าเขตอภัยทานวัดไชยฯ ปลอดภัย!`);
             this.saveGame();
             this.checkActProgression();
           },
@@ -761,42 +761,48 @@ export class Chapter4Engine {
     }
 
     // Pier boating prompt
-    const pier = PIER_XS.find((p) => Math.abs(p - px) < 3.4);
+    const pier = PIER_XS.find((p) => Math.abs(p - px) < 3.6);
     if (pier !== undefined) {
-      if (f.act === 4 && f.sueaKhamDefeated && pier === 116) {
+      if (f.act === 4 && f.sueaKhamDefeated && pier === 178) {
         return { label: 'ขึ้นเรือสำเภาอพยพชาวบ้าน', run: () => this.finishChapter('normal') };
       }
       return { label: 'ลงเรือพายล่องคลองกรุงศรีฯ [B]', run: () => this.toggleBoat() };
     }
 
-    // Story NPC & Landmark interactions
-    if (Math.abs(px - -45.5) < 3.2) {
+    // Story NPC & Monument interactions across the 380m Ayutthaya Kingdom
+    if (Math.abs(px - -81.5) < 3.4) {
       return { label: 'คุยกับลุงสิน (โรงตีดาบ)', run: () => this.interactSmith() };
     }
-    if (Math.abs(px - -91.5) < 3.2 && f.act === 1) {
-      return { label: 'คุยกับแม่พุดซ้อน (ตลาดท่าเรือ)', run: () => this.interactPhudsorn() };
+    if (Math.abs(px - -157) < 3.4 && f.act === 1) {
+      return { label: 'คุยกับแม่พุดซ้อน (ตลาดน้ำอโยธยา)', run: () => this.interactPhudsorn() };
     }
-    if (Math.abs(px - -114) < 3.5 && f.act === 1 && !f.inspectedSampan) {
+    if (Math.abs(px - -174) < 5.0 && f.act === 1 && !f.inspectedSampan) {
       return { label: 'ตรวจเรือสำเภาสินค้าน่านน้ำ', run: () => this.interactSampan() };
     }
-    if (Math.abs(px - 10.4) < 3.2 && f.act === 1) {
-      return { label: 'คุยกับขุนราม (ประตูชัย)', run: () => this.interactKhunRam() };
+    if (Math.abs(px - -38) < 3.6 && f.act === 1) {
+      return { label: 'แวะตรวจจวนขุนนาง (เรือนพระยาวิชัย)', run: () => this.showToast('บ้านขุนนางอโยธยา: ทหารเวรเฝ้าคฤหาสน์และคลังโอสถหลวงอย่างเข้มงวด') };
     }
-    if (Math.abs(px - 69.5) < 3.4) {
-      return { label: 'กราบหลวงตาคง (วัดมหาธาตุ)', run: () => this.interactMonk() };
+    if (Math.abs(px - 11.5) < 3.4 && f.act === 1) {
+      return { label: 'คุยกับขุนราม (ค่ายทหารประตูชัย)', run: () => this.interactKhunRam() };
     }
-    if (Math.abs(px - 96.5) < 4.2) {
+    if (Math.abs(px - 66) < 4.5 && f.act === 1) {
+      return { label: 'ชื่นชมพระบรมมหาราชวัง & อุทยานสระบัว', run: () => this.showToast('พระที่นั่งสรรเพชญมหาปราสาทแลดูสง่างามเหนือลำน้ำเจ้าพระยา') };
+    }
+    if (Math.abs(px - 136) < 3.6) {
+      return { label: 'กราบหลวงตาคง (วัดไชยวัฒนาราม)', run: () => this.interactMonk() };
+    }
+    if (Math.abs(px - 160) < 4.6) {
       if (f.act === 1) {
         if (!f.talkedSmithIntro) {
           return {
-            label: 'ไปรับดาบและหน้าไม้จากลุงสิน (-45 ม.) ก่อนตรวจป่าช้า',
-            run: () => this.showToast('ควรแวะโรงตีดาบลุงสิน (-45 ม.) รับดาบเหล็กน้ำพี้และหน้าไม้ก่อนเข้าใกล้หลุมศพใหญ่!'),
+            label: 'ไปรับดาบและหน้าไม้จากลุงสิน (-81 ม.) ก่อนตรวจป่าช้า',
+            run: () => this.showToast('ควรแวะโรงตีดาบลุงสิน (-81 ม.) รับดาบเหล็กน้ำพี้และหน้าไม้ก่อนเข้าใกล้หลุมศพใหญ่!'),
           };
         }
-        return { label: 'ตรวจดูหลุมศพใหญ่ป่าช้า', run: () => this.triggerAct2Plague() };
+        return { label: 'ตรวจดูหลุมศพใหญ่หลังประตูผี', run: () => this.triggerAct2Plague() };
       }
       if (f.act === 4 && f.sueaKhamDefeated) {
-        return { label: 'จุดไต้เผา & สาดน้ำมนต์ชำระหลุมศพห่า', run: () => this.finishChapter(this.state.rescuedIds.length >= 2 && this.state.extinguishedFireIds.length >= 3 ? 'true' : 'normal') };
+        return { label: 'จุดไต้เผา & สาดน้ำมนต์ชำระหลุมศพห่า', run: () => this.finishChapter(this.state.rescuedIds.length >= 2 && this.state.extinguishedFireIds.length >= 4 ? 'true' : 'normal') };
       }
     }
 
@@ -817,7 +823,7 @@ export class Chapter4Engine {
           speaker: 'ลุงสิน',
           role: 'ช่างตีดาบหลวง',
           portrait: 'uncle',
-          text: 'เจ้ามั่นมาพอดี! ลุงตีดาบเหล็กน้ำพี้กับหน้าไม้ไว้ให้เอ็งติดตัวแล้ว เอาไต้ไฟกับยาต้มสมุนไพรไปด้วย ลองฟันหุ่นฟางข้างโรงตีดาบ [F] ดูสักที แล้วล่องเรือไปตรวจตลาดท่าเรือด้านซ้าย (-91 ม.) นะเอ็ง',
+          text: 'เจ้ามั่นมาพอดี! ลุงตีดาบเหล็กน้ำพี้กับหน้าไม้ไว้ให้เอ็งติดตัวแล้ว เอาไต้ไฟกับยาต้มสมุนไพรไปด้วย ลองฟันหุ่นฟางข้างโรงตีดาบ [F] ดูสักที แล้วล่องเรือไปตรวจตลาดน้ำอโยธยาด้านซ้าย (-157 ม.) นะเอ็ง',
         },
       ]);
       return;
@@ -837,9 +843,9 @@ export class Chapter4Engine {
     this.startDialogue([
       {
         speaker: 'แม่พุดซ้อน',
-        role: 'แม่ค้าตลาดท่าเรือ',
+        role: 'แม่ค้าตลาดน้ำอโยธยา',
         portrait: 'vendor',
-        text: 'พ่อมั่น! ช่วยด้วยเถิดเจ้าค่ะ มีข่าวลือว่าเรือสำเภาต่างถิ่นที่เทียบท่าน้ำซ้าย (-114 ม.) มีคนป่วยตัวซีดล้มตายหลายคน เอาถังน้ำนี่ติดเรือไปด้วย เผื่อช่วยตักน้ำหรือดับไฟได้เจ้าค่ะ',
+        text: 'พ่อมั่น! ช่วยด้วยเถิดเจ้าค่ะ มีข่าวลือว่าเรือสำเภาต่างถิ่นที่เทียบท่าน้ำซ้าย (-174 ม.) มีคนป่วยตัวซีดล้มตายหลายคน เอาถังน้ำนี่ติดเรือไปด้วย เผื่อช่วยตักน้ำหรือดับไฟได้เจ้าค่ะ',
       },
     ]);
   }
@@ -853,7 +859,7 @@ export class Chapter4Engine {
         speaker: 'มั่น',
         role: 'ศิษย์ช่างตีดาบ',
         portrait: 'player',
-        text: 'มีห่อผ้าเปื้อนเลือดกับรอยลากศพจากเรือสำเภาไปทางป่าช้านอกกำแพงเมืองฝั่งตะวันออก... ต้องรีบไปบอกขุนรามที่ประตูชัย (+10 ม.) กับหลวงตาคงที่วัดมหาธาตุ (+69 ม.) แล้ว!',
+        text: 'มีห่อผ้าเปื้อนเลือดกับรอยลากศพจากเรือสำเภาไปทางป่าช้านอกกำแพงเมืองฝั่งตะวันออก... ต้องรีบเข้าประตูชัยผ่านย่านขุนนางไปแจ้งขุนรามค่ายช้างศึก (+11 ม.) และหลวงตาคงที่วัดไชยฯ (+136 ม.) แล้ว!',
       },
     ]);
   }
@@ -865,9 +871,9 @@ export class Chapter4Engine {
     this.startDialogue([
       {
         speaker: 'ขุนราม',
-        role: 'นายทวารประตูชัย',
+        role: 'นายทวารประตูชัย & ค่ายช้างศึก',
         portrait: 'uncle',
-        text: 'เจ้ามั่น! พวกโจรเสือคำกำลังซุ่มดูลาดเลานอกกำแพงเมือง ส่วนหมอหลวงขนศพคนตายโรคห่าไปรวมไว้ที่หลุมใหญ่หลังวัดมหาธาตุ (+97 ม.) เอ็งไปกราบหลวงตาคงรับน้ำมนต์แล้วลองเดินไปตรวจหลุมศพเถิด',
+        text: 'เจ้ามั่น! พวกโจรเสือคำกำลังซุ่มดูลาดเลานอกกำแพงเมือง ส่วนหมอหลวงขนศพคนตายโรคห่าไปรวมไว้ที่หลุมใหญ่หลังประตูผี (+160 ม.) เอ็งเดินชมวังหลวงแล้วแวะรับน้ำมนต์จากหลวงตาคง (+136 ม.) ก่อนไปตรวจหลุมศพเถิด',
       },
     ]);
   }
@@ -884,9 +890,9 @@ export class Chapter4Engine {
       this.startDialogue([
         {
           speaker: 'หลวงตาคง',
-          role: 'เจ้าอาวาสวัดมหาธาตุ',
+          role: 'เจ้าอาวาสวัดไชยวัฒนาราม',
           portrait: 'uncle',
-          text: 'เจริญพรโยมมั่น จงรับเบี้ยแก้กันห่าและน้ำพระพุทธมนต์นี้ไว้คุ้มกาย หากเกิดเพศภัยในพระนคร ให้พามหาชนเข้ามาหลบในเขตอภัยทานศาลาวัดมหาธาตุแห่งนี้ แล้วโยมจงไปดูหลุมศพใหญ่ด้านขวา (+97 ม.) เถิด',
+          text: 'เจริญพรโยมมั่น จงรับเบี้ยแก้กันห่าและน้ำพระพุทธมนต์นี้ไว้คุ้มกาย หากเกิดเพศภัยในพระนคร ให้พามหาชนเข้ามาหลบในเขตอภัยทานศาลาวัดแห่งนี้ แล้วโยมจงเดินออกประตูผีไปดูหลุมศพใหญ่ด้านขวา (+160 ม.) เถิด',
         },
       ]);
       return;
@@ -915,7 +921,7 @@ export class Chapter4Engine {
       this.modalBody.innerHTML =
         ending === 'bad'
           ? `<p>เจ้ามั่นล้มลงท่ามกลางเพลิงจลาจลและฝูงผีห่าอโยธยา...</p><div style="margin-top:14px;display:flex;gap:10px;justify-content:flex-end"><button id="ch4-retry" class="primary-btn">ลุกขึ้นสู้ใหม่ (จุดเซฟล่าสุด)</button><button id="ch4-menu" class="secondary-btn">กลับหน้าแรก</button></div>`
-          : `<p>${ending === 'true' ? 'เจ้ามั่นปราบขุนโจรเสือคำ ดับเพลิงเผาเมืองทั้ง ๓ จุด ช่วยชาวบ้านไว้ได้ ' + rescued + ' ชีวิต และนำไต้ไฟกับน้ำพระพุทธมนต์ชำระล้างหลุมศพใหญ่จนเชื้อห่ามอดดับ คืนความสงบสู่กรุงอโยธยา!' : 'เจ้ามั่นนำชาวบ้านผู้รอดชีวิต ' + rescued + ' คนฝ่าเพลิงจลาจลลงเรือสำเภาอพยพพ้นภัยโรคห่าได้สำเร็จ!'}</p><p style="color:#d6b984;margin-top:8px">• ชาวบ้านที่รอดปลอดภัย: ${rescued} คน • ไฟที่ดับ: ${fires}/3 จุด • เบาะแส: ${this.state.clues.length}/${CH4_CLUES.length}</p><div style="margin-top:14px;display:flex;gap:10px;justify-content:flex-end"><button id="ch4-replay" class="secondary-btn">เล่นบทที่ ๔ ใหม่</button><button id="ch4-menu" class="primary-btn">กลับหน้าแรก</button></div>`;
+          : `<p>${ending === 'true' ? 'เจ้ามั่นปราบขุนโจรเสือคำ ดับเพลิงเผาเมืองทั้ง ๔ จุด ช่วยชาวบ้านไว้ได้ ' + rescued + ' ชีวิต และนำไต้ไฟกับน้ำพระพุทธมนต์ชำระล้างหลุมศพใหญ่จนเชื้อห่ามอดดับ คืนความสงบสู่กรุงอโยธยา!' : 'เจ้ามั่นนำชาวบ้านผู้รอดชีวิต ' + rescued + ' คนฝ่าเพลิงจลาจลลงเรือสำเภาอพยพพ้นภัยโรคห่าได้สำเร็จ!'}</p><p style="color:#d6b984;margin-top:8px">• ชาวบ้านที่รอดปลอดภัย: ${rescued} คน • ไฟที่ดับ: ${fires}/4 จุด • เบาะแส: ${this.state.clues.length}/${CH4_CLUES.length}</p><div style="margin-top:14px;display:flex;gap:10px;justify-content:flex-end"><button id="ch4-replay" class="secondary-btn">เล่นบทที่ ๔ ใหม่</button><button id="ch4-menu" class="primary-btn">กลับหน้าแรก</button></div>`;
       this.modalBackdrop.classList.remove('hidden');
       document.getElementById('ch4-retry')?.addEventListener('click', () => {
         this.closeModal();
@@ -989,7 +995,7 @@ export class Chapter4Engine {
 
       // Periodic cemetery Preta cry ONLY when near cemetery pit at night (never leaks to other chapters!)
       const hr = (this.state.gameMinutes % 1440) / 60;
-      if ((hr >= 18.5 || hr < 5.5) && this.state.x >= 72) {
+      if ((hr >= 18.5 || hr < 5.5) && this.state.x >= 136) {
         this.pretaSoundTimer -= dt;
         if (this.pretaSoundTimer <= 0) {
           this.pretaSoundTimer = 14 + Math.random() * 10;
@@ -1131,13 +1137,13 @@ export class Chapter4Engine {
   private getObjectiveTarget(): { text: string; targetX: number } {
     const f = this.state.flags;
     if (f.act === 1) {
-      if (!f.talkedSmithIntro) return { text: 'คุยกับลุงสินที่โรงตีดาบรับอาวุธ', targetX: -45.5 };
-      if (!f.practicedSword) return { text: 'ฝึกฟันหุ่นฟางข้างโรงตีดาบ [F]', targetX: -41.4 };
-      if (!f.talkedPhudsornIntro) return { text: 'ล่องเรือหรือเดินไปคุยแม่พุดซ้อนที่ตลาด', targetX: -91.5 };
-      if (!f.inspectedSampan) return { text: 'ตรวจเรือสำเภาสินค้าน่านน้ำ (-114 ม.)', targetX: -114 };
-      if (!f.talkedKhunRamIntro) return { text: 'ไปพบขุนรามที่ประตูชัยกำแพงเมือง', targetX: 10.4 };
-      if (!f.talkedMonkIntro) return { text: 'กราบหลวงตาคงในวัดมหาธาตุ', targetX: 69.5 };
-      return { text: 'ไปตรวจดูหลุมศพใหญ่ป่าช้านอกกำแพง', targetX: 96.5 };
+      if (!f.talkedSmithIntro) return { text: 'คุยกับลุงสินที่โรงตีดาบรับอาวุธ', targetX: -81.5 };
+      if (!f.practicedSword) return { text: 'ฝึกฟันหุ่นฟางข้างโรงตีดาบ [F]', targetX: -77.5 };
+      if (!f.talkedPhudsornIntro) return { text: 'ล่องเรือหรือเดินไปตลาดน้ำอโยธยา (-157 ม.)', targetX: -157 };
+      if (!f.inspectedSampan) return { text: 'ตรวจเรือสำเภาสินค้าน่านน้ำ (-174 ม.)', targetX: -174 };
+      if (!f.talkedKhunRamIntro) return { text: 'เข้าประตูชัยไปพบขุนรามค่ายทหารช้างศึก', targetX: 11.5 };
+      if (!f.talkedMonkIntro) return { text: 'ผ่านวังหลวงไปกราบหลวงตาคงวัดไชยฯ', targetX: 136 };
+      return { text: 'ออกประตูผีตรวจดูหลุมศพใหญ่ป่าช้า', targetX: 160 };
     }
     if (f.act === 2) {
       const e = this.world.getEnemyViews().find((v) => v.alive);
@@ -1151,8 +1157,8 @@ export class Chapter4Engine {
       const e = this.world.getEnemyViews().find((v) => v.alive);
       if (e) return { text: 'ปราบโจรและผีห่าที่เหลือ', targetX: e.x };
     }
-    if (!f.sueaKhamDefeated) return { text: 'ปราบขุนโจรเสือคำหน้าหลุมศพ (+86 ม.)', targetX: 86 };
-    return { text: 'ชำระหลุมศพใหญ่ (+97) หรือขึ้นสำเภาอพยพ (+116)', targetX: 97 };
+    if (!f.sueaKhamDefeated) return { text: 'ปราบขุนโจรเสือคำหน้าหลุมศพ (+148 ม.)', targetX: 148 };
+    return { text: 'ชำระหลุมศพใหญ่ (+160) หรือขึ้นสำเภาอพยพ (+178)', targetX: 160 };
   }
 
   private updateHUD(): void {
@@ -1168,7 +1174,7 @@ export class Chapter4Engine {
     const zone = CH4_ZONE_NAMES.find((z) => this.state.x >= z.minX && this.state.x <= z.maxX)?.name ?? 'กรุงศรีอยุธยา';
     this.hudLocation.textContent = zone;
     if (this.hudExtra) {
-      this.hudExtra.textContent = `❤️ ${Math.round(this.state.hp)}% • 🏹 ${this.state.arrows} • 🛡️ รอด ${this.state.rescuedIds.length} • 💧 ดับไฟ ${this.state.extinguishedFireIds.length}/3`;
+      this.hudExtra.textContent = `❤️ ${Math.round(this.state.hp)}% • 🏹 ${this.state.arrows} • 🛡️ รอด ${this.state.rescuedIds.length} • 💧 ดับไฟ ${this.state.extinguishedFireIds.length}/4`;
     }
     this.hudSanityVal.textContent = `เลือด ${Math.round(this.state.hp)}%`;
     this.hudSanityFill.style.width = `${Math.max(0, Math.min(100, this.state.hp))}%`;
@@ -1269,14 +1275,16 @@ export class Chapter4Engine {
 
   private openMapModal(): void {
     this.modalOpen = true;
-    this.modalTitle.textContent = 'แผนที่กรุงอโยธยา (คลอง • เมือง • วัด • ป่าช้า)';
-    this.modalBody.innerHTML = `<div style="display:flex;flex-direction:column;gap:8px;font-size:0.9rem">
+    this.modalTitle.textContent = 'แผนที่ราชอาณาจักรอโยธยา (๓๘๐ เมตร)';
+    this.modalBody.innerHTML = `<div style="display:flex;flex-direction:column;gap:8px;font-size:0.88rem">
       <div>📍 ตำแหน่งปัจจุบัน: <strong>${Math.round(this.state.x)} ม.</strong> (${this.state.isRowing ? 'กำลังพายเรือในคลอง' : 'อยู่บนบก'})</div>
-      <div>🚣 <strong>-114 ม. ท่าเรือสำเภา & ตลาดริมน้ำ</strong> — ร้านแม่พุดซ้อน, เรือสินค้าต่างถิ่น</div>
-      <div>⚒️ <strong>-46 ม. ชุมชน & โรงตีดาบลุงสิน</strong> — รับดาบเหล็กน้ำพี้, หน้าไม้, เติมลูกดอก & ยา</div>
-      <div>🧱 <strong>+12 ม. ประตูชัยกำแพงเมือง</strong> — ป้อมขุนราม เชื่อมเข้าสู่เขตพระนคร</div>
-      <div>🛕 <strong>+69 ม. วัดมหาธาตุอโยธยา</strong> — เขตอภัยทานปลอดภัย หลวงตาคง & น้ำพระพุทธมนต์</div>
-      <div>💀 <strong>+97 ม. ป่าช้าหลุมศพใหญ่ & +116 ม. ท่าเรือสำเภาอพยพ</strong></div>
+      <div>🚣 <strong>-174 ถึง -135 ม. ท่าเรือสำเภา & ตลาดน้ำอโยธยา</strong> — แพค้าขายและเรือประทุน</div>
+      <div>⚒️ <strong>-82 ม. ชุมชนนาข้าว & โรงตีดาบลุงสิน</strong> — ตีดาบเหล็กน้ำพี้ หน้าไม้ & เติมยา</div>
+      <div>🏯 <strong>-38 ม. เรือนหมู่ขุนนางพระยาวิชัย</strong> — คฤหาสน์เรือนไทยในกำแพง</div>
+      <div>🐘 <strong>+10 ถึง +35 ม. ประตูชัยกำแพงพระนคร & กองช้างศึก</strong> — ค่ายทหารขุนราม</div>
+      <div>👑 <strong>+66 ม. พระบรมมหาราชวังอโยธยา</strong> — พระที่นั่งสรรเพชญ์ อุทยานสระบัว & สุพรรณหงส์</div>
+      <div>🛕 <strong>+102 ถึง +136 ม. วัดพระศรีสรรเพชญ์ & วัดไชยฯ ๕ ยอด</strong> — เขตอภัยทานปลอดภัย</div>
+      <div>💀 <strong>+160 ม. ป่าช้าหลุมศพใหญ่ (หลังประตูผี) & +178 ม. กองสำเภาอพยพ</strong></div>
     </div>`;
     this.modalBackdrop.classList.remove('hidden');
   }

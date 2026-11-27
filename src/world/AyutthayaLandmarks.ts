@@ -1,69 +1,47 @@
 import * as THREE from 'three';
-import { makeAyutthayaBrickTex, makeAyutthayaFigure, makeAyutthayaSignTex } from './AyutthayaArchitecture';
+import {
+  addPartBox,
+  makeAyutthayaBoat,
+  makeAyutthayaBrickTex,
+  makeAyutthayaFigure,
+  makeAyutthayaSignTex,
+  makeRoyalSwanBarge,
+} from './AyutthayaArchitecture';
+import { AyutthayaInnerHandles, buildAyutthayaInnerCity } from './AyutthayaInnerCity';
 
-export interface AyutthayaLandmarkHandles {
+export interface AyutthayaLandmarkHandles extends AyutthayaInnerHandles {
   hearthLight: THREE.PointLight;
-  templeLights: THREE.PointLight[];
   canalCorpses: THREE.Mesh[];
-  pitFlames: THREE.Mesh[];
-  pitSmoke: THREE.Mesh[];
-  pitLight: THREE.PointLight;
-  pretaShadow: THREE.Group;
+  swanBarge: { group: THREE.Group; oars: THREE.Group[]; x: number; dir: 1 | -1 };
   marketWalkers: { group: THREE.Group; baseX: number; range: number; speed: number; phase: number }[];
-  templeArchSign: THREE.Mesh;
-}
-
-function addBox(
-  parent: THREE.Object3D,
-  w: number,
-  h: number,
-  d: number,
-  col: string,
-  x: number,
-  y: number,
-  z: number,
-  rough = 0.82,
-  metal = 0.08
-): THREE.Mesh {
-  const m = new THREE.Mesh(
-    new THREE.BoxGeometry(w, h, d),
-    new THREE.MeshStandardMaterial({ color: col, roughness: rough, metalness: metal })
-  );
-  m.position.set(x, y, z);
-  parent.add(m);
-  return m;
 }
 
 function buildJunkShip(x: number, z: number, labelTitle: string, isEvac = false): THREE.Group {
   const g = new THREE.Group();
   g.position.set(x, 0, z);
-  const hullCol = isEvac ? '#5c2d16' : '#4a2511';
-  // Sculpted wooden hull + raised stern cabin + high bow
-  addBox(g, 9.2, 1.35, 2.5, hullCol, 0, 0.42, 0, 0.85);
-  addBox(g, 2.8, 1.45, 2.3, '#7c3f1d', -3.0, 1.5, 0, 0.8); // stern cabin
-  addBox(g, 3.0, 0.14, 2.55, '#92400e', -3.0, 2.26, 0, 0.78);
-  const bow = new THREE.Mesh(
-    new THREE.ConeGeometry(1.3, 2.8, 4),
-    new THREE.MeshStandardMaterial({ color: hullCol, roughness: 0.85 })
-  );
+  const hullMat = new THREE.MeshStandardMaterial({ color: isEvac ? '#5c2d16' : '#4a2511', roughness: 0.85 });
+  const cabinMat = new THREE.MeshStandardMaterial({ color: '#7c3f1d', roughness: 0.8 });
+  const mastMat = new THREE.MeshStandardMaterial({ color: '#3f2210', roughness: 0.9 });
+  const sailMat = new THREE.MeshStandardMaterial({ color: '#efe2c6', roughness: 0.92 });
+
+  addPartBox(g, 9.2, 1.35, 2.5, hullMat, 0, 0.42, 0);
+  addPartBox(g, 2.8, 1.45, 2.3, cabinMat, -3.0, 1.5, 0);
+  addPartBox(g, 3.0, 0.14, 2.55, mastMat, -3.0, 2.26, 0);
+  const bow = new THREE.Mesh(new THREE.ConeGeometry(1.3, 2.8, 4), hullMat);
   bow.rotation.z = -Math.PI / 2;
   bow.rotation.x = Math.PI / 4;
   bow.scale.set(0.75, 1, 1.05);
   bow.position.set(5.4, 0.82, 0);
   g.add(bow);
 
-  // Twin tall wooden masts with ribbed bamboo canvas sails
   [-0.8, 2.1].forEach((mx, mi) => {
     const h = mi === 0 ? 7.2 : 5.8;
-    addBox(g, 0.16, h, 0.16, '#3f2210', mx, h / 2 + 0.5, 0, 0.9);
-    const sail = addBox(g, 0.08, h * 0.55, mi === 0 ? 2.5 : 2.0, '#efe2c6', mx, h * 0.62 + 0.6, 0, 0.92);
+    addPartBox(g, 0.16, h, 0.16, mastMat, mx, h / 2 + 0.5, 0);
+    const sail = addPartBox(g, 0.08, h * 0.55, mi === 0 ? 2.5 : 2.0, sailMat, mx, h * 0.62 + 0.6, 0);
     sail.rotation.y = Math.PI / 2;
-    [0.38, 0.56, 0.74].forEach((ry) => {
-      addBox(g, 2.3, 0.05, 0.1, '#78350f', mx, h * ry + 0.6, 0, 0.85);
-    });
+    [0.38, 0.56, 0.74].forEach((ry) => addPartBox(g, 2.3, 0.05, 0.1, mastMat, mx, h * ry + 0.6, 0));
   });
 
-  // Warm red Chinese/Ayutthaya hanging ship lanterns
   [-3.8, 0.5, 4.2].forEach((lx) => {
     const l = new THREE.Mesh(new THREE.SphereGeometry(0.18, 8, 8), new THREE.MeshBasicMaterial({ color: '#ef4444' }));
     l.position.set(lx, 2.45, -1.1);
@@ -71,58 +49,51 @@ function buildJunkShip(x: number, z: number, labelTitle: string, isEvac = false)
   });
 
   const sign = new THREE.Mesh(
-    new THREE.PlaneGeometry(3.4, 0.75),
-    new THREE.MeshBasicMaterial({ map: makeAyutthayaSignTex('#451a03', '#eab308', '#fef08a', labelTitle) })
+    new THREE.PlaneGeometry(3.5, 0.76),
+    new THREE.MeshBasicMaterial({ map: makeAyutthayaSignTex('#451a03', '#eab308', '#fef08a', labelTitle), side: THREE.DoubleSide })
   );
   sign.position.set(0, 1.25, -1.32);
-  sign.rotation.y = Math.PI;
   g.add(sign);
-
-  // Note: ships face camera cleanly via z-side banner on +Z side too
-  const signFront = sign.clone();
-  signFront.position.set(0, 1.25, 1.32);
-  signFront.rotation.y = 0;
-  g.add(signFront);
   return g;
 }
 
-/** Builds Ayutthaya Canal, Piers, Markets, Blacksmith Forge, City Wall & Open Gate, Wat Mahathat & Mass Grave Pit. */
+/**
+ * Builds all 380 meters (-190..+190) of Ayutthaya Kingdom: Chao Phraya Canal, 8 Boat Piers, Royal Swan Barge,
+ * Floating Market & Raft Houses, Peasant Village & Rice Paddies, Blacksmith Forge, Nobleman's Compound,
+ * Walled City, Garrison, Royal Palace, Triple Golden Chedis, Five-Prang Wat Chai, Ghost Gate & Mass Grave Pit.
+ */
 export function buildAyutthayaLandmarks(scene: THREE.Scene): AyutthayaLandmarkHandles {
   const brickMat = new THREE.MeshStandardMaterial({ map: makeAyutthayaBrickTex(), roughness: 0.88 });
-  const templeLights: THREE.PointLight[] = [];
+  const woodDark = new THREE.MeshStandardMaterial({ color: '#3b2112', roughness: 0.9 });
+  const woodMid = new THREE.MeshStandardMaterial({ color: '#5c361d', roughness: 0.85 });
+  const woodPlank = new THREE.MeshStandardMaterial({ color: '#784626', roughness: 0.84 });
+  const thatchMat = new THREE.MeshStandardMaterial({ color: '#a16207', roughness: 0.92 });
+  const redRoofMat = new THREE.MeshStandardMaterial({ color: '#7c2d12', roughness: 0.78 });
+  const goldMat = new THREE.MeshStandardMaterial({ color: '#eab308', metalness: 0.62, roughness: 0.28 });
+  const ironMat = new THREE.MeshStandardMaterial({ color: '#1e293b', metalness: 0.72, roughness: 0.35 });
 
-  // 1) Ground Roadway & Chao Phraya Canal (-135 .. +135)
-  addBox(scene, 270, 0.3, 14, '#4b3726', 0, -0.15, -3.2, 0.95); // packed clay village road & yards
+  // 1) 390m Roadway, Chao Phraya River Canal & 8 Boat Piers
+  addPartBox(scene, 396, 0.3, 15.5, new THREE.MeshStandardMaterial({ color: '#4b3726', roughness: 0.95 }), 0, -0.15, -3.5);
   const canalWater = new THREE.Mesh(
-    new THREE.PlaneGeometry(270, 8.5),
+    new THREE.PlaneGeometry(396, 10.5),
     new THREE.MeshStandardMaterial({ color: '#0f3b4c', roughness: 0.46, metalness: 0.12 })
   );
   canalWater.rotation.x = -Math.PI / 2;
-  canalWater.position.set(0, -0.22, 7.1);
+  canalWater.position.set(0, -0.22, 8.1);
   scene.add(canalWater);
-  // Wooden canal embankment retaining wall + pilings along z = 2.85
-  addBox(scene, 270, 0.55, 0.32, '#3d2516', 0, -0.08, 2.85, 0.92);
-  for (let px = -126; px <= 126; px += 4.5) {
-    addBox(scene, 0.18, 0.85, 0.18, '#2b180e', px, -0.02, 2.95, 0.95);
+  addPartBox(scene, 396, 0.55, 0.34, woodDark, 0, -0.08, 2.85);
+  for (let px = -188; px <= 188; px += 5) {
+    addPartBox(scene, 0.18, 0.85, 0.18, woodDark, px, -0.02, 2.95);
   }
 
-  // 5 Wooden Boat Piers (ท่าน้ำ) with grounded left-side signboard post clear of dock & canal boats
-  [-112, -52, 22, 74, 116].forEach((px, idx) => {
-    addBox(scene, 3.6, 0.14, 2.1, '#6b3e22', px, 0.08, 3.6, 0.85);
-    [-1.4, 1.4].forEach((ox) => {
-      addBox(scene, 0.16, 1.25, 0.16, '#3f2210', px + ox, 0.42, 4.48, 0.9);
-    });
-    // Left bank post dedicated to pier sign (no floating signs or overlap with dock moorings!)
-    addBox(scene, 0.1, 1.55, 0.1, '#451a03', px - 2.05, 0.78, 2.7, 0.9);
+  [-168, -128, -84, -36, 18, 72, 134, 178].forEach((px, idx) => {
+    addPartBox(scene, 3.6, 0.14, 2.1, woodMid, px, 0.08, 3.6);
+    [-1.4, 1.4].forEach((ox) => addPartBox(scene, 0.16, 1.25, 0.16, woodDark, px + ox, 0.42, 4.48));
+    addPartBox(scene, 0.1, 1.55, 0.1, woodDark, px - 2.05, 0.78, 2.7);
     const pierSign = new THREE.Mesh(
       new THREE.PlaneGeometry(1.65, 0.44),
       new THREE.MeshBasicMaterial({
-        map: makeAyutthayaSignTex(
-          '#451a03',
-          '#eab308',
-          '#fef08a',
-          idx === 4 ? 'ท่าเรืออพยพ' : 'ท่าน้ำลงเรือ [E]'
-        ),
+        map: makeAyutthayaSignTex('#451a03', '#eab308', '#fef08a', idx === 7 ? 'ท่าเรืออพยพ' : 'ท่าน้ำลงเรือ [E]'),
         side: THREE.DoubleSide,
       })
     );
@@ -130,96 +101,110 @@ export function buildAyutthayaLandmarks(scene: THREE.Scene): AyutthayaLandmarkHa
     scene.add(pierSign);
   });
 
-  // Grand Junk Ships at both river ends
-  scene.add(buildJunkShip(-119, 6.2, 'เรือสำเภาสินค้าน่านน้ำ', false));
-  scene.add(buildJunkShip(120, 6.2, 'เรือสำเภาหลวงอพยพ', true));
+  // Grand Foreign Junk Ship & Red-Brick Riverside Warehouse (-182)
+  scene.add(buildJunkShip(-180, 6.4, 'เรือสำเภาสินค้าน่านน้ำ', false));
+  const wh = new THREE.Mesh(new THREE.BoxGeometry(5.5, 3.0, 2.6), brickMat);
+  wh.position.set(-182, 1.5, -2.5);
+  scene.add(wh);
+  addPartBox(scene, 6.0, 0.2, 3.0, redRoofMat, -182, 3.1, -2.5);
 
-  // Floating shrouded corpses along the canal (hidden during peaceful Act 1)
+  // Floating River Corpses (visible once plague starts)
   const canalCorpses: THREE.Mesh[] = [];
-  [-92, -32, 36, 98].forEach((cx, ci) => {
-    const c = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.18, 0.15, 1.45, 8),
-      new THREE.MeshStandardMaterial({ color: ci % 2 === 0 ? '#cbd5e1' : '#9ca3af', roughness: 0.9 })
-    );
+  const corpseMat = new THREE.MeshStandardMaterial({ color: '#cbd5e1', roughness: 0.9 });
+  [-150, -96, -24, 48, 156].forEach((cx, ci) => {
+    const c = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.15, 1.45, 8), corpseMat);
     c.rotation.z = Math.PI / 2;
     c.rotation.y = 0.25 * (ci % 2 === 0 ? 1 : -1);
-    c.position.set(cx, -0.18, 5.2 + (ci % 2) * 1.1);
+    c.position.set(cx, -0.18, 5.4 + (ci % 2) * 1.1);
     c.visible = false;
     scene.add(c);
     canalCorpses.push(c);
   });
 
-  // 2) Ayutthaya Waterside Market (-104 .. -74)
-  const stalls = [
-    { x: -101, name: 'ตลาดเครื่องเทศ & ผ้าไหม', roof: '#7c2d12', items: ['#dc2626', '#facc15', '#a855f7'] },
-    { x: -91, name: 'แผงหม้อดิน & เครื่องถ้วยชาม', roof: '#854d0e', items: ['#b45309', '#78350f', '#cbd5e1'] },
-    { x: -80, name: 'โรงครัวขนมไทย & ปลาตากแห้ง', roof: '#991b1b', items: ['#f59e0b', '#e2e8f0', '#ea580c'] },
+  // Royal Golden Swan Barge cruising along the Chao Phraya riverfront!
+  const sb = makeRoyalSwanBarge();
+  sb.group.position.set(30, -0.1, 7.3);
+  scene.add(sb.group);
+
+  // =========================================================================
+  // 2) Ayutthaya Grand Floating Market & Raft Houses (-174 .. -122)
+  // =========================================================================
+  // Elevated Raft-Houses connected by timber boardwalk + Canopied Vendor Boats right below!
+  const raftConfigs = [
+    { x: -168, title: 'แพเครื่องเทศ & สมุนไพร', col: '#dc2626' },
+    { x: -157, title: 'ตลาดน้ำผ้าแพร & สังคโลก', col: '#eab308' },
+    { x: -146, title: 'แพขนมไทย & ปลาแม่น้ำ', col: '#be185d' },
+    { x: -135, title: 'ท่าเทียบเรือสินค้าตลาดน้ำ', col: '#0284c7' },
   ];
-  stalls.forEach((st) => {
-    addBox(scene, 5.2, 0.14, 2.3, '#57361e', st.x, 0.07, -2.1, 0.9);
-    [-2.4, 2.4].forEach((sx) => {
-      addBox(scene, 0.14, 2.95, 0.14, '#452613', st.x + sx, 1.48, -3.1, 0.88);
-      addBox(scene, 0.14, 2.85, 0.14, '#452613', st.x + sx, 1.42, -1.1, 0.88);
+  raftConfigs.forEach((rc, idx) => {
+    addPartBox(scene, 6.2, 0.16, 2.6, woodMid, rc.x, 0.08, -2.0);
+    [-2.8, 2.8].forEach((ox) => {
+      addPartBox(scene, 0.14, 2.9, 0.14, woodDark, rc.x + ox, 1.45, -3.1);
+      addPartBox(scene, 0.14, 2.8, 0.14, woodDark, rc.x + ox, 1.4, -0.9);
     });
-    const rfF = addBox(scene, 5.6, 0.08, 1.55, st.roof, st.x, 3.08, -1.55, 0.82);
+    const rfF = addPartBox(scene, 6.6, 0.08, 1.6, idx % 2 === 0 ? thatchMat : redRoofMat, rc.x, 3.05, -1.45);
     rfF.rotation.x = 0.34;
-    const rfB = addBox(scene, 5.6, 0.08, 1.55, st.roof, st.x, 3.08, -2.65, 0.82);
+    const rfB = addPartBox(scene, 6.6, 0.08, 1.6, idx % 2 === 0 ? thatchMat : redRoofMat, rc.x, 3.05, -2.55);
     rfB.rotation.x = -0.34;
-    addBox(scene, 4.4, 0.78, 0.72, '#6b3e22', st.x, 0.45, -1.55, 0.84);
-    st.items.forEach((ic, ii) => {
-      const prop = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.18, 0.15, 0.32, 10),
-        new THREE.MeshStandardMaterial({ color: ic, roughness: 0.65 })
+    addPartBox(scene, 5.2, 0.72, 0.72, woodPlank, rc.x, 0.42, -1.4);
+
+    // Colorful produce baskets & clay pots on market counter
+    [-1.2, 0, 1.2].forEach((bx) => {
+      const pot = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.18, 0.14, 0.3, 8),
+        new THREE.MeshStandardMaterial({ color: rc.col, roughness: 0.65 })
       );
-      prop.position.set(st.x - 1.1 + ii * 1.1, 0.98, -1.5);
-      scene.add(prop);
+      pot.position.set(rc.x + bx, 0.94, -1.38);
+      scene.add(pot);
     });
-    const vendor = makeAyutthayaFigure(st.items[0], '#451a03');
-    vendor.position.set(st.x, 0, -2.25);
+    const vendor = makeAyutthayaFigure(rc.col, '#451a03', { sabaiCol: idx % 2 === 0 ? '#fde047' : undefined });
+    vendor.position.set(rc.x, 0, -2.2);
     scene.add(vendor);
 
     const sign = new THREE.Mesh(
-      new THREE.PlaneGeometry(3.2, 0.68),
-      new THREE.MeshBasicMaterial({ map: makeAyutthayaSignTex('#451a03', '#facc15', '#fffbeb', st.name) })
+      new THREE.PlaneGeometry(3.4, 0.68),
+      new THREE.MeshBasicMaterial({ map: makeAyutthayaSignTex('#451a03', '#facc15', '#fffbeb', rc.title) })
     );
-    sign.position.set(st.x, 2.38, -0.82);
+    sign.position.set(rc.x, 2.38, -0.78);
     scene.add(sign);
+
+    // Floating bamboo-canopied vendor sampan moored right along the Floating Market canal!
+    const floatBoat = makeAyutthayaBoat(3.5, true, rc.col, true);
+    floatBoat.group.position.set(rc.x + 1.2, -0.14, 4.15);
+    floatBoat.group.scale.x = idx % 2 === 0 ? 1 : -1;
+    scene.add(floatBoat.group);
   });
 
-  // Patrolling market walkers (facing direction of travel, proper stride!)
-  const marketWalkers = [
-    { baseX: -96, range: 6, speed: 1.0, shirt: '#f43f5e' },
-    { baseX: -84, range: 5, speed: 0.9, shirt: '#38bdf8' },
-    { baseX: -48, range: 6, speed: 0.95, shirt: '#eab308' },
-    { baseX: -28, range: 5, speed: 1.05, shirt: '#a3e635' },
-  ].map((mw, idx) => {
-    const fig = makeAyutthayaFigure(mw.shirt, '#1e293b', { hatCol: idx % 2 === 0 ? '#a16207' : undefined });
-    fig.position.set(mw.baseX, 0, -0.35 + (idx % 2) * 0.4);
-    scene.add(fig);
-    return { group: fig, baseX: mw.baseX, range: mw.range, speed: mw.speed, phase: idx * 1.4 };
+  // =========================================================================
+  // 3) Peasant Village, Emerald Rice Paddies, Brick Kiln & Blacksmith Forge (-120 .. -64)
+  // =========================================================================
+  // Emerald & Golden Rice Paddies + Elevated Rice Granary (ยุ้งข้าว + นาข้าวอยุธยา)
+  const paddyMat = new THREE.MeshStandardMaterial({ color: '#3f6212', roughness: 0.92 });
+  [-116, -106].forEach((px) => {
+    addPartBox(scene, 8.5, 0.08, 4.2, paddyMat, px, 0.03, -3.2);
+    for (let r = -3.4; r <= 3.4; r += 0.9) {
+      const stalk = new THREE.Mesh(new THREE.ConeGeometry(0.18, 0.65, 5), new THREE.MeshStandardMaterial({ color: '#65a30d', roughness: 0.9 }));
+      stalk.position.set(px + r, 0.35, -3.1 + (Math.floor(r * 2) % 2) * 0.8);
+      scene.add(stalk);
+    }
   });
-
-  // 3) Ayutthaya Village Stilt Houses & Open Blacksmith Forge (-60 .. -18)
-  [-59, -32, -20].forEach((hx, hi) => {
+  // Elevated Peasant Stilt Houses (-112, -98, -70) + Sala Waterfront (-96)
+  [-112, -97, -69].forEach((hx, hi) => {
     const hGrp = new THREE.Group();
-    hGrp.position.set(hx, 0, -3.2);
+    hGrp.position.set(hx, 0, -3.3);
     [-2.0, 0, 2.0].forEach((px) => {
-      [-1.0, 1.0].forEach((pz) => addBox(hGrp, 0.18, 1.45, 0.18, '#3b2112', px, 0.72, pz, 0.9));
+      [-1.0, 1.0].forEach((pz) => addPartBox(hGrp, 0.18, 1.45, 0.18, woodDark, px, 0.72, pz));
     });
-    addBox(hGrp, 4.7, 0.14, 2.8, '#5c361d', 0, 1.46, 0, 0.85);
-    addBox(hGrp, 4.3, 1.55, 2.35, '#784626', 0, 2.28, 0, 0.84);
-    [-1.1, 1.1].forEach((wx) => addBox(hGrp, 0.72, 0.66, 0.08, '#3f2210', wx, 2.35, 1.18, 0.8));
-    // Multi-tiered Thai gable roof with enclosed triangular gable walls (ทรงไทยจั่วเต็ม)
-    const rF = addBox(hGrp, 5.2, 0.1, 1.9, hi === 0 ? '#7c2d12' : '#572814', 0, 3.45, 0.78, 0.78);
+    addPartBox(hGrp, 4.7, 0.14, 2.8, woodMid, 0, 1.46, 0);
+    addPartBox(hGrp, 4.3, 1.55, 2.35, woodPlank, 0, 2.28, 0);
+    [-1.1, 1.1].forEach((wx) => addPartBox(hGrp, 0.72, 0.66, 0.08, woodDark, wx, 2.35, 1.18));
+    const rF = addPartBox(hGrp, 5.2, 0.1, 1.9, hi === 1 ? thatchMat : redRoofMat, 0, 3.45, 0.78);
     rF.rotation.x = 0.48;
-    const rB = addBox(hGrp, 5.2, 0.1, 1.9, hi === 0 ? '#7c2d12' : '#572814', 0, 3.45, -0.78, 0.78);
+    const rB = addPartBox(hGrp, 5.2, 0.1, 1.9, hi === 1 ? thatchMat : redRoofMat, 0, 3.45, -0.78);
     rB.rotation.x = -0.48;
-    addBox(hGrp, 5.3, 0.14, 0.2, '#9a3412', 0, 3.88, 0, 0.72);
+    addPartBox(hGrp, 5.3, 0.14, 0.2, redRoofMat, 0, 3.88, 0);
     [-2.12, 2.12].forEach((gx) => {
-      const gable = new THREE.Mesh(
-        new THREE.ConeGeometry(1.22, 0.85, 4),
-        new THREE.MeshStandardMaterial({ color: '#6b3e22', roughness: 0.85 })
-      );
+      const gable = new THREE.Mesh(new THREE.ConeGeometry(1.22, 0.85, 4), woodMid);
       gable.rotation.y = Math.PI / 4;
       gable.scale.set(0.14, 1, 1.42);
       gable.position.set(gx, 3.42, 0);
@@ -228,268 +213,107 @@ export function buildAyutthayaLandmarks(scene: THREE.Scene): AyutthayaLandmarkHa
     scene.add(hGrp);
   });
 
-  // Open Blacksmith Forge (โรงตีดาบหลวงลุงสิน x = -46) — raised pitched Thai roof well clear of sign!
-  const forgeX = -46;
+  // Brick Stacks & Rice Granary Yard at -104 (just like historical Ayutthaya riverside print!)
+  const brickStack = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.75, 1.1), brickMat);
+  brickStack.position.set(-104, 0.38, -1.6);
+  scene.add(brickStack);
+
+  // Open Blacksmith Forge (โรงตีดาบหลวงลุงสิน x = -82)
+  const forgeX = -82;
   const fGrp = new THREE.Group();
   fGrp.position.set(forgeX, 0, -2.5);
-  addBox(fGrp, 5.8, 0.16, 2.6, '#44403c', 0, 0.08, 0, 0.92);
-  addBox(fGrp, 5.6, 3.05, 0.18, '#4a2b17', 0, 1.6, -1.2, 0.88);
-  [-2.7, 2.7].forEach((px) => addBox(fGrp, 0.2, 3.05, 0.2, '#3b2112', px, 1.52, 1.1, 0.88));
-  const fRoofF = addBox(fGrp, 6.2, 0.1, 1.75, '#7c2d12', 0, 3.28, 0.72, 0.82);
+  addPartBox(fGrp, 5.8, 0.16, 2.6, ironMat, 0, 0.08, 0);
+  addPartBox(fGrp, 5.6, 3.05, 0.18, woodMid, 0, 1.6, -1.2);
+  [-2.7, 2.7].forEach((px) => addPartBox(fGrp, 0.2, 3.05, 0.2, woodDark, px, 1.52, 1.1));
+  const fRoofF = addPartBox(fGrp, 6.2, 0.1, 1.75, redRoofMat, 0, 3.28, 0.72);
   fRoofF.rotation.x = 0.34;
-  const fRoofB = addBox(fGrp, 6.2, 0.1, 1.75, '#7c2d12', 0, 3.28, -0.72, 0.82);
+  const fRoofB = addPartBox(fGrp, 6.2, 0.1, 1.75, redRoofMat, 0, 3.28, -0.72);
   fRoofB.rotation.x = -0.34;
-  addBox(fGrp, 6.25, 0.12, 0.18, '#9a3412', 0, 3.58, 0, 0.75);
-  // Brick hearth + glowing embers + iron anvil + quench tub
+  addPartBox(fGrp, 6.25, 0.12, 0.18, redRoofMat, 0, 3.58, 0);
   const hearth = new THREE.Mesh(new THREE.BoxGeometry(1.4, 1.15, 0.95), brickMat);
   hearth.position.set(-1.55, 0.65, -0.55);
-  fGrp.add(hearth);
   const coals = new THREE.Mesh(new THREE.SphereGeometry(0.32, 8, 8), new THREE.MeshBasicMaterial({ color: '#fb923c' }));
   coals.scale.set(1.3, 0.5, 1.0);
   coals.position.set(-1.55, 1.18, -0.45);
-  fGrp.add(coals);
-  addBox(fGrp, 0.65, 0.55, 0.42, '#1e293b', 0.2, 0.42, -0.3, 0.4, 0.85); // steel anvil
-  addBox(fGrp, 0.95, 0.48, 0.65, '#451a03', 1.45, 0.36, -0.3, 0.85); // quench tub
-  // Sword rack + clearly framed Blacksmith sign cleanly below roof eaves!
-  addBox(fGrp, 1.2, 1.35, 0.12, '#78350f', 2.0, 0.82, -1.0, 0.8);
-  addBox(fGrp, 5.6, 0.12, 0.1, '#3b2112', 0, 2.75, 1.12, 0.88);
+  fGrp.add(hearth, coals);
+  addPartBox(fGrp, 0.65, 0.55, 0.42, ironMat, 0.2, 0.42, -0.3);
+  addPartBox(fGrp, 0.95, 0.48, 0.65, woodDark, 1.45, 0.36, -0.3);
+  addPartBox(fGrp, 5.6, 0.12, 0.1, woodDark, 0, 2.75, 1.12);
   const forgeSign = new THREE.Mesh(
-    new THREE.PlaneGeometry(3.1, 0.68),
+    new THREE.PlaneGeometry(3.2, 0.68),
     new THREE.MeshBasicMaterial({ map: makeAyutthayaSignTex('#450a0a', '#facc15', '#fef08a', 'โรงตีดาบหลวงลุงสิน', 'ตีดาบน้ำพี้ • เติมลูกดอก • ปราบห่า') })
   );
   forgeSign.position.set(0, 2.48, 1.26);
   fGrp.add(forgeSign);
   scene.add(fGrp);
 
-  const hearthLight = new THREE.PointLight('#fb923c', 4.6, 12, 1.1);
+  const hearthLight = new THREE.PointLight('#fb923c', 4.6, 14, 1.1);
   hearthLight.position.set(forgeX - 1.5, 1.65, -1.8);
   scene.add(hearthLight);
 
-  // 4) Iconic Red-Brick Ayutthaya City Wall & Open Victory Gate (x = -4 .. +28, gate center x = +12)
-  const wallY = 3.6;
-  // Left & Right Brick Curtain Walls with authentic diamond battlements (ใบเสมา)
-  [
-    { x: 2.2, w: 13.0 },
-    { x: 21.8, w: 13.0 },
-  ].forEach((seg) => {
-    const wall = new THREE.Mesh(new THREE.BoxGeometry(seg.w, wallY, 1.3), brickMat);
-    wall.position.set(seg.x, wallY / 2, -2.5);
-    scene.add(wall);
-    const numSema = Math.floor(seg.w / 1.45);
-    for (let i = 0; i < numSema; i++) {
-      const bx = seg.x - seg.w / 2 + 0.75 + i * 1.45;
-      const sema = new THREE.Mesh(new THREE.ConeGeometry(0.36, 0.72, 4), brickMat);
-      sema.rotation.y = Math.PI / 4;
-      sema.position.set(bx, wallY + 0.34, -2.5);
-      scene.add(sema);
+  // =========================================================================
+  // 4) Nobleman's Compound / บ้านขุนนางอยุธยา (-60 .. -14, center -38)
+  // =========================================================================
+  const nobX = -38;
+  // Brick perimeter courtyard walls & ornate open Noble Gate (x = -38)
+  [-52, -24].forEach((wx) => addPartBox(scene, 0.85, 2.8, 3.2, brickMat, wx, 1.4, -3.5));
+  [-46, -30].forEach((px) => addPartBox(scene, 11.0, 2.2, 0.45, brickMat, px, 1.1, -1.9));
+  // Open courtyard Thai Archway at -38
+  [-40.2, -35.8].forEach((gx) => addPartBox(scene, 0.8, 3.3, 0.8, brickMat, gx, 1.65, -1.9));
+  addPartBox(scene, 5.4, 0.65, 0.9, brickMat, nobX, 3.35, -1.9);
+  const nobArchRoof = new THREE.Mesh(new THREE.ConeGeometry(1.6, 1.1, 4), redRoofMat);
+  nobArchRoof.rotation.y = Math.PI / 4;
+  nobArchRoof.position.set(nobX, 4.15, -1.9);
+  scene.add(nobArchRoof);
+
+  // Grand Elevated 3-House Nobleman Compound (เรือนหมู่คหบดี/ขุนนาง)
+  [-45, -38, -31].forEach((rx, ri) => {
+    const rGrp = new THREE.Group();
+    rGrp.position.set(rx, 0, -4.4);
+    addPartBox(rGrp, 5.8, 1.6, 2.8, woodMid, 0, 0.8, 0);
+    addPartBox(rGrp, 5.0, 1.8, 2.4, woodPlank, 0, 2.5, 0);
+    const rrF = addPartBox(rGrp, 6.2, 0.12, 2.0, redRoofMat, 0, 3.85, 0.82);
+    rrF.rotation.x = 0.46;
+    const rrB = addPartBox(rGrp, 6.2, 0.12, 2.0, redRoofMat, 0, 3.85, -0.82);
+    rrB.rotation.x = -0.46;
+    addPartBox(rGrp, 6.3, 0.16, 0.22, goldMat, 0, 4.3, 0); // gilded noble gable ridge!
+    if (ri === 1) {
+      addPartBox(rGrp, 8.2, 0.18, 2.4, woodMid, 0, 1.62, 1.5); // central wide wooden courtyard veranda (ชานเรือน)
     }
+    scene.add(rGrp);
   });
-  // Open Vaulted City Gate Archway (x = 12, walk cleanly through z = -2.5!)
-  [9.35, 14.65].forEach((gx) => {
-    const pier = new THREE.Mesh(new THREE.BoxGeometry(1.3, 4.4, 1.65), brickMat);
-    pier.position.set(gx, 2.2, -2.5);
-    scene.add(pier);
-  });
-  const archTop = new THREE.Mesh(new THREE.BoxGeometry(6.6, 1.15, 1.68), brickMat);
-  archTop.position.set(12, 4.15, -2.5);
-  scene.add(archTop);
-  // Multi-tiered Thai Prasat roof atop the City Gate Tower!
-  addBox(scene, 5.4, 0.16, 2.4, '#7c2d12', 12, 4.82, -2.5, 0.78);
-  addBox(scene, 3.8, 0.16, 1.8, '#9a3412', 12, 5.15, -2.5, 0.75);
-  const spireTop = new THREE.Mesh(
-    new THREE.ConeGeometry(0.45, 1.4, 8),
-    new THREE.MeshStandardMaterial({ color: '#eab308', metalness: 0.65, roughness: 0.25 })
+  const nobSign = new THREE.Mesh(
+    new THREE.PlaneGeometry(3.4, 0.68),
+    new THREE.MeshBasicMaterial({ map: makeAyutthayaSignTex('#451a03', '#facc15', '#fef08a', 'เรือนหมู่พระยาวิชัย (บ้านขุนนาง)', 'คฤหาสน์คหบดี & คลังโอสถหลวง') })
   );
-  spireTop.position.set(12, 5.95, -2.5);
-  scene.add(spireTop);
-  const gateSign = new THREE.Mesh(
-    new THREE.PlaneGeometry(3.2, 0.68),
-    new THREE.MeshBasicMaterial({ map: makeAyutthayaSignTex('#450a0a', '#eab308', '#fef08a', 'ประตูชัยกำแพงพระนคร') })
-  );
-  gateSign.position.set(12, 3.95, -1.62);
-  scene.add(gateSign);
-  // Twin iron cannons flanking gate + fire braziers
-  [7.4, 16.6].forEach((cx) => {
-    const barrel = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.14, 0.2, 1.55, 10),
-      new THREE.MeshStandardMaterial({ color: '#1e293b', metalness: 0.75, roughness: 0.35 })
-    );
-    barrel.rotation.z = cx < 12 ? 0.35 : -0.35;
-    barrel.position.set(cx, 0.56, -1.1);
-    addBox(scene, 0.65, 0.35, 0.52, '#451a03', cx, 0.22, -1.1, 0.88);
-    scene.add(barrel);
+  nobSign.position.set(nobX, 3.35, -1.35);
+  scene.add(nobSign);
+
+  // Patrolling Villagers & Noble Servants walking cleanly facing travel direction
+  const marketWalkers = [
+    { baseX: -158, range: 9, speed: 1.0, shirt: '#f43f5e' },
+    { baseX: -140, range: 8, speed: 0.92, shirt: '#38bdf8' },
+    { baseX: -102, range: 7, speed: 0.95, shirt: '#eab308' },
+    { baseX: -38, range: 7, speed: 0.9, shirt: '#a855f7' },
+    { baseX: 60, range: 8, speed: 1.0, shirt: '#ec4899' },
+  ].map((mw, idx) => {
+    const fig = makeAyutthayaFigure(mw.shirt, '#1e293b', {
+      hatCol: idx % 2 === 0 ? '#a16207' : undefined,
+      sabaiCol: idx >= 3 ? '#fde047' : undefined,
+    });
+    fig.position.set(mw.baseX, 0, -0.35 + (idx % 2) * 0.4);
+    scene.add(fig);
+    return { group: fig, baseX: mw.baseX, range: mw.range, speed: mw.speed, phase: idx * 1.4 };
   });
 
-  // 5) Wat Mahathat Ayutthaya Temple Complex (+40 .. +82)
-  // Authentic Thai open archway gate at x = 44 + Prang tower at x = 62 + Open Sanctuary Sala at x = 72
-  [41.8, 46.2].forEach((tx) => {
-    const tPier = new THREE.Mesh(new THREE.BoxGeometry(0.85, 3.4, 0.9), brickMat);
-    tPier.position.set(tx, 1.7, -2.2);
-    scene.add(tPier);
-  });
-  const tLintel = new THREE.Mesh(new THREE.BoxGeometry(5.6, 0.65, 1.05), brickMat);
-  tLintel.position.set(44, 3.55, -2.2);
-  scene.add(tLintel);
-  const tRoof = new THREE.Mesh(
-    new THREE.ConeGeometry(1.55, 1.15, 4),
-    new THREE.MeshStandardMaterial({ color: '#991b1b', roughness: 0.7 })
-  );
-  tRoof.rotation.y = Math.PI / 4;
-  tRoof.position.set(44, 4.45, -2.2);
-  scene.add(tRoof);
-  const templeArchSign = new THREE.Mesh(
-    new THREE.PlaneGeometry(3.0, 0.64),
-    new THREE.MeshBasicMaterial({ map: makeAyutthayaSignTex('#451a03', '#facc15', '#fef08a', 'วัดมหาธาตุ (เขตอภัยทาน)') })
-  );
-  templeArchSign.position.set(44, 3.55, -1.64);
-  scene.add(templeArchSign);
-
-  // Towering Multi-Tiered Ayutthaya Phra Prang (พระปรางค์วัดมหาธาตุ x = 60, z = -4.2)
-  const prangX = 60;
-  const prangMat = new THREE.MeshStandardMaterial({ color: '#8f4734', roughness: 0.85 });
-  [
-    { w: 5.2, h: 1.2, y: 0.6 },
-    { w: 3.9, h: 1.4, y: 1.9 },
-    { w: 3.0, h: 1.5, y: 3.35 },
-    { w: 2.25, h: 1.35, y: 4.75 },
-    { w: 1.6, h: 1.2, y: 6.0 },
-    { w: 1.05, h: 1.1, y: 7.1 },
-  ].forEach((tier) => {
-    const m = new THREE.Mesh(new THREE.CylinderGeometry(tier.w * 0.42, tier.w * 0.5, tier.h, 8), prangMat);
-    m.position.set(prangX, tier.y, -4.2);
-    scene.add(m);
-  });
-  const prangTop = new THREE.Mesh(
-    new THREE.ConeGeometry(0.42, 1.55, 8),
-    new THREE.MeshStandardMaterial({ color: '#eab308', metalness: 0.65, roughness: 0.25 })
-  );
-  prangTop.position.set(prangX, 8.4, -4.2);
-  scene.add(prangTop);
-
-  // Open Sanctuary Sala (ศาลาการเปรียญเขตอภัยทาน x = 70, z = -2.2) where survivors take refuge!
-  addBox(scene, 7.2, 0.24, 3.2, '#7c3e20', 70, 0.12, -2.2, 0.85);
-  [-3.2, 0, 3.2].forEach((px) => addBox(scene, 0.22, 3.0, 0.22, '#991b1b', 70 + px, 1.6, -0.8, 0.7));
-  [-3.2, 3.2].forEach((px) => addBox(scene, 0.22, 3.0, 0.22, '#991b1b', 70 + px, 1.6, -3.6, 0.7));
-  const salaRfF = addBox(scene, 7.8, 0.12, 2.2, '#991b1b', 70, 3.38, -1.35, 0.7);
-  salaRfF.rotation.x = 0.42;
-  const salaRfB = addBox(scene, 7.8, 0.12, 2.2, '#991b1b', 70, 3.38, -3.05, 0.7);
-  salaRfB.rotation.x = -0.42;
-  const salaLight = new THREE.PointLight('#fde68a', 5.2, 16, 1.0);
-  salaLight.position.set(70, 2.65, -1.8);
-  scene.add(salaLight);
-  templeLights.push(salaLight);
-
-  // 6) Plague Cemetery & Mass Grave Pit (หลุมศพใหญ่โรคห่า x = 97, z = -2.6) + Preta Shadow!
-  const pitX = 97;
-  const pitZ = -2.6;
-  // Dark sunken pit floor + outer soil earth berms forming a clear dug trench
-  addBox(scene, 7.6, 0.08, 3.4, '#1c120c', pitX, 0.02, pitZ, 0.98);
-  [
-    [pitX, 0.24, pitZ - 1.75, 8.2, 0.48, 0.55],
-    [pitX, 0.24, pitZ + 1.65, 8.2, 0.42, 0.5],
-    [pitX - 4.0, 0.24, pitZ, 0.65, 0.45, 3.6],
-    [pitX + 4.0, 0.24, pitZ, 0.65, 0.45, 3.6],
-  ].forEach(([bx, by, bz, bw, bh, bd]) => addBox(scene, bw, bh, bd, '#4a3222', bx, by, bz, 0.96));
-
-  // Piled shroud-wrapped plague corpses mounded inside the mass grave pit!
-  const clothMat1 = new THREE.MeshStandardMaterial({ color: '#d6d3d1', roughness: 0.94 });
-  const clothMat2 = new THREE.MeshStandardMaterial({ color: '#a8a29e', roughness: 0.95 });
-  const ropeMat = new THREE.MeshStandardMaterial({ color: '#78350f', roughness: 0.9 });
-  for (let i = 0; i < 14; i++) {
-    const layer = i >= 8 ? 1 : 0;
-    const cx = pitX - 2.6 + (i % 7) * 0.86 + (layer ? 0.35 : 0);
-    const cy = 0.16 + layer * 0.26;
-    const cz = pitZ + ((i % 3) - 1) * 0.52;
-    const corpse = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.16, 0.13, 1.38, 7),
-      i % 2 === 0 ? clothMat1 : clothMat2
-    );
-    corpse.rotation.z = Math.PI / 2 + ((i % 5) - 2) * 0.09;
-    corpse.rotation.y = ((i % 4) - 1.5) * 0.28;
-    corpse.position.set(cx, cy, cz);
-    scene.add(corpse);
-
-    const tie = new THREE.Mesh(new THREE.TorusGeometry(0.16, 0.02, 5, 8), ropeMat);
-    tie.position.set(cx, cy, cz);
-    tie.rotation.y = Math.PI / 2;
-    scene.add(tie);
-  }
-
-  // Smoldering funeral pyre flames & smoke beside/inside the pit + sign
-  const pitFlames: THREE.Mesh[] = [];
-  const pitSmoke: THREE.Mesh[] = [];
-  [-2.5, 0, 2.5].forEach((fx) => {
-    const fl = new THREE.Mesh(
-      new THREE.ConeGeometry(0.28, 0.72, 7),
-      new THREE.MeshBasicMaterial({ color: '#f97316', transparent: true, opacity: 0.85 })
-    );
-    fl.position.set(pitX + fx, 0.52, pitZ + 0.15);
-    fl.visible = false;
-    scene.add(fl);
-    pitFlames.push(fl);
-
-    const sm = new THREE.Mesh(
-      new THREE.SphereGeometry(0.55, 7, 6),
-      new THREE.MeshBasicMaterial({ color: '#475569', transparent: true, opacity: 0.36 })
-    );
-    sm.position.set(pitX + fx, 1.65, pitZ);
-    sm.visible = false;
-    scene.add(sm);
-    pitSmoke.push(sm);
-  });
-
-  [-1.2, 1.2].forEach((ox) => addBox(scene, 0.1, 1.85, 0.1, '#451a03', pitX - 4.6 + ox, 0.92, -1.16, 0.9));
-  const pitSign = new THREE.Mesh(
-    new THREE.PlaneGeometry(3.3, 0.68),
-    new THREE.MeshBasicMaterial({ map: makeAyutthayaSignTex('#450a0a', '#ef4444', '#fecaca', 'หลุมฝังกลบศพโรคห่า', 'เขตอันตราย — ห้ามเข้าใกล้หลังตะวันตกดิน') })
-  );
-  pitSign.position.set(pitX - 4.6, 1.52, -1.1);
-  scene.add(pitSign);
-
-  const pitLight = new THREE.PointLight('#fb923c', 1.2, 14, 1.15);
-  pitLight.position.set(pitX, 1.6, pitZ + 0.8);
-  scene.add(pitLight);
-
-  // Towering Ayutthaya Cemetery Preta shadow (visible at night behind the grave pit)
-  const pretaShadow = new THREE.Group();
-  const pMat = new THREE.MeshBasicMaterial({ color: '#020306', transparent: true, opacity: 0.8 });
-  [-0.24, 0.24].forEach((lx) => {
-    const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.05, 4.4, 7), pMat);
-    leg.position.set(lx, 2.2, 0);
-    pretaShadow.add(leg);
-  });
-  const pTorso = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.16, 2.2, 8), pMat);
-  pTorso.position.set(0, 5.4, 0);
-  const pNeck = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.07, 1.0, 7), pMat);
-  pNeck.position.set(0, 7.0, 0);
-  const pHead = new THREE.Mesh(new THREE.SphereGeometry(0.21, 9, 8), pMat);
-  pHead.position.set(0, 7.65, 0);
-  pretaShadow.add(pTorso, pNeck, pHead);
-  [-0.07, 0.07].forEach((ex) => {
-    const eye = new THREE.Mesh(new THREE.SphereGeometry(0.025, 6, 6), new THREE.MeshBasicMaterial({ color: '#ef4444' }));
-    eye.position.set(ex, 7.68, 0.19);
-    pretaShadow.add(eye);
-  });
-  [-0.36, 0.36].forEach((ax, ai) => {
-    const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.04, 3.2, 7), pMat);
-    arm.name = ai === 0 ? 'pretaArmL' : 'pretaArmR';
-    arm.position.set(ax, 4.8, 0.08);
-    arm.rotation.z = ai === 0 ? 0.12 : -0.12;
-    pretaShadow.add(arm);
-  });
-  pretaShadow.position.set(96, 0, -9.2);
-  pretaShadow.visible = false;
-  scene.add(pretaShadow);
+  // Build Inner Walled Ayutthaya Kingdom + Royal Palace + Temples + Cemetery
+  const inner = buildAyutthayaInnerCity(scene, brickMat, buildJunkShip);
 
   return {
     hearthLight,
-    templeLights,
     canalCorpses,
-    pitFlames,
-    pitSmoke,
-    pitLight,
-    pretaShadow,
+    swanBarge: { group: sb.group, oars: sb.oars, x: 30, dir: 1 },
     marketWalkers,
-    templeArchSign,
+    ...inner,
   };
 }

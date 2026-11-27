@@ -4,8 +4,8 @@ import { WeatherType } from '../types';
 import { buildAyutthayaFoliage, makeAyutthayaBoat, makeAyutthayaFigure, makeAyutthayaSignTex } from './AyutthayaArchitecture';
 import { AyutthayaLandmarkHandles, buildAyutthayaLandmarks } from './AyutthayaLandmarks';
 
-export const CH4_MIN_X = -124;
-export const CH4_MAX_X = 124;
+export const CH4_MIN_X = -188;
+export const CH4_MAX_X = 188;
 
 export type AyutthayaMood = 'prosperous' | 'plague' | 'riot' | 'climax';
 
@@ -110,7 +110,7 @@ export class AyutthayaWorld {
     this.scene.fog = new THREE.FogExp2('#2d241c', 0.011);
 
     this.camera = new THREE.PerspectiveCamera(42, window.innerWidth / window.innerHeight, 0.1, 130);
-    this.camera.position.set(-46, 2.4, 14.2);
+    this.camera.position.set(-84, 2.4, 14.2);
 
     const isMobileOrTablet = window.matchMedia('(pointer: coarse)').matches || navigator.maxTouchPoints > 0;
     this.renderer = new THREE.WebGLRenderer({
@@ -138,8 +138,8 @@ export class AyutthayaWorld {
     this.landmarks = buildAyutthayaLandmarks(this.scene);
     buildAyutthayaFoliage(this.scene);
 
-    // Street / bridge torches at key landmarks
-    [-108, -90, -52, -34, -4, 12, 28, 44, 72, 114].forEach((tx) => {
+    // Street / pier torches spanning all 380m of Ayutthaya neighborhoods
+    [-168, -146, -124, -100, -82, -56, -38, -14, 10, 26, 46, 66, 94, 125, 143, 178].forEach((tx) => {
       const post = new THREE.Mesh(
         new THREE.CylinderGeometry(0.05, 0.06, 2.35, 6),
         new THREE.MeshStandardMaterial({ color: '#451a03', roughness: 0.9 })
@@ -152,9 +152,9 @@ export class AyutthayaWorld {
 
     // Ambient Ayutthaya river merchant boats rowing along Chao Phraya canal
     [
-      { x: -95, dir: 1 as const, z: 5.5, speed: 2.2, shirt: '#dc2626' },
-      { x: -18, dir: -1 as const, z: 6.7, speed: 2.6, shirt: '#0284c7' },
-      { x: 52, dir: 1 as const, z: 5.8, speed: 2.1, shirt: '#ca8a04' },
+      { x: -155, dir: 1 as const, z: 5.9, speed: 2.2, shirt: '#dc2626' },
+      { x: -45, dir: -1 as const, z: 6.9, speed: 2.6, shirt: '#0284c7' },
+      { x: 90, dir: 1 as const, z: 6.1, speed: 2.1, shirt: '#ca8a04' },
     ].forEach((rb) => {
       const boat = makeAyutthayaBoat(4.2, true, rb.shirt);
       boat.group.position.set(rb.x, -0.14, rb.z);
@@ -163,9 +163,9 @@ export class AyutthayaWorld {
       this.riverTraders.push({ group: boat.group, oarL: boat.oarL, oarR: boat.oarR, ...rb });
     });
 
-    // Straw combat training dummy beside Blacksmith Forge (x = -41.4)
+    // Straw combat training dummy beside Blacksmith Forge (x = -77.5)
     this.trainingDummy = new THREE.Group();
-    this.trainingDummy.position.set(-41.4, 0, -0.85);
+    this.trainingDummy.position.set(-77.5, 0, -0.85);
     const dPost = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.07, 2.15, 6), new THREE.MeshStandardMaterial({ color: '#5c3a21' }));
     dPost.position.y = 1.08;
     const dBody = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.24, 0.95, 8), new THREE.MeshStandardMaterial({ color: '#ca8a04', roughness: 0.95 }));
@@ -180,21 +180,21 @@ export class AyutthayaWorld {
     this.trainingDummy.add(dPost, dBody, dArm, dSign);
     this.scene.add(this.trainingDummy);
 
-    // Docked spare boat neatly moored in canal beside Blacksmith Pier & Player's navigable Boat
+    // Docked spare boat neatly moored beside Blacksmith River Pier & Player's navigable Boat
     this.dockedPierBoat = makeAyutthayaBoat(3.9, false).group;
-    this.dockedPierBoat.position.set(-51.6, -0.14, 5.65);
+    this.dockedPierBoat.position.set(-83.6, -0.14, 5.65);
     this.scene.add(this.dockedPierBoat);
 
     this.playerBoat = makeAyutthayaBoat(4.1, false);
-    this.playerBoat.group.position.set(-51.6, -0.14, 5.65);
+    this.playerBoat.group.position.set(-83.6, -0.14, 5.65);
     this.playerBoat.group.visible = false;
     this.scene.add(this.playerBoat.group);
 
     const shadowTex = this.createShadowTex();
     this.playerMesh = this.makeSpriteMesh(this.charFrames.man[0], 1.5, 2.2);
-    this.playerMesh.position.set(-46, 0.95, 0.85);
+    this.playerMesh.position.set(-84, 0.95, 0.85);
     this.playerShadow = this.makeShadow(shadowTex);
-    this.playerShadow.position.set(-46, 0.02, 0.85);
+    this.playerShadow.position.set(-84, 0.02, 0.85);
     this.scene.add(this.playerMesh, this.playerShadow);
 
     // Visible 3D held flaming resin torch (ไต้ไฟถือในมือ) & optional held Ayutthaya steel sword!
@@ -253,13 +253,13 @@ export class AyutthayaWorld {
       this.projectilePool.push({ x: 0, y: 1.1, vx: 0, active: false, mesh: aMesh });
     }
 
-    // Core story NPCs
+    // Core story NPCs across the 380m Ayutthaya Kingdom
     const npcDefs: { id: string; kind: Ch4CharacterKind; x: number; z: number }[] = [
-      { id: 'smith', kind: 'smith', x: -45.5, z: -0.9 },
-      { id: 'phudsorn', kind: 'phudsorn', x: -91.5, z: -0.9 },
-      { id: 'khun_ram', kind: 'khun_ram', x: 10.4, z: -0.85 },
-      { id: 'monk_khong', kind: 'monk_khong', x: 69.5, z: -1.1 },
-      { id: 'child_kla', kind: 'child_kla', x: -57.5, z: -0.8 },
+      { id: 'smith', kind: 'smith', x: -81.5, z: -0.9 },
+      { id: 'phudsorn', kind: 'phudsorn', x: -157, z: -0.9 },
+      { id: 'khun_ram', kind: 'khun_ram', x: 11.5, z: -0.85 },
+      { id: 'monk_khong', kind: 'monk_khong', x: 136, z: -1.1 },
+      { id: 'child_kla', kind: 'child_kla', x: -102, z: -0.8 },
     ];
     npcDefs.forEach((n) => {
       const m = this.makeSpriteMesh(this.charFrames[n.kind][0], 1.48, 2.15);
@@ -268,11 +268,12 @@ export class AyutthayaWorld {
       this.npcMeshes[n.id] = m;
     });
 
-    // City Arson Fires (3 outbreak zones)
+    // City Arson Fires (4 district flashpoints during riot)
     this.fireViews = [
-      { id: 'fire_market', label: 'เพลิงไหม้ตลาดท่าเรือ', x: -86 },
-      { id: 'fire_village', label: 'เพลิงไหม้ชุมชนเรือนไทย', x: -32 },
-      { id: 'fire_gate', label: 'เพลิงไหม้ป้อมประตูชัย', x: 14 },
+      { id: 'fire_market', label: 'เพลิงไหม้ตลาดน้ำอโยธยา', x: -157 },
+      { id: 'fire_village', label: 'เพลิงไหม้ชุมชนเรือนไทย', x: -100 },
+      { id: 'fire_noble', label: 'เพลิงไหม้บ้านขุนนาง', x: -38 },
+      { id: 'fire_gate', label: 'เพลิงไหม้ประตูชัย & หน้าวัง', x: 14 },
     ].map((fd) => {
       const fg = new THREE.Group();
       fg.position.set(fd.x, 0, -1.35);
@@ -480,7 +481,7 @@ export class AyutthayaWorld {
     this.slashArcMesh.position.set(playerX + facing * 1.0, 1.05, 0.9);
     this.slashArcMesh.scale.x = facing;
     this.slashArcMesh.visible = true;
-    if (Math.abs(playerX - -41.4) < 3.0) {
+    if (Math.abs(playerX - -60.5) < 3.0) {
       this.dummyHitTimer = 0.55;
     }
   }
@@ -589,13 +590,40 @@ export class AyutthayaWorld {
       rb.group.visible = mood !== 'riot';
       if (!rb.group.visible) return;
       rb.x += rb.dir * rb.speed * dt;
-      if (rb.x > 110) rb.dir = -1;
-      else if (rb.x < -110) rb.dir = 1;
+      if (rb.x > 136) rb.dir = -1;
+      else if (rb.x < -140) rb.dir = 1;
       rb.group.position.x = rb.x;
       rb.group.scale.x = rb.dir;
       const sweep = Math.sin(this.animClock * 3.4 + ri) * 0.48;
       if (rb.oarL) rb.oarL.rotation.z = sweep;
       if (rb.oarR) rb.oarR.rotation.z = sweep;
+    });
+    // Royal Golden Swan Barge cruising along the Royal Canal (-15 .. +95)
+    const sb = this.landmarks.swanBarge;
+    sb.group.visible = mood !== 'riot';
+    if (sb.group.visible) {
+      sb.x += sb.dir * 2.4 * dt;
+      if (sb.x > 88) sb.dir = -1;
+      else if (sb.x < -12) sb.dir = 1;
+      sb.group.position.x = sb.x;
+      sb.group.scale.x = sb.dir;
+      sb.group.position.y = -0.1 + Math.sin(this.animClock * 1.6) * 0.035;
+      const bSweep = Math.sin(this.animClock * 3.0) * 0.45;
+      sb.oars.forEach((oar) => { oar.rotation.z = bSweep; });
+    }
+
+    // Patrolling Army Garrison Soldiers facing travel direction
+    this.landmarks.soldiers.forEach((sl) => {
+      sl.group.visible = true;
+      const sx = sl.baseX + Math.sin(this.animClock * 0.55 * sl.speed + sl.phase) * sl.range;
+      const sdir = Math.cos(this.animClock * 0.55 * sl.speed + sl.phase) >= 0 ? 1 : -1;
+      sl.group.position.x = sx;
+      sl.group.rotation.y = sdir * (Math.PI / 2);
+      const stride = Math.sin(this.animClock * 5.2 + sl.phase);
+      const lL = sl.group.getObjectByName('legL');
+      const lR = sl.group.getObjectByName('legR');
+      if (lL) lL.rotation.x = stride * 0.36;
+      if (lR) lR.rotation.x = -stride * 0.36;
     });
 
     // Market walkers facing direction of travel (`rotation.y = dir * PI/2`) with leg/arm strides!
@@ -636,7 +664,7 @@ export class AyutthayaWorld {
 
     this.landmarks.pretaShadow.visible = isNight || mood === 'riot' || mood === 'climax';
     if (this.landmarks.pretaShadow.visible) {
-      this.landmarks.pretaShadow.position.x = 96 + Math.sin(this.animClock * 0.12) * 14;
+      this.landmarks.pretaShadow.position.x = 160 + Math.sin(this.animClock * 0.12) * 14;
       this.landmarks.pretaShadow.rotation.z = Math.sin(this.animClock * 0.9) * 0.05;
     }
 
@@ -674,7 +702,7 @@ export class AyutthayaWorld {
       sv.mesh.position.x = sv.x;
       const moveDir = sv.rescued ? 1 : playerX >= sv.x ? 1 : -1;
       sv.mesh.rotation.y = moveDir * (Math.PI / 2);
-      const stride = sv.rescued && sv.x < 64 ? Math.sin(this.animClock * 6.5 + idx) : 0;
+      const stride = sv.rescued && sv.x < 130 ? Math.sin(this.animClock * 6.5 + idx) : 0;
       const lL = sv.mesh.getObjectByName('legL');
       const lR = sv.mesh.getObjectByName('legR');
       if (lL) lL.rotation.x = stride * 0.4;
