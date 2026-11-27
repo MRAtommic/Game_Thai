@@ -275,12 +275,13 @@ export class SchoolWorld {
     this.addBox(this.exteriorGroup, 34, 0.22, 0.42, '#7f1d1d', -30, 1.32, -2.55, 0.75);
 
     const treeTex = createStreetTreeTexture();
-    [-118, -98, -78, -60, -40, -18, 40, 60, 74, 102, 120].forEach((tx, idx) => {
+    // Place trees strictly in open clear gaps BETWEEN houses, shophouses, gate & campus facilities (ZERO overlap!)
+    [-102.2, -89.0, -75.5, -64.2, -41.0, -17.5, 39.5, 60.0, 74.5, 102.5, 120.0].forEach((tx, idx) => {
       const tr = new THREE.Mesh(
-        new THREE.PlaneGeometry(3.6, 4.5),
+        new THREE.PlaneGeometry(3.5, 4.4),
         new THREE.MeshStandardMaterial({ map: treeTex, transparent: true, alphaTest: 0.35, side: THREE.DoubleSide })
       );
-      tr.position.set(tx, 2.15, -3.2 - (idx % 2) * 0.4);
+      tr.position.set(tx, 2.15, -3.35 - (idx % 2) * 0.3);
       this.exteriorGroup.add(tr);
     });
 
@@ -302,7 +303,7 @@ export class SchoolWorld {
     // Grounded 2-Story Open Thai Town Shophouses (ตึกแถวเปิดร้านค้า มีแสงไฟ ชั้นวางของ และคนอยู่ข้างใน!)
     const shophouseWin = createThaiWindowTexture(true);
     [
-      { x: -119, wall: '#e2e8f0', roof: '#1e3a8a', awning: '#b91c1c', sign: 'ร้านขายของชำป้าพร', sub: 'ขนม • เครื่องดื่ม • เปิด 06:00-21:00', staff: 'mom_ch3' as Ch3CharKind, guest: 'student_girl' as Ch3CharKind },
+      { x: -120.5, wall: '#e2e8f0', roof: '#1e3a8a', awning: '#b91c1c', sign: 'ร้านขายของชำป้าพร', sub: 'ขนม • เครื่องดื่ม • เปิด 06:00-21:00', staff: 'mom_ch3' as Ch3CharKind, guest: 'student_girl' as Ch3CharKind },
       { x: -96, wall: '#fef3c7', roof: '#7c2d12', awning: '#0f766e', sign: 'ร้านกาแฟโบราณ & นมสด', sub: 'ชาเย็น • โอวัลติน • เปิดบริการ', staff: 'vendor_coop' as Ch3CharKind, guest: 'student_boy' as Ch3CharKind },
       { x: -82, wall: '#dbeafe', roof: '#1e293b', awning: '#1d4ed8', sign: 'ร้านเครื่องเขียนจันทรา', sub: 'สมุด • ดินสอ • ถ่ายเอกสาร', staff: 'mom_ch3' as Ch3CharKind, guest: 'student_girl' as Ch3CharKind },
       { x: -69, wall: '#f1f5f9', roof: '#7f1d1d', awning: '#b45309', sign: 'มินิมาร์ทหน้าโรงเรียน', sub: 'เปิด 24 ชม. • ของกินเพียบ', staff: 'vendor_coop' as Ch3CharKind, guest: 'student_boy' as Ch3CharKind },
@@ -344,17 +345,17 @@ export class SchoolWorld {
       guestMesh.scale.x = 1;
       this.exteriorGroup.add(staffMesh, guestMesh);
 
-      // Sloped striped canopy awning + Unobstructed Shop Sign cleanly IN FRONT of balcony rail!
-      this.addBox(this.exteriorGroup, 5.8, 0.12, 1.15, sh.awning, sh.x, 2.8, frontZ + 0.48, 0.75).rotation.x = 0.26;
+      // Sloped striped canopy awning + Shop Sign mounted cleanly on front lip of awning fascia (zero overlap!)
+      this.addBox(this.exteriorGroup, 5.8, 0.12, 1.15, sh.awning, sh.x, 2.72, frontZ + 0.48, 0.75).rotation.x = 0.2;
       const shopSign = new THREE.Mesh(
         new THREE.PlaneGeometry(4.1, 0.64),
         new THREE.MeshBasicMaterial({ map: createSchoolSignTexture(sh.sign, sh.sub, sh.roof, '#0f172a', '#fde68a') })
       );
-      shopSign.position.set(sh.x, 3.35, frontZ + 0.34);
+      shopSign.position.set(sh.x, 2.86, frontZ + 1.08);
       this.exteriorGroup.add(shopSign);
 
       // 2nd Floor balcony rail & warm glowing Thai windows
-      this.addBox(this.exteriorGroup, bw - 0.6, 0.48, 0.14, '#cbd5e1', sh.x, 3.45, frontZ + 0.16, 0.8);
+      this.addBox(this.exteriorGroup, bw - 0.6, 0.48, 0.14, '#cbd5e1', sh.x, 3.35, frontZ + 0.16, 0.8);
       [-1.7, 1.7].forEach((wx) => {
         const w = new THREE.Mesh(new THREE.PlaneGeometry(1.75, 1.25), new THREE.MeshBasicMaterial({ map: shophouseWin }));
         w.position.set(sh.x + wx, 4.46, frontZ + 0.04);
@@ -363,20 +364,22 @@ export class SchoolWorld {
       });
     });
 
-    // Utility Power Poles & Catenary Cables along entire 248m town/school street
-    for (let px = -120; px <= 116; px += 18) {
-      this.addBox(this.exteriorGroup, 0.24, 8.2, 0.24, '#334155', px, 4.1, -3.75, 0.9);
-      this.addBox(this.exteriorGroup, 1.35, 0.12, 0.14, '#475569', px, 7.6, -3.75, 0.7);
-      if (px + 18 <= 118) {
+    // Utility Power Poles & Catenary Cables placed strictly in open bays between buildings (never in front of windows!)
+    const poleXs = [-124.5, -103.5, -89.5, -75.8, -64.6, -42.0, -16.5, 40.2, 59.5, 74.0, 103.5, 121.0];
+    poleXs.forEach((px, idx) => {
+      this.addBox(this.exteriorGroup, 0.22, 8.2, 0.22, '#334155', px, 4.1, -3.55, 0.9);
+      this.addBox(this.exteriorGroup, 1.35, 0.12, 0.14, '#475569', px, 7.6, -3.55, 0.7);
+      if (idx + 1 < poleXs.length) {
+        const nx = poleXs[idx + 1];
         const sagPts = [
-          new THREE.Vector3(px, 7.55, -3.75),
-          new THREE.Vector3(px + 9, 6.95, -3.75),
-          new THREE.Vector3(px + 18, 7.55, -3.75),
+          new THREE.Vector3(px, 7.55, -3.55),
+          new THREE.Vector3((px + nx) / 2, 6.95, -3.55),
+          new THREE.Vector3(nx, 7.55, -3.55),
         ];
         const wireGeo = new THREE.BufferGeometry().setFromPoints(new THREE.QuadraticBezierCurve3(...sagPts).getPoints(10));
         this.exteriorGroup.add(new THREE.Line(wireGeo, new THREE.LineBasicMaterial({ color: '#0f172a', transparent: true, opacity: 0.72 })));
       }
-    }
+    });
 
     // Crisp Flush Asphalt Road Markings (PlaneGeometry flat on pavement so ZERO boxy thickness or crosswalk overlap!)
     const addRoadMark = (w: number, d: number, col: string, x: number, z: number) => {
@@ -416,7 +419,7 @@ export class SchoolWorld {
     this.exteriorGroup.add(this.gateLockMesh);
 
     const lampConeTex = createLightConeTexture('255, 224, 150');
-    [-112, -88, -66, -42, -31, 46, 67, 88, 114].forEach((lx) => {
+    [-104.0, -88.5, -75.2, -58.2, -41.2, -31.0, 39.2, 60.2, 74.8, 102.0, 119.5].forEach((lx) => {
       this.addBox(this.exteriorGroup, 0.22, 5.8, 0.22, '#475569', lx, 2.9, -2.0);
       const b = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.12, 0.45), new THREE.MeshBasicMaterial({ color: '#fde68a' }));
       b.position.set(lx, 5.75, -1.25);
