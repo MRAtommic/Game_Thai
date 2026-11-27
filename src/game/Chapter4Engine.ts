@@ -4,6 +4,7 @@ import { speakDialogueLine, stopVoiceActing } from '../audio/VoiceActor';
 import { CH4_CLUES, CH4_ITEMS, CH4_RULES, CH4_ZONE_NAMES } from '../data/chapter4Data';
 import { DialogueLine, EndingType, FloorIndex, TimePeriod, WeatherType } from '../types';
 import { CutscenePlayer, IsaanCutsceneId } from '../ui/CutscenePlayer';
+import { AyutthayaMiniGameKind, launchAyutthayaMiniGame } from '../ui/AyutthayaMiniGames';
 import { renderSharedInventoryBar } from '../ui/InventoryBar';
 import { bindCameraZoomControls } from '../ui/mobileZoom';
 import { CH4_ROOM_META, Ch4RoomId } from '../world/AyutthayaInteriorRooms';
@@ -80,6 +81,16 @@ export class Chapter4Engine {
   private playerFacing: 1 | -1 = 1;
   private swordCd = 0;
   private bowCd = 0;
+  private swordComboStep = 0;
+  private comboWindowTimer = 0;
+  private parryWindowTimer = 0;
+  private parryCd = 0;
+  private hitstopTimer = 0;
+  private bleedingTimer = 0;
+  private bladeBuffTimer = 0;
+  private dmgVignetteTimer = 0;
+  private dmgVignetteEl: HTMLElement | null = null;
+  private miniGameCleanup: (() => void) | null = null;
   private enemyAtkClock = 0;
   private arrowRegenTimer = 0;
   private pretaSoundTimer = 10;
@@ -127,6 +138,7 @@ export class Chapter4Engine {
   private touchSprint = document.getElementById('touch-sprint');
   private touchShoot = document.getElementById('touch-shoot');
   private touchBow = document.getElementById('touch-bow');
+  private touchPhoto = document.getElementById('touch-photo');
 
   constructor(canvas: HTMLCanvasElement, sound: SoundEngine, onExitToMenu: () => void) {
     this.world = new AyutthayaWorld(canvas);
@@ -256,6 +268,16 @@ export class Chapter4Engine {
       this.touchBow.classList.toggle('hidden', !isTouch);
       this.touchBow.textContent = '🏹 ธนู';
     }
+    if (this.touchPhoto) {
+      this.touchPhoto.classList.toggle('hidden', !isTouch);
+      this.touchPhoto.textContent = '🛡️ ปัด';
+    }
+    if (!this.dmgVignetteEl) {
+      const vig = document.createElement('div');
+      vig.className = 'ch4-dmg-vignette';
+      document.body.appendChild(vig);
+      this.dmgVignetteEl = vig;
+    }
 
     this.running = true;
     this.lastTime = performance.now();
@@ -284,6 +306,14 @@ export class Chapter4Engine {
       this.touchShoot.textContent = 'ยิงปืน!';
     }
     if (this.touchBow) this.touchBow.classList.add('hidden');
+    if (this.touchPhoto) {
+      this.touchPhoto.classList.add('hidden');
+      this.touchPhoto.textContent = '📷';
+    }
+    this.miniGameCleanup?.();
+    this.miniGameCleanup = null;
+    this.dmgVignetteEl?.remove();
+    this.dmgVignetteEl = null;
     const fSpan = this.btnFlashlight.querySelector('span');
     if (fSpan) fSpan.textContent = 'ไฟฉาย';
     this.hudExtra?.classList.add('hidden');
@@ -347,6 +377,12 @@ export class Chapter4Engine {
         } else if (code === 'KeyG') {
           e.preventDefault();
           this.shootBow();
+        } else if (code === 'KeyC' || code === 'KeyV') {
+          e.preventDefault();
+          this.triggerParry();
+        } else if (code === 'KeyJ') {
+          e.preventDefault();
+          this.openMiniGameHub();
         } else if (code === 'KeyT') {
           this.toggleTorch();
         } else if (code === 'KeyB') {
@@ -446,6 +482,7 @@ export class Chapter4Engine {
     }, sig);
     this.touchShoot?.addEventListener('click', () => { this.sound.init(); this.swingSword(); }, sig);
     this.touchBow?.addEventListener('click', () => { this.sound.init(); this.shootBow(); }, sig);
+    this.touchPhoto?.addEventListener('click', () => { this.sound.init(); this.triggerParry(); }, sig);
   }
 
   private toggleTorch(): void {
@@ -492,15 +529,47 @@ export class Chapter4Engine {
     this.showToast(this.state.isRidingHorse ? 'ควบม้าศึกอโยธยา! วิ่งไวขึ้นและฟันดาบบนหลังม้าได้ [F]' : 'ลงจากหลังม้าแล้ว');
   }
 
+  private triggerParry(): void {
+    if (this.parryCd > 0 || this.state.isRowing || this.currentRoom !== 'outside') return;
+    if (!this.state.inventory.includes('namphi_sword')) {
+      this.showToast('ต้องมีดาบเหล็กน้ำพี้ก่อนจึงจะปัดดาบ/ป้องกันได้!');
+      return;
+    }
+    this.parryCd = 0.85;
+    this.parryWindowTimer = 0.44;
+    this.state.x = Math.max(CH4_MIN_X + 2, Math.min(CH4_MAX_X - 2, this.state.x - this.playerFacing * 0.8));
+    this.sound.playSwordSlash();
+
+    let parriedAny = false;
+    this.world.getEnemyViews().forEach((ev) => {
+      if (ev.alive && Math.abs(ev.x - this.state.x) < 3.4 && ev.windUp > 0.15) {
+        ev.windUp = 0;
+        ev.stunTimer = 2.1;
+        ev.x += ev.x >= this.state.x ? 1.8 : -1.8;
+        parriedAny = true;
+      }
+    });
+    this.world.triggerParryGuard(this.state.x, this.playerFacing, parriedAny);
+    if (parriedAny) {
+      this.sound.playSwordHit();
+      this.state.stamina = Math.min(100, this.state.stamina + 20);
+      this.showCombatFloat('🛡️ ปัดดาบสำเร็จ! ศัตรูมึนงง!', '#38bdf8');
+    }
+  }
+
   private swingSword(): void {
     if (this.swordCd > 0) return;
     if (!this.state.inventory.includes('namphi_sword')) {
       this.showToast('ยังไม่มีดาบ! รีบไปรับดาบเหล็กน้ำพี้จากลุงสินที่โรงตีดาบ (-81 ม.)');
       return;
     }
-    this.swordCd = 0.34;
+    this.swordComboStep = this.comboWindowTimer > 0 ? (this.swordComboStep % 3) + 1 : 1;
+    this.comboWindowTimer = 0.95;
+    const isFinisher = this.swordComboStep === 3;
+    this.swordCd = isFinisher ? 0.42 : 0.24;
+
     this.sound.playSwordSlash();
-    this.world.triggerSwordSlash(this.state.x, this.playerFacing);
+    this.world.triggerSwordSlash(this.state.x, this.playerFacing, this.swordComboStep, this.bladeBuffTimer > 0);
 
     // Training dummy strike in Act 1
     if (this.state.flags.act === 1 && Math.abs(this.state.x - -77.5) < 3.0 && !this.state.flags.practicedSword) {
@@ -513,21 +582,37 @@ export class Chapter4Engine {
 
     if (this.state.isRowing) return;
 
+    const baseDmg = isFinisher ? 64 : this.swordComboStep === 2 ? 42 : 34;
+    const buffedDmg = this.bladeBuffTimer > 0 ? Math.round(baseDmg * 1.35) : baseDmg;
+    const reach = isFinisher ? 3.35 : 2.85;
+
     let hitAny = false;
     this.world.getEnemyViews().forEach((ev) => {
       if (!ev.alive) return;
       const dx = ev.x - this.state.x;
-      if (Math.abs(dx) < 2.8 && (dx === 0 || Math.sign(dx) === this.playerFacing || Math.abs(dx) < 1.35)) {
-        ev.hp = Math.max(0, ev.hp - 36);
-        ev.x = Math.max(CH4_MIN_X + 3, Math.min(CH4_MAX_X - 3, ev.x + this.playerFacing * 2.1));
+      if (Math.abs(dx) < reach && (dx === 0 || Math.sign(dx) === this.playerFacing || Math.abs(dx) < 1.45)) {
+        const finalDmg = ev.stunTimer > 0 ? Math.round(buffedDmg * 1.4) : buffedDmg;
+        const crit = isFinisher || ev.stunTimer > 0;
+        ev.hp = Math.max(0, ev.hp - finalDmg);
+        ev.flashTimer = 0.28;
+        ev.windUp = 0; // stagger enemy wind-up!
+        ev.x = Math.max(CH4_MIN_X + 3, Math.min(CH4_MAX_X - 3, ev.x + this.playerFacing * (crit ? 3.2 : 1.7)));
         hitAny = true;
+        this.world.triggerHitImpact(ev.x, this.playerFacing, crit, ev.hp <= 0);
+        this.showCombatFloat(
+          crit ? `⚔️ -${finalDmg} คริ!` : `⚔️ -${finalDmg}`,
+          crit ? '#facc15' : '#f87171'
+        );
         if (ev.hp <= 0) {
           ev.alive = false;
           this.onEnemyDefeated(ev.kind);
         }
       }
     });
-    if (hitAny) this.sound.playSwordHit();
+    if (hitAny) {
+      this.sound.playSwordHit();
+      if (isFinisher) this.hitstopTimer = 0.055;
+    }
   }
 
   private shootBow(): void {
@@ -575,18 +660,23 @@ export class Chapter4Engine {
     if (id === 'herb_medicine') {
       this.state.hp = Math.min(100, this.state.hp + 45);
       this.state.sanity = Math.min(100, this.state.sanity + 25);
+      this.bleedingTimer = 0;
       const idx = this.state.inventory.indexOf(id);
       if (idx >= 0) this.state.inventory.splice(idx, 1);
       this.renderInventory();
-      this.showToast('ดื่มยาต้มสมุนไพรหลวง ฟื้นฟูเลือด +45 และสติ +25');
+      this.showToast('ดื่มยาต้มสมุนไพรหลวง หยุดเลือดออก +45 เลือด และ +25 สติ!');
     } else if (id === 'holy_water') {
       this.state.hp = Math.min(100, this.state.hp + 30);
       this.state.sanity = Math.min(100, this.state.sanity + 40);
+      this.bleedingTimer = 0;
       this.sound.playWaterSplash();
       this.world.getEnemyViews().forEach((ev) => {
         if (ev.alive && ev.kind === 'phee_ha' && Math.abs(ev.x - this.state.x) < 8) {
-          ev.hp = Math.max(0, ev.hp - 40);
+          ev.hp = Math.max(0, ev.hp - 42);
+          ev.flashTimer = 0.25;
+          ev.stunTimer = 1.5;
           ev.x += ev.x >= this.state.x ? 3.5 : -3.5;
+          this.world.triggerHitImpact(ev.x, ev.x >= this.state.x ? 1 : -1, true, ev.hp <= 0);
           if (ev.hp <= 0) {
             ev.alive = false;
             this.onEnemyDefeated('phee_ha');
@@ -766,16 +856,9 @@ export class Chapter4Engine {
         this.showToast('ชมความวิจิตรแห่งพระที่นั่งสรรเพชญมหาปราสาทและพระมหาเศวตฉัตร 9 ชั้น');
       }
     } else if (room === 'temple_ubosot') {
-      this.state.hp = 100;
-      this.state.sanity = 100;
-      if (!claimed) {
-        this.roomBonusClaimed.add(room);
-        this.addItem('holy_water');
-        this.showToast('กราบพระพุทธปฏิมากรทองคำ ฟื้นพลังเต็มร้อย & ได้รับน้ำพระพุทธมนต์ศักดิ์สิทธิ์!');
-      } else {
-        this.sound.playTempleBell();
-        this.showToast('กราบสักการะพระประธานในพระอุโบสถ จิตใจสงบและพลังกายเต็มเปี่ยม!');
-      }
+      this.bleedingTimer = 0;
+      this.openMiniGame('ranat');
+      return;
     } else if (room === 'noble_mansion') {
       if (!claimed) {
         this.roomBonusClaimed.add(room);
@@ -785,12 +868,11 @@ export class Chapter4Engine {
         this.showToast('ภายในจวนขุนนางประดับฉากลายรดน้ำทองและเครื่องถ้วยเบญจรงค์งดงาม');
       }
     } else if (room === 'garrison_fort') {
-      this.state.sanity = Math.min(100, this.state.sanity + 25);
-      this.showToast('ตรวจแผนที่ยุทธศาสตร์ป้องพระนคร — กำลังใจฮึกเหิม (+25 สติ)');
+      this.openMiniGame('duel');
+      return;
     } else if (room === 'blacksmith_interior') {
-      this.state.arrows = Math.max(this.state.arrows, 14);
-      this.sound.playSwordHit();
-      this.showToast('เติมลูกดอกหน้าไม้อโยธยาจากคลังเหล็กน้ำพี้ครบ ๑๔ ดอก!');
+      this.openMiniGame('forge');
+      return;
     } else if (room === 'market_hall') {
       if (!claimed) {
         this.roomBonusClaimed.add(room);
@@ -802,9 +884,71 @@ export class Chapter4Engine {
     } else if (room === 'peasant_house') {
       this.state.hp = Math.min(100, this.state.hp + 30);
       this.state.stamina = 100;
-      this.showToast('พักกายบนแคร่เรือนไทย & ไหว้หิ้งพระประจำบ้าน (+30 เลือด)');
+      this.bleedingTimer = 0;
+      this.showToast('พักกายบนแคร่เรือนไทย หยุดเลือดออก & ฟื้น +30 เลือด!');
     }
     this.saveGame();
+  }
+
+  private openMiniGame(kind: AyutthayaMiniGameKind): void {
+    this.miniGameCleanup?.();
+    this.modalOpen = true;
+    this.codes.clear();
+    this.touchMoveDir = 0;
+    this.miniGameCleanup = launchAyutthayaMiniGame(
+      kind,
+      this.sound,
+      this.modalBackdrop,
+      this.modalTitle,
+      this.modalBody,
+      (res) => {
+        this.miniGameCleanup = null;
+        this.closeModal();
+        if (res.kind === 'forge') {
+          if (res.won) {
+            this.state.arrows = Math.max(this.state.arrows, 14) + 4;
+            this.bladeBuffTimer = 120;
+            this.showToast('🔥 ชุบเหล็กน้ำพี้สำเร็จ! +4/+14 ลูกดอก & บัฟคมดาบ +35% ดาเมจ 2 นาที!');
+          } else {
+            this.state.arrows = Math.max(this.state.arrows, 10);
+            this.showToast(`ตีดาบได้ ${res.score}/5 ครั้ง — เติมลูกดอกให้ครบ 10 ดอกแล้ว!`);
+          }
+        } else if (res.kind === 'duel') {
+          if (res.won) {
+            this.addItem('herb_medicine');
+            this.state.hp = Math.min(100, this.state.hp + 35);
+            this.state.sanity = Math.min(100, this.state.sanity + 25);
+            this.showToast(`⚔️ ชนะประลองยุทธ์ (${res.score} คะแนน)! รับยาสมุนไพรหลวง & +35 เลือด!`);
+          } else {
+            this.showToast(`ประลองได้ ${res.score} คะแนน — ลองใหม่เพื่อรับยาสมุนไพรหลวง!`);
+          }
+        } else if (res.kind === 'ranat') {
+          this.state.hp = 100;
+          this.state.sanity = 100;
+          this.bleedingTimer = 0;
+          this.addItem('holy_water');
+          this.showToast('🎶 ลั่นระนาดเอกครบ 3 บท! ฟื้นเลือดเต็ม 100% & ได้รับน้ำพระพุทธมนต์!');
+        }
+        this.saveGame();
+        this.updateHUD();
+      }
+    );
+  }
+
+  private openMiniGameHub(): void {
+    this.modalOpen = true;
+    this.modalTitle.textContent = '🎮 มินิเกมกรุงศรีอยุธยา [J]';
+    this.modalBody.innerHTML = `
+      <div class="mg-hub-grid">
+        <button type="button" class="secondary-btn" id="mg-pick-forge">🔨 ตีดาบเหล็กน้ำพี้ (เพิ่มลูกดอก &amp; คมดาบ +35%)</button>
+        <button type="button" class="secondary-btn" id="mg-pick-duel">⚔️ ประลองยุทธ์ค่ายทหาร (รับสมุนไพร &amp; ฟื้นเลือด)</button>
+        <button type="button" class="secondary-btn" id="mg-pick-ranat">🎵 ตีระนาดเอกถวายพระ (ฟื้นเลือด 100% &amp; น้ำมนต์)</button>
+      </div>
+    `;
+    document.getElementById('mg-pick-forge')?.addEventListener('click', () => this.openMiniGame('forge'));
+    document.getElementById('mg-pick-duel')?.addEventListener('click', () => this.openMiniGame('duel'));
+    document.getElementById('mg-pick-ranat')?.addEventListener('click', () => this.openMiniGame('ranat'));
+    this.modalBackdrop.classList.remove('hidden');
   }
 
   private getNearestAction(): { label: string; run: () => void } | null {
@@ -1107,10 +1251,29 @@ export class Chapter4Engine {
     this.lastTime = now;
     if (this.cutscene.isPlaying()) return;
 
+    if (this.hitstopTimer > 0) {
+      this.hitstopTimer -= dt;
+      return;
+    }
+
     const paused = this.modalOpen || this.activeDialogue.length > 0 || Boolean(this.state.flags.endingReached);
     let moving = false;
 
+    if (this.comboWindowTimer > 0) this.comboWindowTimer = Math.max(0, this.comboWindowTimer - dt);
+    if (this.parryWindowTimer > 0) this.parryWindowTimer = Math.max(0, this.parryWindowTimer - dt);
+    if (this.parryCd > 0) this.parryCd = Math.max(0, this.parryCd - dt);
+    if (this.bladeBuffTimer > 0) this.bladeBuffTimer = Math.max(0, this.bladeBuffTimer - dt);
+    if (this.dmgVignetteTimer > 0) this.dmgVignetteTimer = Math.max(0, this.dmgVignetteTimer - dt);
+    if (this.dmgVignetteEl) {
+      const bleedOpacity = this.bleedingTimer > 0 ? 0.28 + Math.sin(now * 0.008) * 0.1 : 0;
+      this.dmgVignetteEl.style.opacity = String(Math.min(0.85, Math.max(bleedOpacity, this.dmgVignetteTimer * 1.3)));
+    }
+
     if (!paused) {
+      if (this.bleedingTimer > 0) {
+        this.bleedingTimer = Math.max(0, this.bleedingTimer - dt);
+        this.state.hp = Math.max(1, this.state.hp - 1.35 * dt);
+      }
       let dir = 0;
       if (this.codes.has('KeyA') || this.codes.has('ArrowLeft')) dir -= 1;
       if (this.codes.has('KeyD') || this.codes.has('ArrowRight')) dir += 1;
@@ -1235,8 +1398,12 @@ export class Chapter4Engine {
         if (ev.alive && Math.abs(ev.x - proj.x) < 1.05) {
           proj.active = false;
           proj.mesh.visible = false;
-          ev.hp = Math.max(0, ev.hp - 32);
+          const bDmg = this.bladeBuffTimer > 0 ? 44 : 34;
+          ev.hp = Math.max(0, ev.hp - bDmg);
+          ev.flashTimer = 0.24;
           ev.x += Math.sign(proj.vx) * 1.1;
+          this.world.triggerHitImpact(ev.x, Math.sign(proj.vx), false, ev.hp <= 0);
+          this.showCombatFloat(`🏹 -${bDmg}`, '#fde047');
           this.sound.playSwordHit();
           if (ev.hp <= 0) {
             ev.alive = false;
@@ -1247,14 +1414,18 @@ export class Chapter4Engine {
       }
     });
 
-    // Enemy pursuit & live attack tick against survivors or player
+    // Enemy pursuit, wind-up telegraph & combat strikes against survivors or player
     this.enemyAtkClock += dt;
-    const attackTick = this.enemyAtkClock >= 1.7;
+    const attackTick = this.enemyAtkClock >= 1.5;
     if (attackTick) this.enemyAtkClock = 0;
 
     const survivors = this.world.getSurvivorViews();
     enemies.forEach((ev) => {
       if (!ev.alive) return;
+      if (ev.stunTimer > 0) {
+        ev.windUp = 0;
+        return;
+      }
       let targetX: number | null = null;
       let targetSurv: (typeof survivors)[number] | null = null;
 
@@ -1275,25 +1446,41 @@ export class Chapter4Engine {
       if (targetX !== null) {
         const dx = targetX - ev.x;
         ev.dir = dx >= 0 ? 1 : -1;
-        if (Math.abs(dx) > 1.35) {
+        if (Math.abs(dx) > 1.45) {
+          ev.windUp = Math.max(0, ev.windUp - dt * 2);
           const spd = ev.kind === 'phee_ha' ? 2.15 : ev.kind === 'suea_kham' ? 3.2 : 2.85;
           ev.x += ev.dir * spd * dt;
-        } else if (attackTick) {
-          if (targetSurv) {
-            targetSurv.hp = Math.max(0, targetSurv.hp - 4);
-            if (targetSurv.hp <= 0) {
-              targetSurv.alive = false;
-              if (!this.state.deadIds.includes(targetSurv.id)) this.state.deadIds.push(targetSurv.id);
-              this.showToast(`⚠️ ${targetSurv.name} ถูกทำร้ายจนสิ้นใจแล้ว!`);
-              this.checkActProgression();
-            }
-          } else if (!this.state.isRowing && distPlayer < 1.8) {
-            const rawDmg = ev.kind === 'suea_kham' ? 14 : 9;
-            const dmg = this.state.inventory.includes('biakae_amulet') ? Math.ceil(rawDmg * 0.65) : rawDmg;
-            this.state.hp = Math.max(0, this.state.hp - dmg);
-            this.sound.playSwordHit();
-            if (this.state.hp <= 0) {
-              this.finishChapter('bad');
+        } else {
+          ev.windUp = Math.min(1, ev.windUp + dt * 1.45);
+          if (attackTick) {
+            ev.windUp = 0;
+            if (targetSurv) {
+              targetSurv.hp = Math.max(0, targetSurv.hp - 4);
+              if (targetSurv.hp <= 0) {
+                targetSurv.alive = false;
+                if (!this.state.deadIds.includes(targetSurv.id)) this.state.deadIds.push(targetSurv.id);
+                this.showToast(`⚠️ ${targetSurv.name} ถูกทำร้ายจนสิ้นใจแล้ว!`);
+                this.checkActProgression();
+              }
+            } else if (!this.state.isRowing && distPlayer < 1.9) {
+              if (this.parryWindowTimer > 0) {
+                ev.stunTimer = 2.0;
+                this.world.triggerParryGuard(this.state.x, ev.dir, true);
+                this.sound.playSwordHit();
+                this.showCombatFloat('🛡️ ปัดดาบสำเร็จ!', '#38bdf8');
+                return;
+              }
+              const rawDmg = ev.kind === 'suea_kham' ? 16 : 11;
+              const dmg = this.state.inventory.includes('biakae_amulet') ? Math.ceil(rawDmg * 0.65) : rawDmg;
+              this.state.hp = Math.max(0, this.state.hp - dmg);
+              this.dmgVignetteTimer = 0.55;
+              this.bleedingTimer = Math.max(this.bleedingTimer, 7.0);
+              this.world.triggerPlayerHurt(this.state.x, ev.dir);
+              this.sound.playHurt();
+              this.showCombatFloat(`🩸 -${dmg} บาดเจ็บ!`, '#ef4444');
+              if (this.state.hp <= 0) {
+                this.finishChapter('bad');
+              }
             }
           }
         }
@@ -1362,7 +1549,9 @@ export class Chapter4Engine {
         : CH4_ZONE_NAMES.find((z) => this.state.x >= z.minX && this.state.x <= z.maxX)?.name ?? 'กรุงศรีอยุธยา';
     this.hudLocation.textContent = zone;
     if (this.hudExtra) {
-      this.hudExtra.textContent = `❤️ ${Math.round(this.state.hp)}% • 🏹 ${this.state.arrows} • 🛡️ รอด ${this.state.rescuedIds.length} • 💧 ดับไฟ ${this.state.extinguishedFireIds.length}/4`;
+      const bleedTag = this.bleedingTimer > 0 ? ' • 🩸 เลือดออก([Q]ยา)' : '';
+      const buffTag = this.bladeBuffTimer > 0 ? ` • 🔥 คมดาบ+35%` : '';
+      this.hudExtra.textContent = `❤️ ${Math.round(this.state.hp)}% • 🏹 ${this.state.arrows} • 🛡️ รอด ${this.state.rescuedIds.length} • 💧 ดับไฟ ${this.state.extinguishedFireIds.length}/4${bleedTag}${buffTag} • 🎮 [J] มินิเกม`;
     }
     this.hudSanityVal.textContent = `เลือด ${Math.round(this.state.hp)}%`;
     this.hudSanityFill.style.width = `${Math.max(0, Math.min(100, this.state.hp))}%`;
@@ -1477,14 +1666,28 @@ export class Chapter4Engine {
       <div>👑 <strong>+66 ม. พระบรมมหาราชวังอโยธยา</strong> — พระที่นั่งสรรเพชญ์ อุทยานสระบัว & สุพรรณหงส์</div>
       <div>🛕 <strong>+102 ถึง +136 ม. วัดพระศรีสรรเพชญ์ & วัดไชยฯ ๕ ยอด</strong> — เขตอภัยทานปลอดภัย</div>
       <div>💀 <strong>+160 ม. ป่าช้าหลุมศพใหญ่ (หลังประตูผี) & +178 ม. กองสำเภาอพยพ</strong></div>
+      <button type="button" class="primary-btn" id="map-open-mg" style="margin-top:6px">🎮 เปิดเล่นมินิเกมกรุงศรีอยุธยา (3 เกม) [J]</button>
     </div>`;
+    document.getElementById('map-open-mg')?.addEventListener('click', () => this.openMiniGameHub());
     this.modalBackdrop.classList.remove('hidden');
   }
 
   private closeModal(): void {
     if (this.state.flags.endingReached) return;
+    this.miniGameCleanup?.();
+    this.miniGameCleanup = null;
     this.modalOpen = false;
     this.modalBackdrop.classList.add('hidden');
+  }
+
+  private showCombatFloat(text: string, color: string): void {
+    const el = document.createElement('div');
+    el.className = 'ch4-combat-float';
+    el.textContent = text;
+    el.style.color = color;
+    el.style.left = `${44 + Math.random() * 12}%`;
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 750);
   }
 
   private showToast(msg: string): void {

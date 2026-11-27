@@ -21,6 +21,10 @@ export interface AyutthayaEnemyView {
   alive: boolean;
   mesh: THREE.Group;
   hpFill: THREE.Mesh;
+  wounds: THREE.Mesh[];
+  flashTimer: number;
+  windUp: number;
+  stunTimer: number;
 }
 
 export interface AyutthayaSurvivorView {
@@ -94,6 +98,13 @@ export class AyutthayaWorld {
   private slashArcMesh: THREE.Mesh;
   private slashTimer = 0;
   private slashDir = 1;
+  private swordSwingTimer = 0;
+  private swordComboStep = 1;
+  private parryShieldMesh: THREE.Mesh;
+  private parryShieldTimer = 0;
+  private cameraShake = 0;
+  private fxParticles: { mesh: THREE.Mesh; vx: number; vy: number; vz: number; life: number; maxLife: number }[] = [];
+  private bloodPools: { mesh: THREE.Mesh; life: number }[] = [];
 
   private riverTraders: { group: THREE.Group; oarL?: THREE.Group; oarR?: THREE.Group; x: number; dir: 1 | -1; speed: number; z: number }[] = [];
   private trainingDummy: THREE.Group;
@@ -336,13 +347,40 @@ export class AyutthayaWorld {
     this.playerSwordMesh.visible = false;
     this.scene.add(this.playerSwordMesh);
 
-    // Sword slash effect arc + reusable arrow pool
+    // Sword slash effect arc + parry guard shield + particle & blood pool FX + arrow pool
     this.slashArcMesh = new THREE.Mesh(
-      new THREE.RingGeometry(0.65, 1.15, 12, 1, -0.8, 1.8),
-      new THREE.MeshBasicMaterial({ color: '#fef08a', side: THREE.DoubleSide, transparent: true, opacity: 0.88 })
+      new THREE.RingGeometry(0.65, 1.25, 14, 1, -0.9, 2.0),
+      new THREE.MeshBasicMaterial({ color: '#fef08a', side: THREE.DoubleSide, transparent: true, opacity: 0.92 })
     );
     this.slashArcMesh.visible = false;
     this.scene.add(this.slashArcMesh);
+
+    this.parryShieldMesh = new THREE.Mesh(
+      new THREE.RingGeometry(0.45, 0.88, 16),
+      new THREE.MeshBasicMaterial({ color: '#38bdf8', side: THREE.DoubleSide, transparent: true, opacity: 0.85 })
+    );
+    this.parryShieldMesh.visible = false;
+    this.scene.add(this.parryShieldMesh);
+
+    const dropGeo = new THREE.SphereGeometry(0.065, 6, 6);
+    for (let i = 0; i < 36; i++) {
+      const m = new THREE.Mesh(dropGeo, new THREE.MeshBasicMaterial({ color: '#dc2626' }));
+      m.visible = false;
+      this.scene.add(m);
+      this.fxParticles.push({ mesh: m, vx: 0, vy: 0, vz: 0, life: 0, maxLife: 0.5 });
+    }
+
+    const poolGeo = new THREE.CircleGeometry(0.42, 10);
+    for (let i = 0; i < 14; i++) {
+      const pm = new THREE.Mesh(
+        poolGeo,
+        new THREE.MeshBasicMaterial({ color: '#7f1d1d', transparent: true, opacity: 0.78, depthWrite: false })
+      );
+      pm.rotation.x = -Math.PI / 2;
+      pm.visible = false;
+      this.scene.add(pm);
+      this.bloodPools.push({ mesh: pm, life: 0 });
+    }
 
     for (let i = 0; i < 8; i++) {
       const aMesh = new THREE.Mesh(
@@ -519,10 +557,44 @@ export class AyutthayaWorld {
     const { barGrp, fill } = this.createHpBarMesh('#ef4444');
     barGrp.position.y = kind === 'suea_kham' ? 2.15 : 1.95;
     fig.add(barGrp);
+
+    // 3 visible crimson slash wound decals revealed progressively as zombie/bandit takes sword hits!
+    const woundMat1 = new THREE.MeshBasicMaterial({ color: '#b91c1c' });
+    const woundMat2 = new THREE.MeshBasicMaterial({ color: '#ef4444' });
+    const wChest = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.048, 0.36), woundMat1);
+    wChest.position.set(0, 1.12, 0.02);
+    wChest.rotation.z = 0.55;
+    const wBelly = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.052, 0.36), woundMat2);
+    wBelly.position.set(0, 0.88, 0.02);
+    wBelly.rotation.z = -0.48;
+    const wFace = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.038, 0.31), woundMat1);
+    wFace.position.set(0.02, 1.44, 0.02);
+    wFace.rotation.z = 0.65;
+    const wounds = [wChest, wBelly, wFace];
+    wounds.forEach((w) => {
+      w.visible = false;
+      fig.add(w);
+    });
+
     fig.position.set(x, 0, 0.55);
     this.scene.add(fig);
 
-    const view: AyutthayaEnemyView = { id, kind, x, z: 0.55, dir: -1, hp, maxHp: hp, alive: true, mesh: fig, hpFill: fill };
+    const view: AyutthayaEnemyView = {
+      id,
+      kind,
+      x,
+      z: 0.55,
+      dir: -1,
+      hp,
+      maxHp: hp,
+      alive: true,
+      mesh: fig,
+      hpFill: fill,
+      wounds,
+      flashTimer: 0,
+      windUp: 0,
+      stunTimer: 0,
+    };
     this.enemyViews.push(view);
     return view;
   }
@@ -579,15 +651,70 @@ export class AyutthayaWorld {
     return this.fireViews;
   }
 
-  public triggerSwordSlash(playerX: number, facing: 1 | -1): void {
-    this.slashTimer = 0.22;
+  public triggerSwordSlash(playerX: number, facing: 1 | -1, comboStep = 1, buffed = false): void {
+    this.slashTimer = comboStep === 3 ? 0.32 : 0.22;
+    this.swordSwingTimer = 0.24;
+    this.swordComboStep = comboStep;
     this.slashDir = facing;
-    this.slashArcMesh.position.set(playerX + facing * 1.0, 1.05, 0.9);
-    this.slashArcMesh.scale.x = facing;
+    const scale = comboStep === 3 ? 1.55 : comboStep === 2 ? 1.22 : 1.05;
+    this.slashArcMesh.position.set(playerX + facing * 1.05, 1.08, 0.9);
+    this.slashArcMesh.scale.set(facing * scale, scale, 1);
+    (this.slashArcMesh.material as THREE.MeshBasicMaterial).color.set(
+      comboStep === 3 ? '#f97316' : buffed ? '#fde047' : '#fef9c3'
+    );
     this.slashArcMesh.visible = true;
-    if (Math.abs(playerX - -60.5) < 3.0) {
+    if (buffed) this.spawnParticles(playerX + facing * 0.9, 1.1, 0.85, 5, '#fde047', facing);
+    if (Math.abs(playerX - -77.5) < 3.0) {
       this.dummyHitTimer = 0.55;
+      this.spawnParticles(-77.5, 1.25, -0.8, 6, '#facc15', facing);
     }
+  }
+
+  private spawnParticles(x: number, y: number, z: number, count: number, colorHex: string, dirX: number): void {
+    let spawned = 0;
+    for (const p of this.fxParticles) {
+      if (p.life > 0) continue;
+      p.life = 0.35 + Math.random() * 0.25;
+      p.maxLife = p.life;
+      p.mesh.position.set(x, y, z);
+      (p.mesh.material as THREE.MeshBasicMaterial).color.set(colorHex);
+      p.mesh.scale.setScalar(0.75 + Math.random() * 0.85);
+      p.mesh.visible = true;
+      p.vx = dirX * (2.5 + Math.random() * 4.5) + (Math.random() - 0.5) * 2.5;
+      p.vy = 2.2 + Math.random() * 4.0;
+      p.vz = (Math.random() - 0.5) * 2.4;
+      spawned++;
+      if (spawned >= count) break;
+    }
+  }
+
+  public triggerHitImpact(x: number, dirX: number, isCrit = false, enemyKilled = false): void {
+    this.spawnParticles(x, 1.15, 0.65, isCrit ? 14 : 8, '#dc2626', dirX);
+    this.spawnParticles(x, 1.2, 0.72, isCrit ? 8 : 4, '#fef08a', -dirX);
+    this.cameraShake = Math.max(this.cameraShake, isCrit ? 0.32 : 0.16);
+
+    const slot = this.bloodPools.find((bp) => bp.life <= 0) ?? this.bloodPools[0];
+    slot.life = enemyKilled ? 22 : 12;
+    slot.mesh.position.set(x + dirX * 0.25, 0.032, 0.52 + (Math.random() - 0.5) * 0.3);
+    slot.mesh.scale.setScalar(enemyKilled ? 1.55 : isCrit ? 1.15 : 0.78);
+    (slot.mesh.material as THREE.MeshBasicMaterial).opacity = enemyKilled ? 0.82 : 0.58;
+    slot.mesh.visible = true;
+  }
+
+  public triggerParryGuard(x: number, dirX: number, blockedHit = false): void {
+    this.parryShieldTimer = 0.38;
+    this.parryShieldMesh.position.set(x + dirX * 0.65, 1.12, 0.92);
+    (this.parryShieldMesh.material as THREE.MeshBasicMaterial).color.set(blockedHit ? '#facc15' : '#38bdf8');
+    this.parryShieldMesh.visible = true;
+    if (blockedHit) {
+      this.spawnParticles(x + dirX * 0.65, 1.2, 0.9, 10, '#facc15', dirX);
+      this.cameraShake = Math.max(this.cameraShake, 0.24);
+    }
+  }
+
+  public triggerPlayerHurt(x: number, dirX: number): void {
+    this.spawnParticles(x, 1.05, 0.85, 10, '#ef4444', dirX);
+    this.cameraShake = Math.max(this.cameraShake, 0.28);
   }
 
   public spawnArrowProjectile(playerX: number, dir: 1 | -1): AyutthayaProjectileView | null {
@@ -772,13 +899,49 @@ export class AyutthayaWorld {
     if (this.playerSwordMesh.visible) {
       this.playerSwordMesh.position.set(playerX - playerFacing * 0.28, playerY - 0.08, playerZ + 0.12);
       this.playerSwordMesh.scale.x = playerFacing;
+      if (this.swordSwingTimer > 0) {
+        this.swordSwingTimer -= dt;
+        const p = 1 - Math.max(0, this.swordSwingTimer) / 0.24;
+        const swingAngle = this.swordComboStep === 2 ? 1.4 - p * 2.5 : -0.9 + p * 2.6;
+        this.playerSwordMesh.rotation.z = -swingAngle;
+        this.playerSwordMesh.position.x = playerX + playerFacing * (0.28 + Math.sin(p * Math.PI) * 0.35);
+      } else {
+        this.playerSwordMesh.rotation.z = 0;
+      }
     }
 
     if (this.slashTimer > 0) {
       this.slashTimer -= dt;
-      this.slashArcMesh.position.set(playerX + this.slashDir * 1.0, 1.05, playerZ);
-      this.slashArcMesh.rotation.z = this.slashDir * (0.6 - this.slashTimer * 5);
+      this.slashArcMesh.position.set(playerX + this.slashDir * 1.05, 1.08, playerZ);
+      const twist = this.swordComboStep === 2 ? -0.7 + this.slashTimer * 5.2 : 0.7 - this.slashTimer * 5.2;
+      this.slashArcMesh.rotation.z = this.slashDir * twist;
       if (this.slashTimer <= 0) this.slashArcMesh.visible = false;
+    }
+    if (this.parryShieldTimer > 0) {
+      this.parryShieldTimer -= dt;
+      this.parryShieldMesh.position.set(playerX + playerFacing * 0.65, playerY + 0.14, playerZ + 0.1);
+      this.parryShieldMesh.scale.setScalar(1 + (0.38 - this.parryShieldTimer) * 1.1);
+      if (this.parryShieldTimer <= 0) this.parryShieldMesh.visible = false;
+    }
+
+    // Update blood/spark particles & ground blood pools
+    for (const p of this.fxParticles) {
+      if (p.life <= 0) continue;
+      p.life -= dt;
+      p.vy -= 14.5 * dt;
+      p.mesh.position.x += p.vx * dt;
+      p.mesh.position.y += p.vy * dt;
+      p.mesh.position.z += p.vz * dt;
+      if (p.life <= 0 || p.mesh.position.y <= 0.03) {
+        p.life = 0;
+        p.mesh.visible = false;
+      }
+    }
+    for (const bp of this.bloodPools) {
+      if (bp.life <= 0) continue;
+      bp.life -= dt;
+      (bp.mesh.material as THREE.MeshBasicMaterial).opacity = Math.min(0.75, bp.life * 0.08);
+      if (bp.life <= 0) bp.mesh.visible = false;
     }
     if (this.dummyHitTimer > 0) {
       this.dummyHitTimer -= dt;
@@ -898,18 +1061,34 @@ export class AyutthayaWorld {
       if (sm.visible) sm.position.y = 4.2 + Math.sin(this.animClock * 0.8 + si) * 0.7;
     });
 
-    // Enemy & Survivor facing + walk stride + HP bar scale (only shown outside!)
+    // Enemy & Survivor facing + walk stride + progressive wounds + wind-up + stun stagger (only shown outside!)
     this.enemyViews.forEach((ev, idx) => {
       ev.mesh.visible = !isInside && ev.alive;
       if (!ev.mesh.visible) return;
-      ev.mesh.position.x = ev.x;
+      if (ev.flashTimer > 0) ev.flashTimer -= dt;
+      if (ev.stunTimer > 0) ev.stunTimer -= dt;
+      const shakeOff = ev.flashTimer > 0 ? Math.sin(this.animClock * 65) * 0.08 : 0;
+      ev.mesh.position.x = ev.x + shakeOff;
       ev.mesh.rotation.y = ev.dir * (Math.PI / 2);
-      const stride = Math.sin(this.animClock * (ev.kind === 'phee_ha' ? 5.2 : 7.0) + idx);
+      ev.mesh.rotation.z = ev.stunTimer > 0 ? Math.sin(this.animClock * 18) * 0.16 : 0;
+      const hpPct = ev.hp / ev.maxHp;
+      if (ev.wounds[0]) ev.wounds[0].visible = hpPct < 0.88;
+      if (ev.wounds[1]) ev.wounds[1].visible = hpPct < 0.58;
+      if (ev.wounds[2]) ev.wounds[2].visible = hpPct < 0.34;
+      const stride = ev.stunTimer > 0 ? 0 : Math.sin(this.animClock * (ev.kind === 'phee_ha' ? 5.2 : 7.0) + idx);
       const lL = ev.mesh.getObjectByName('legL');
       const lR = ev.mesh.getObjectByName('legR');
+      const aL = ev.mesh.getObjectByName('armL');
+      const aR = ev.mesh.getObjectByName('armR');
       if (lL) lL.rotation.x = stride * 0.42;
       if (lR) lR.rotation.x = -stride * 0.42;
-      ev.hpFill.scale.x = Math.max(0.01, ev.hp / ev.maxHp);
+      if (aL && aR && ev.kind !== 'phee_ha') {
+        // Raise arms visibly to telegraph incoming strike before dealing damage!
+        const windAng = ev.windUp > 0 ? -1.45 * ev.windUp : -stride * 0.25;
+        aR.rotation.x = windAng;
+        aL.rotation.x = stride * 0.25;
+      }
+      ev.hpFill.scale.x = Math.max(0.01, hpPct);
       ev.hpFill.parent!.rotation.y = -ev.mesh.rotation.y; // Keep HP bar facing camera!
     });
 
@@ -963,6 +1142,11 @@ export class AyutthayaWorld {
       this.camera.position.y = THREE.MathUtils.lerp(this.camera.position.y, isRowing ? 2.8 : 2.35, alpha);
       this.camera.position.z = THREE.MathUtils.lerp(this.camera.position.z, this.targetCamZ + (isRowing ? 1.8 : 0), alpha);
       this.camera.lookAt(this.camera.position.x, this.camera.position.y - 0.15, isRowing ? 2.5 : 0);
+    }
+    if (this.cameraShake > 0.005) {
+      this.camera.position.x += (Math.random() - 0.5) * this.cameraShake;
+      this.camera.position.y += (Math.random() - 0.5) * this.cameraShake * 0.6;
+      this.cameraShake = Math.max(0, this.cameraShake - dt * 1.6);
     }
     this.renderer.render(this.scene, this.camera);
   }

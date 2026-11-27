@@ -1614,6 +1614,23 @@ export class SoundEngine {
     osc.stop(now + 0.13);
   }
 
+  /** Heavy flesh-tear & thump cue when the player takes damage. */
+  public playHurt(): void {
+    if (!this.ctx || !this.masterGain || this.muted) return;
+    const now = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const g = this.ctx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(145, now);
+    osc.frequency.exponentialRampToValueAtTime(38, now + 0.18);
+    g.gain.setValueAtTime(0.14, now);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + 0.2);
+    osc.connect(g);
+    g.connect(this.masterGain);
+    osc.start(now);
+    osc.stop(now + 0.21);
+  }
+
   /** Deep resonant Ayutthaya temple bell / alarm gong toll. */
   public playTempleBell(): void {
     if (!this.ctx || !this.masterGain || this.muted) return;
