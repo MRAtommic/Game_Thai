@@ -136,26 +136,33 @@ function makeVillagerFigure(shirtCol: string, pantsCol: string, hatCol?: string,
   const hasStache = !isFemale && seed % 4 === 3;
 
   const g = new THREE.Group();
-  // Rounded legs (left/right kept as legL/legR for animation!)
-  const legGeo = new THREE.CylinderGeometry(0.072, 0.064, 0.52, 8);
+  // Articulated legs pivoting cleanly from the hips (y = 0.52) with rounded shoes!
+  const legGeo = new THREE.CylinderGeometry(0.068, 0.058, 0.48, 8);
   const legMat = new THREE.MeshStandardMaterial({ color: pantsCol, roughness: 0.78 });
-  const leftLeg = new THREE.Mesh(legGeo, legMat);
-  leftLeg.position.set(-0.08, 0.26, 0);
-  const rightLeg = new THREE.Mesh(legGeo, legMat);
-  rightLeg.position.set(0.08, 0.26, 0);
-  leftLeg.name = 'legL';
-  rightLeg.name = 'legR';
-  g.add(leftLeg, rightLeg);
+  const shoeMat = new THREE.MeshStandardMaterial({ color: '#111827', roughness: 0.85 });
+  const makeLegPivot = (lx: number, name: string) => {
+    const p = new THREE.Group();
+    p.position.set(lx, 0.52, 0);
+    p.name = name;
+    const cyl = new THREE.Mesh(legGeo, legMat);
+    cyl.position.y = -0.24;
+    const shoe = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.08, 0.17), shoeMat);
+    shoe.position.set(0, -0.48, 0.03);
+    p.add(cyl, shoe);
+    g.add(p);
+    return p;
+  };
+  makeLegPivot(-0.08, 'legL');
+  makeLegPivot(0.08, 'legR');
 
-  // Sculpted torso + neck + clean collar/belt (zero z-fighting!)
+  // Sculpted torso + neck + clean waist belt (zero z-fighting!)
   const torso = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.16, 0.18, 0.64, 12),
+    new THREE.CylinderGeometry(0.16, 0.18, 0.62, 12),
     new THREE.MeshStandardMaterial({ color: shirtCol, roughness: 0.72 })
   );
   torso.position.set(0, 0.84, 0);
   g.add(torso);
   if (seed % 3 === 0 && shirtCol !== '#ffffff') {
-    // Traditional Isaan Pha Khao Ma waist belt around cylinder torso
     const belt = new THREE.Mesh(
       new THREE.CylinderGeometry(0.184, 0.186, 0.1, 12),
       new THREE.MeshStandardMaterial({ color: '#dc2626', roughness: 0.75 })
@@ -165,16 +172,23 @@ function makeVillagerFigure(shirtCol: string, pantsCol: string, hatCol?: string,
   }
   addPart(g, 0.1, 0.12, 0.1, skinCol, 0, 1.18, 0);
 
-  // Rounded arms (armL/armR kept for waving/dancing!)
-  const armGeo = new THREE.CylinderGeometry(0.048, 0.044, 0.48, 8);
+  // Articulated arms pivoting naturally from shoulders (y = 1.08) with rounded hands!
+  const armGeo = new THREE.CylinderGeometry(0.048, 0.04, 0.44, 8);
   const armMat = new THREE.MeshStandardMaterial({ color: skinCol, roughness: 0.7 });
-  const leftArm = new THREE.Mesh(armGeo, armMat);
-  leftArm.position.set(-0.22, 0.86, 0);
-  const rightArm = new THREE.Mesh(armGeo, armMat);
-  rightArm.position.set(0.22, 0.86, 0);
-  leftArm.name = 'armL';
-  rightArm.name = 'armR';
-  g.add(leftArm, rightArm);
+  const makeArmPivot = (ax: number, name: string) => {
+    const p = new THREE.Group();
+    p.position.set(ax, 1.08, 0);
+    p.name = name;
+    const cyl = new THREE.Mesh(armGeo, armMat);
+    cyl.position.y = -0.22;
+    const hand = new THREE.Mesh(new THREE.SphereGeometry(0.048, 8, 8), armMat);
+    hand.position.y = -0.45;
+    p.add(cyl, hand);
+    g.add(p);
+    return p;
+  };
+  makeArmPivot(-0.21, 'armL');
+  makeArmPivot(0.21, 'armR');
 
   // Rounded 3D head with clean 3D eyes/brows/glasses/mouth (NO flat square plane!)
   const head = new THREE.Mesh(
@@ -754,15 +768,19 @@ export function buildTrafficAndParkedVehicles(scene: THREE.Scene): MovingVehicle
         const makeShowPerformer = (dressCol: string, plumeCol: string, isLeadSinger = false): THREE.Group => {
           const perfSeed = villagerSeedCounter++;
           const g = new THREE.Group();
-          const legGeo = new THREE.CylinderGeometry(0.055, 0.048, 0.52, 8);
+          const legGeo = new THREE.CylinderGeometry(0.052, 0.044, 0.48, 8);
           const legMat = new THREE.MeshStandardMaterial({ color: '#dfb089', roughness: 0.7 });
-          const legL = new THREE.Mesh(legGeo, legMat);
-          legL.position.set(-0.07, 0.26, 0);
-          const legR = new THREE.Mesh(legGeo, legMat);
-          legR.position.set(0.07, 0.26, 0);
-          legL.name = 'legL';
-          legR.name = 'legR';
-          g.add(legL, legR);
+          [-0.07, 0.07].forEach((lx, li) => {
+            const lp = new THREE.Group();
+            lp.position.set(lx, 0.52, 0);
+            lp.name = li === 0 ? 'legL' : 'legR';
+            const lc = new THREE.Mesh(legGeo, legMat);
+            lc.position.y = -0.24;
+            const shoe = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.07, 0.14), new THREE.MeshStandardMaterial({ color: '#ca8a04', roughness: 0.4 }));
+            shoe.position.set(0, -0.48, 0.02);
+            lp.add(lc, shoe);
+            g.add(lp);
+          });
           // Flared sparkling sequined mini-skirt + metallic gold belt + fitted bodice
           const skirt = new THREE.Mesh(
             new THREE.ConeGeometry(0.28, 0.42, 12),
@@ -777,14 +795,18 @@ export function buildTrafficAndParkedVehicles(scene: THREE.Scene): MovingVehicle
           );
           bodice.position.set(0, 0.98, 0);
           g.add(bodice);
-          const armGeo = new THREE.CylinderGeometry(0.042, 0.038, 0.44, 8);
-          const armL = new THREE.Mesh(armGeo, legMat);
-          armL.position.set(-0.2, 1.0, 0);
-          const armR = new THREE.Mesh(armGeo, legMat);
-          armR.position.set(0.2, 1.0, 0);
-          armL.name = 'armL';
-          armR.name = 'armR';
-          g.add(armL, armR);
+          const armGeo = new THREE.CylinderGeometry(0.04, 0.035, 0.42, 8);
+          [-0.19, 0.19].forEach((ax, ai) => {
+            const ap = new THREE.Group();
+            ap.position.set(ax, 1.12, 0);
+            ap.name = ai === 0 ? 'armL' : 'armR';
+            const ac = new THREE.Mesh(armGeo, legMat);
+            ac.position.y = -0.21;
+            const hand = new THREE.Mesh(new THREE.SphereGeometry(0.044, 8, 8), legMat);
+            hand.position.y = -0.43;
+            ap.add(ac, hand);
+            g.add(ap);
+          });
           // Rounded head with expressive painted singer/dancer face + flowing dark hair + feathered Mor Lam crown!
           const head = new THREE.Mesh(
             new THREE.SphereGeometry(0.145, 16, 14),
