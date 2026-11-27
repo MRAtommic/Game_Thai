@@ -37,6 +37,7 @@ interface Ch4SaveState {
   arrows: number;
   torchOn: boolean;
   isRowing: boolean;
+  isRidingHorse?: boolean;
   inventory: string[];
   clues: string[];
   rescuedIds: string[];
@@ -143,6 +144,7 @@ export class Chapter4Engine {
       arrows: 12,
       torchOn: false,
       isRowing: false,
+      isRidingHorse: false,
       inventory: ['resin_torch'],
       clues: [],
       rescuedIds: [],
@@ -341,6 +343,8 @@ export class Chapter4Engine {
           this.toggleTorch();
         } else if (code === 'KeyB') {
           this.toggleBoat();
+        } else if (code === 'KeyH') {
+          this.toggleHorse();
         } else if (code === 'KeyQ') {
           if (this.state.inventory.includes('herb_medicine')) this.useItem('herb_medicine');
           else if (this.state.inventory.includes('holy_water')) this.useItem('holy_water');
@@ -420,7 +424,12 @@ export class Chapter4Engine {
       else this.tryInteract();
     }, sig);
     this.touchFlashlight.addEventListener('click', () => { this.sound.init(); this.toggleTorch(); }, sig);
-    this.touchBike.addEventListener('click', () => { this.sound.init(); this.toggleBoat(); }, sig);
+    this.touchBike.addEventListener('click', () => {
+      this.sound.init();
+      const nearPier = PIER_XS.some((px) => Math.abs(px - this.state.x) < 4.2);
+      if (this.state.isRowing || nearPier) this.toggleBoat();
+      else this.toggleHorse();
+    }, sig);
     this.touchSprint?.addEventListener('click', () => {
       this.sound.init();
       this.isSprintingTouch = !this.isSprintingTouch;
@@ -458,10 +467,21 @@ export class Chapter4Engine {
       this.showToast('ต้องเดินไปที่ท่าน้ำริมคลอง (เสาป้ายท่าน้ำ) เพื่อลงเรือพาย!');
       return;
     }
+    this.state.isRidingHorse = false;
     this.state.isRowing = true;
     this.sound.playWaterSplash();
     this.touchBike.textContent = '🚣✓';
     this.showToast('ลงเรือพายแล้ว — กด ◀ ▶ พายล่องคลองหนีผีห่าได้เลย!');
+  }
+
+  private toggleHorse(): void {
+    if (this.state.isRowing) {
+      this.showToast('ต้องเทียบท่าขึ้นฝั่ง [E] ก่อนจึงจะขึ้นขี่ม้าได้!');
+      return;
+    }
+    this.state.isRidingHorse = !this.state.isRidingHorse;
+    this.sound.playUIClick();
+    this.showToast(this.state.isRidingHorse ? 'ควบม้าศึกอโยธยา! วิ่งไวขึ้นและฟันดาบบนหลังม้าได้ [F]' : 'ลงจากหลังม้าแล้ว');
   }
 
   private swingSword(): void {
@@ -780,7 +800,20 @@ export class Chapter4Engine {
       return { label: 'ตรวจเรือสำเภาสินค้าน่านน้ำ', run: () => this.interactSampan() };
     }
     if (Math.abs(px - -38) < 3.6 && f.act === 1) {
-      return { label: 'แวะตรวจจวนขุนนาง (เรือนพระยาวิชัย)', run: () => this.showToast('บ้านขุนนางอโยธยา: ทหารเวรเฝ้าคฤหาสน์และคลังโอสถหลวงอย่างเข้มงวด') };
+      return {
+        label: 'เข้าพบพระยาวิชัย (บ้านขุนนาง)',
+        run: () => {
+          this.addItem('herb_medicine');
+          this.startDialogue([
+            {
+              speaker: 'พระยาวิชัย',
+              role: 'ขุนนางกรุงศรีฯ',
+              portrait: 'uncle',
+              text: 'อ้อ เจ้ามั่นศิษย์ช่างตีดาบนี่เอง พวกโจรโพกหัวแดงลอบมองจวนข้ามาหลายเพลาแล้ว หากเกิดจลาจลเมื่อใด ข้าฝากเจ้าช่วยคุ้มครองชาวเรือนด้วยนะ รับยาสมุนไพรหลวงติดย่ามไว้เถิด',
+            },
+          ]);
+        },
+      };
     }
     if (Math.abs(px - 11.5) < 3.4 && f.act === 1) {
       return { label: 'คุยกับขุนราม (ค่ายทหารประตูชัย)', run: () => this.interactKhunRam() };
@@ -974,7 +1007,7 @@ export class Chapter4Engine {
       if (dir !== 0) {
         moving = true;
         this.playerFacing = dir > 0 ? 1 : -1;
-        const baseSpeed = this.state.isRowing ? 8.6 : sprinting ? 7.2 : 4.8;
+        const baseSpeed = this.state.isRowing ? 8.6 : this.state.isRidingHorse ? 9.4 : sprinting ? 7.2 : 4.8;
         this.state.x = Math.max(CH4_MIN_X + 1.5, Math.min(CH4_MAX_X - 1.5, this.state.x + dir * baseSpeed * dt));
         if (sprinting && !this.state.isRowing) this.state.stamina = Math.max(0, this.state.stamina - 16 * dt);
       } else {
@@ -1022,6 +1055,7 @@ export class Chapter4Engine {
       this.playerFacing,
       moving,
       this.state.isRowing,
+      Boolean(this.state.isRidingHorse),
       this.state.torchOn,
       this.state.inventory.includes('namphi_sword'),
       this.state.gameMinutes,
@@ -1169,7 +1203,9 @@ export class Chapter4Engine {
 
     const actNames: Record<number, string> = { 1: 'อยุธยารุ่งเรือง', 2: 'โรคห่าระบาด', 3: 'โจรจลาจลเผาเมือง', 4: 'ศึกหลุมศพใหญ่' };
     this.hudPeriod.textContent = actNames[this.state.flags.act];
-    this.hudWeather.textContent = this.state.isRowing ? 'พายเรือ' : 'บนฝั่ง';
+    this.hudWeather.textContent = this.state.isRowing ? 'พายเรือ' : this.state.isRidingHorse ? 'ขี่ม้า' : 'บนฝั่ง';
+    const nearPier = PIER_XS.some((px) => Math.abs(px - this.state.x) < 4.2);
+    this.touchBike.textContent = this.state.isRowing ? '🚣✓' : nearPier ? '🚣 เรือ' : this.state.isRidingHorse ? '🐎✓' : '🐎 ขี่ม้า';
 
     const zone = CH4_ZONE_NAMES.find((z) => this.state.x >= z.minX && this.state.x <= z.maxX)?.name ?? 'กรุงศรีอยุธยา';
     this.hudLocation.textContent = zone;

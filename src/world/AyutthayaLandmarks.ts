@@ -1,19 +1,31 @@
 import * as THREE from 'three';
 import {
   addPartBox,
+  AyutthayaHorseHandle,
   makeAyutthayaBoat,
   makeAyutthayaBrickTex,
   makeAyutthayaFigure,
+  makeAyutthayaHorse,
   makeAyutthayaSignTex,
   makeRoyalSwanBarge,
 } from './AyutthayaArchitecture';
 import { AyutthayaInnerHandles, buildAyutthayaInnerCity } from './AyutthayaInnerCity';
+
+export interface AyutthayaTrafficHorse extends AyutthayaHorseHandle {
+  x: number;
+  dir: 1 | -1;
+  speed: number;
+  minX: number;
+  maxX: number;
+  phase: number;
+}
 
 export interface AyutthayaLandmarkHandles extends AyutthayaInnerHandles {
   hearthLight: THREE.PointLight;
   canalCorpses: THREE.Mesh[];
   swanBarge: { group: THREE.Group; oars: THREE.Group[]; x: number; dir: 1 | -1 };
   marketWalkers: { group: THREE.Group; baseX: number; range: number; speed: number; phase: number }[];
+  trafficHorses: AyutthayaTrafficHorse[];
 }
 
 function buildJunkShip(x: number, z: number, labelTitle: string, isEvac = false): THREE.Group {
@@ -306,6 +318,25 @@ export function buildAyutthayaLandmarks(scene: THREE.Scene): AyutthayaLandmarkHa
     return { group: fig, baseX: mw.baseX, range: mw.range, speed: mw.speed, phase: idx * 1.4 };
   });
 
+  // Ayutthaya Cavalry Patrol Horses & Courier Steeds trotting/galloping along the Royal Highway!
+  const horseDefs = [
+    { x: -120, dir: 1 as const, speed: 4.4, coat: '#6e3819', shirt: '#78716c', helm: false, z: 1.85, minX: -172, maxX: 8 },
+    { x: -18, dir: -1 as const, speed: 4.9, coat: '#e2e8f0', shirt: '#f8fafc', helm: true, z: 1.95, minX: -54, maxX: 85 },
+    { x: 24, dir: 1 as const, speed: 5.2, coat: '#1c1917', shirt: '#991b1b', helm: true, z: 1.8, minX: -48, maxX: 138 },
+    { x: 96, dir: -1 as const, speed: 4.7, coat: '#7c3f1d', shirt: '#991b1b', helm: true, z: 1.9, minX: 10, maxX: 140 },
+  ];
+  const trafficHorses: AyutthayaTrafficHorse[] = horseDefs.map((hd, hi) => {
+    const h = makeAyutthayaHorse(hd.coat, {
+      withRider: true,
+      riderShirt: hd.shirt,
+      riderHelmetGold: hd.helm,
+    });
+    h.group.position.set(hd.x, 0, hd.z);
+    h.group.scale.x = hd.dir;
+    scene.add(h.group);
+    return { ...h, x: hd.x, dir: hd.dir, speed: hd.speed, minX: hd.minX, maxX: hd.maxX, phase: hi * 1.1 };
+  });
+
   // Build Inner Walled Ayutthaya Kingdom + Royal Palace + Temples + Cemetery
   const inner = buildAyutthayaInnerCity(scene, brickMat, buildJunkShip);
 
@@ -314,6 +345,7 @@ export function buildAyutthayaLandmarks(scene: THREE.Scene): AyutthayaLandmarkHa
     canalCorpses,
     swanBarge: { group: sb.group, oars: sb.oars, x: 30, dir: 1 },
     marketWalkers,
+    trafficHorses,
     ...inner,
   };
 }

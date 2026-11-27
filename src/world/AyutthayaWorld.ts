@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { Ch4CharacterKind, drawCh4CharacterCanvas } from '../art/Chapter4Sprites';
 import { WeatherType } from '../types';
-import { buildAyutthayaFoliage, makeAyutthayaBoat, makeAyutthayaFigure, makeAyutthayaSignTex } from './AyutthayaArchitecture';
+import { AyutthayaHorseHandle, buildAyutthayaFoliage, makeAyutthayaBoat, makeAyutthayaFigure, makeAyutthayaHorse, makeAyutthayaSignTex } from './AyutthayaArchitecture';
 import { AyutthayaLandmarkHandles, buildAyutthayaLandmarks } from './AyutthayaLandmarks';
 
 export const CH4_MIN_X = -188;
@@ -67,6 +67,7 @@ export class AyutthayaWorld {
     man: [],
     smith: [],
     phudsorn: [],
+    noble: [],
     khun_ram: [],
     monk_khong: [],
     child_kla: [],
@@ -81,6 +82,8 @@ export class AyutthayaWorld {
   private playerShadow: THREE.Mesh;
   private playerBoat: { group: THREE.Group; oarL?: THREE.Group; oarR?: THREE.Group };
   private dockedPierBoat: THREE.Group;
+  private playerHorse: AyutthayaHorseHandle;
+  private parkedHorse: AyutthayaHorseHandle;
   private playerTorchGroup: THREE.Group;
   private playerTorchFlame: THREE.Mesh;
   private playerSwordMesh: THREE.Group;
@@ -190,6 +193,16 @@ export class AyutthayaWorld {
     this.playerBoat.group.visible = false;
     this.scene.add(this.playerBoat.group);
 
+    // Protagonist's own loyal Chestnut War Horse (parked by Blacksmith & mounted cleanly when riding!)
+    this.parkedHorse = makeAyutthayaHorse('#7c2d12');
+    this.parkedHorse.group.position.set(-86.5, 0, -0.4);
+    this.scene.add(this.parkedHorse.group);
+
+    this.playerHorse = makeAyutthayaHorse('#7c2d12');
+    this.playerHorse.group.position.set(-84, 0, 0.85);
+    this.playerHorse.group.visible = false;
+    this.scene.add(this.playerHorse.group);
+
     const shadowTex = this.createShadowTex();
     this.playerMesh = this.makeSpriteMesh(this.charFrames.man[0], 1.5, 2.2);
     this.playerMesh.position.set(-84, 0.95, 0.85);
@@ -257,6 +270,7 @@ export class AyutthayaWorld {
     const npcDefs: { id: string; kind: Ch4CharacterKind; x: number; z: number }[] = [
       { id: 'smith', kind: 'smith', x: -81.5, z: -0.9 },
       { id: 'phudsorn', kind: 'phudsorn', x: -157, z: -0.9 },
+      { id: 'noble', kind: 'noble', x: -38, z: -0.85 },
       { id: 'khun_ram', kind: 'khun_ram', x: 11.5, z: -0.85 },
       { id: 'monk_khong', kind: 'monk_khong', x: 136, z: -1.1 },
       { id: 'child_kla', kind: 'child_kla', x: -102, z: -0.8 },
@@ -342,6 +356,7 @@ export class AyutthayaWorld {
       'man',
       'smith',
       'phudsorn',
+      'noble',
       'khun_ram',
       'monk_khong',
       'child_kla',
@@ -508,6 +523,7 @@ export class AyutthayaWorld {
     playerFacing: 1 | -1,
     isMoving: boolean,
     isRowing: boolean,
+    isRidingHorse: boolean,
     torchOn: boolean,
     hasSword: boolean,
     gameMinutes: number,
@@ -536,19 +552,24 @@ export class AyutthayaWorld {
     this.hemiLight.intensity = mood === 'prosperous' && !isNight ? 1.5 : mood === 'riot' ? 0.92 : 0.78;
     this.sunLight.intensity = mood === 'prosperous' && !isNight ? 1.35 : 0.35;
 
-    // Update protagonist sprite (on shore OR rowing inside Chao Phraya wooden boat!)
+    // Update protagonist sprite (on shore, seated on wooden boat, OR galloping astride chestnut horse!)
     const playerZ = isRowing ? 5.15 : 0.85;
-    const playerY = isRowing ? 0.96 + Math.sin(this.animClock * 4.0) * 0.04 : 0.95;
+    const gallopBob = isRidingHorse && isMoving ? Math.abs(Math.sin(this.animClock * 11)) * 0.08 : 0;
+    const playerY = isRowing
+      ? 0.96 + Math.sin(this.animClock * 4.0) * 0.04
+      : isRidingHorse
+        ? 1.72 + gallopBob
+        : 0.95;
     this.playerMesh.position.set(playerX, playerY, playerZ);
     this.playerShadow.position.set(playerX, 0.02, playerZ);
     this.playerShadow.visible = !isRowing;
 
-    const frame = isMoving ? Math.floor(this.animClock * (isRowing ? 6 : 9)) % 4 : 0;
+    const frame = isMoving && !isRidingHorse ? Math.floor(this.animClock * (isRowing ? 6 : 9)) % 4 : 0;
     const pMat = this.playerMesh.material as THREE.MeshStandardMaterial;
     pMat.map = this.charFrames.man[frame];
     this.playerMesh.scale.x = playerFacing;
 
-    // Player's controllable wooden rowing boat
+    // Player's controllable wooden rowing boat & chestnut horse
     this.playerBoat.group.visible = isRowing;
     this.dockedPierBoat.visible = !isRowing;
     if (isRowing) {
@@ -556,8 +577,19 @@ export class AyutthayaWorld {
       this.playerBoat.group.scale.x = playerFacing;
     }
 
+    this.playerHorse.group.visible = isRidingHorse && !isRowing;
+    this.parkedHorse.group.visible = !isRidingHorse;
+    if (this.playerHorse.group.visible) {
+      this.playerHorse.group.position.set(playerX, gallopBob * 0.45, playerZ - 0.06);
+      this.playerHorse.group.scale.x = playerFacing;
+      const gSwing = isMoving ? Math.sin(this.animClock * 12) * 0.56 : 0;
+      this.playerHorse.legs.forEach((leg, li) => {
+        leg.rotation.z = li === 0 || li === 3 ? gSwing : -gSwing;
+      });
+    }
+
     this.torchLight.intensity = torchOn ? 3.1 + Math.sin(this.animClock * 16) * 0.45 : 0;
-    this.torchLight.position.set(playerX + playerFacing * 0.48, 1.48, playerZ - 0.15);
+    this.torchLight.position.set(playerX + playerFacing * 0.48, playerY + 0.5, playerZ - 0.15);
 
     this.playerTorchGroup.visible = torchOn;
     if (torchOn) {
@@ -611,6 +643,21 @@ export class AyutthayaWorld {
       const bSweep = Math.sin(this.animClock * 3.0) * 0.45;
       sb.oars.forEach((oar) => { oar.rotation.z = bSweep; });
     }
+
+    // Ambient Ayutthaya Cavalry & Courier Horses galloping/trotting along the Royal Road!
+    this.landmarks.trafficHorses.forEach((th) => {
+      th.group.visible = mood !== 'riot';
+      if (!th.group.visible) return;
+      th.x += th.dir * th.speed * dt;
+      if (th.x > th.maxX) th.dir = -1;
+      else if (th.x < th.minX) th.dir = 1;
+      th.group.position.x = th.x;
+      th.group.scale.x = th.dir;
+      const gSwing = Math.sin(this.animClock * 9.5 + th.phase) * 0.48;
+      th.legs.forEach((leg, li) => {
+        leg.rotation.z = li === 0 || li === 3 ? gSwing : -gSwing;
+      });
+    });
 
     // Patrolling Army Garrison Soldiers facing travel direction
     this.landmarks.soldiers.forEach((sl) => {

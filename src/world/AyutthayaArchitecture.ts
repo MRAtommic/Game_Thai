@@ -162,11 +162,15 @@ export function makeAyutthayaFigure(
   g.add(head);
 
   if (!options?.isMonk) {
+    // Authentic Men's Mahatthai tuft (ผมทรงมหาดไทย) unless female wing-hair or noble/soldier headwear
+    const isMahatthai = !options?.sabaiCol && !options?.helmetGold && !options?.hatCol;
     const hair = new THREE.Mesh(
-      new THREE.SphereGeometry(0.152, 8, 8, 0, Math.PI * 2, 0, Math.PI * 0.54),
+      isMahatthai
+        ? new THREE.CylinderGeometry(0.095, 0.11, 0.06, 8)
+        : new THREE.SphereGeometry(0.152, 8, 8, 0, Math.PI * 2, 0, Math.PI * 0.54),
       new THREE.MeshStandardMaterial({ color: '#18181b', roughness: 0.9 })
     );
-    hair.position.y = 1.46;
+    hair.position.y = isMahatthai ? 1.56 : 1.46;
     g.add(hair);
   }
   if (options?.headbandCol) {
@@ -192,6 +196,13 @@ export function makeAyutthayaFigure(
     );
     helm.position.y = 1.66;
     g.add(helm);
+  } else if (options?.sabaiCol && !options?.isMonk && !options?.isZombie) {
+    // Winged Ayutthaya lady hairstyle + gold hairpin
+    const wing = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.08, 0.22), new THREE.MeshStandardMaterial({ color: '#18181b', roughness: 0.9 }));
+    wing.position.y = 1.54;
+    const pin = new THREE.Mesh(new THREE.SphereGeometry(0.035, 6, 6), new THREE.MeshStandardMaterial({ color: '#eab308', metalness: 0.7 }));
+    pin.position.set(0.14, 1.57, 0);
+    g.add(wing, pin);
   }
 
   const eyeCol = options?.isZombie ? '#ef4444' : '#111827';
@@ -405,6 +416,92 @@ export function makeAyutthayaWarElephant(): THREE.Group {
   g.add(mahout);
 
   return g;
+}
+
+export interface AyutthayaHorseHandle {
+  group: THREE.Group;
+  legs: THREE.Group[];
+  rider?: THREE.Group;
+}
+
+/** Builds a detailed 3D Ayutthaya Horse (+X facing) with 4 pivoted galloping legs, flowing mane/tail, crimson-gold saddle, and optional rider. */
+export function makeAyutthayaHorse(
+  coatColor = '#6e3819',
+  options?: { withRider?: boolean; riderShirt?: string; riderHelmetGold?: boolean }
+): AyutthayaHorseHandle {
+  const g = new THREE.Group();
+  const coatMat = new THREE.MeshStandardMaterial({ color: coatColor, roughness: 0.78 });
+  const maneMat = new THREE.MeshStandardMaterial({ color: coatColor === '#e2e8f0' ? '#cbd5e1' : '#18181b', roughness: 0.9 });
+  const hoofMat = new THREE.MeshStandardMaterial({ color: '#18181b', roughness: 0.85 });
+  const saddleMat = new THREE.MeshStandardMaterial({ color: '#991b1b', roughness: 0.68 });
+  const goldMat = new THREE.MeshStandardMaterial({ color: '#eab308', metalness: 0.65, roughness: 0.28 });
+
+  // Muscular barrel horse torso
+  const body = new THREE.Mesh(new THREE.CylinderGeometry(0.36, 0.34, 1.48, 10), coatMat);
+  body.rotation.z = Math.PI / 2;
+  body.position.set(0, 1.04, 0);
+  const chest = new THREE.Mesh(new THREE.SphereGeometry(0.37, 9, 8), coatMat);
+  chest.position.set(0.68, 1.04, 0);
+  const rump = new THREE.Mesh(new THREE.SphereGeometry(0.37, 9, 8), coatMat);
+  rump.position.set(-0.68, 1.04, 0);
+  g.add(body, chest, rump);
+
+  // Arched Neck, Sculpted Equine Head, Ears, Flowing Mane & Swishing Tail (+X forward!)
+  const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.26, 0.78, 8), coatMat);
+  neck.position.set(0.9, 1.44, 0);
+  neck.rotation.z = -0.58;
+  const mane = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.72, 0.08), maneMat);
+  mane.position.set(0.8, 1.5, 0);
+  mane.rotation.z = -0.58;
+  const head = new THREE.Mesh(new THREE.BoxGeometry(0.56, 0.24, 0.22), coatMat);
+  head.position.set(1.22, 1.68, 0);
+  head.rotation.z = -0.35;
+  [-0.07, 0.07].forEach((ez) => {
+    const ear = new THREE.Mesh(new THREE.ConeGeometry(0.045, 0.14, 5), coatMat);
+    ear.position.set(1.06, 1.86, ez);
+    g.add(ear);
+  });
+  const tail = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.09, 0.78, 6), maneMat);
+  tail.position.set(-1.02, 0.94, 0);
+  tail.rotation.z = -0.45;
+  g.add(neck, mane, head, tail);
+
+  // Crimson & Gold Siamese War/Travel Saddle
+  addPartBox(g, 0.56, 0.14, 0.78, saddleMat, 0.05, 1.38, 0);
+  addPartBox(g, 0.6, 0.06, 0.82, goldMat, 0.05, 1.31, 0);
+
+  // 4 Pivoted Galloping Legs (Front Left, Front Right, Back Left, Back Right)
+  const legs: THREE.Group[] = [];
+  [
+    [0.58, 0.2],
+    [0.58, -0.2],
+    [-0.58, 0.2],
+    [-0.58, -0.2],
+  ].forEach(([lx, lz]) => {
+    const leg = new THREE.Group();
+    leg.position.set(lx, 0.84, lz);
+    const upper = new THREE.Mesh(new THREE.CylinderGeometry(0.085, 0.06, 0.76, 7), coatMat);
+    upper.position.y = -0.38;
+    const hoof = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.075, 0.1, 7), hoofMat);
+    hoof.position.y = -0.78;
+    leg.add(upper, hoof);
+    g.add(leg);
+    legs.push(leg);
+  });
+
+  let rider: THREE.Group | undefined;
+  if (options?.withRider) {
+    rider = makeAyutthayaFigure(options.riderShirt ?? '#991b1b', '#450a0a', {
+      helmetGold: options.riderHelmetGold,
+      hasSpear: options.riderHelmetGold,
+      headbandCol: options.riderHelmetGold ? undefined : '#a16207',
+    });
+    rider.position.set(0.05, 0.95, 0);
+    rider.rotation.y = Math.PI / 2; // faces +X along horse travel direction!
+    g.add(rider);
+  }
+
+  return { group: g, legs, rider };
 }
 
 /** Places lush Ayutthaya Bodhi trees, arched coconut palms, bamboo groves, skyline spires & lotus across the 380m map. */

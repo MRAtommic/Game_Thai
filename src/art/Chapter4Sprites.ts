@@ -4,6 +4,7 @@ export type Ch4CharacterKind =
   | 'man'
   | 'smith'
   | 'phudsorn'
+  | 'noble'
   | 'khun_ram'
   | 'monk_khong'
   | 'child_kla'
@@ -19,28 +20,46 @@ interface Ch4Palette {
   jong: string;
   sash: string;
   hair: string;
+  bareChest?: boolean;
+  mahatthaiHair?: boolean;
+  wingHair?: boolean;
+  lomphok?: boolean;
   headband?: string;
   isMonk?: boolean;
   isFemale?: boolean;
   isZombie?: boolean;
+  isSoldier?: boolean;
   hasSword?: boolean;
+  tattooed?: boolean;
 }
 
 const PALETTES: Record<Ch4CharacterKind, Ch4Palette> = {
-  man: { skin: '#b97f56', shirt: '#f1e6d2', jong: '#7c2d12', sash: '#ca8a04', hair: '#18181b' },
-  smith: { skin: '#9a6544', shirt: '#44403c', jong: '#292524', sash: '#78350f', hair: '#9ca3af', headband: '#92400e' },
-  phudsorn: { skin: '#cf9b72', shirt: '#be185d', jong: '#4c1d95', sash: '#f472b6', hair: '#1c1917', isFemale: true },
-  khun_ram: { skin: '#a8704a', shirt: '#991b1b', jong: '#7f1d1d', sash: '#facc15', hair: '#111827', headband: '#b91c1c', hasSword: true },
-  monk_khong: { skin: '#be8b64', shirt: '#d97706', jong: '#b45309', sash: '#92400e', hair: '#be8b64', isMonk: true },
-  child_kla: { skin: '#c89268', shirt: '#f59e0b', jong: '#365314', sash: '#fde047', hair: '#111827' },
-  villager: { skin: '#b8825a', shirt: '#78716c', jong: '#1e293b', sash: '#a16207', hair: '#18181b' },
-  bandit: { skin: '#8d5b3e', shirt: '#1c1917', jong: '#450a0a', sash: '#dc2626', hair: '#111827', headband: '#dc2626', hasSword: true },
-  suea_kham: { skin: '#7c4c32', shirt: '#27272a', jong: '#7f1d1d', sash: '#ef4444', hair: '#18181b', headband: '#991b1b', hasSword: true },
-  phee_ha: { skin: '#6b705c', shirt: '#57534e', jong: '#3f3f46', sash: '#7f1d1d', hair: '#1c1917', isZombie: true },
+  // ชายกรุงศรีฯ: เสื้อคอกลมผูกเชือกแขนกระบอก + ผ้าขาวม้าคาดเอว + โจงกระเบนสีครั่ง + ทรงมหาดไทย
+  man: { skin: '#b97f56', shirt: '#ece2ce', jong: '#6b1d17', sash: '#b45309', hair: '#18181b', mahatthaiHair: true },
+  // ลุงสินช่างตีดาบ: เสื้อผ้าดิบครามเข้ม + ผ้าขาวม้าพาดไหล่ + โจงกระเบน + ผ้าคาดหัว
+  smith: { skin: '#9a6544', shirt: '#334155', jong: '#27272a', sash: '#d97706', hair: '#9ca3af', headband: '#92400e', mahatthaiHair: true },
+  // แม่พุดซ้อน: สไบจีบสีกลีบบัว + ผ้านุ่งจีบหน้านางลายทอง + ผมปีกอยุธยาโบราณ
+  phudsorn: { skin: '#cf9b72', shirt: '#cf9b72', jong: '#4c1d95', sash: '#ec4899', hair: '#1c1917', isFemale: true, wingHair: true, bareChest: true },
+  // ขุนนางอยุธยา (พระยาวิชัย): เสื้อครุยขาวขลิบทอง + สมปักปูม + ลอมพอกขุนนางสูง!
+  noble: { skin: '#c48f68', shirt: '#f8fafc', jong: '#7c2d12', sash: '#eab308', hair: '#18181b', lomphok: true },
+  // ขุนรามทหารอยุธยา: เสื้อยันต์แดงลงอาคม + ตะกรุดคาดสะพาย + โจงกระเบนรั้ง + หมวก/ประเจียดรบ
+  khun_ram: { skin: '#a8704a', shirt: '#991b1b', jong: '#450a0a', sash: '#facc15', hair: '#111827', headband: '#facc15', isSoldier: true, hasSword: true },
+  // หลวงตาคง: ห่มจีวรพาดสังฆาฏิสีกรักเข้ม
+  monk_khong: { skin: '#be8b64', shirt: '#9a5418', jong: '#78350f', sash: '#b45309', hair: '#be8b64', isMonk: true },
+  // เด็กชายกล้า: เปลือยอกคล้องลูกประคำ + โจงกระเบนสั้น + ผมจุกกลางกระหม่อม!
+  child_kla: { skin: '#c89268', shirt: '#c89268', jong: '#365314', sash: '#eab308', hair: '#111827', bareChest: true },
+  // ชาวบ้านสามัญชน: เสื้อผ้าฝ้ายเปลือกไม้ + ผ้าขาวม้าคาดเอว + โจงกระเบน + ทรงมหาดไทย
+  villager: { skin: '#b8825a', shirt: '#78716c', jong: '#1e293b', sash: '#a16207', hair: '#18181b', mahatthaiHair: true },
+  // โจรปล้นเมือง: เปลือยอกสักยันต์ + ผ้าประเจียดแดงโพกหัว + โจงกระเบนดำถกเขมร
+  bandit: { skin: '#8d5b3e', shirt: '#8d5b3e', jong: '#1c1917', sash: '#dc2626', hair: '#111827', headband: '#dc2626', bareChest: true, tattooed: true, hasSword: true },
+  // ขุนโจรเสือคำ: เสื้อกั๊กหนังดำสักยันต์ + ผ้าประเจียดแดง + ดาบใหญ่
+  suea_kham: { skin: '#7c4c32', shirt: '#18181b', jong: '#450a0a', sash: '#ef4444', hair: '#18181b', headband: '#b91c1c', hasSword: true },
+  // ผีห่าอโยธยา: ร่างซีดคล้ำผ้าพันศพขาดรุ่งริ่ง คราบเลือด ตาแดง
+  phee_ha: { skin: '#6b705c', shirt: '#d6d3d1', jong: '#57534e', sash: '#7f1d1d', hair: '#1c1917', isZombie: true, mahatthaiHair: true },
   narrator: { skin: '#b97f56', shirt: '#1e293b', jong: '#0f172a', sash: '#eab308', hair: '#18181b' },
 };
 
-/** Draws a crisp Ayutthaya period 2.5D character sprite on a 2D canvas (96x128 or 96x96). */
+/** Draws authentic Ayutthaya Kingdom period character outfits & hairstyles on a 2D canvas. */
 export function drawCh4CharacterCanvas(
   ctx: CanvasRenderingContext2D,
   kind: Ch4CharacterKind,
@@ -56,49 +75,71 @@ export function drawCh4CharacterCanvas(
   const stride = frame === 1 ? 6 : frame === 3 ? -6 : 0;
   const bob = frame === 1 || frame === 3 ? -2 : 0;
 
-  // Ground contact shadow
   ctx.fillStyle = 'rgba(0,0,0,0.34)';
   ctx.beginPath();
   ctx.ellipse(48, 121, 20, 5, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  // Legs & traditional bare feet / wraps
-  ctx.fillStyle = p.isZombie ? '#4b5563' : '#78350f';
+  // Bare legs & feet (authentic Ayutthaya commoners walked barefoot)
+  ctx.fillStyle = p.isZombie ? '#4b5563' : p.skin;
   ctx.fillRect(36 + stride * 0.5, 92, 9, 27);
   ctx.fillRect(51 - stride * 0.5, 92, 9, 27);
-  ctx.fillStyle = p.skin;
-  ctx.fillRect(35 + stride * 0.5, 114, 11, 6);
-  ctx.fillRect(50 - stride * 0.5, 114, 11, 6);
 
-  // Jong Kraben (traditional Thai wrapped lower garment)
+  // Jong Kraben (wrapped & tucked between legs, showing fold & gold pattern edge for nobles)
   ctx.fillStyle = p.jong;
   ctx.beginPath();
-  ctx.roundRect(30, 72 + bob, 36, 26, 5);
+  ctx.roundRect(29, 71 + bob, 38, 28, 5);
   ctx.fill();
-  ctx.fillStyle = 'rgba(0,0,0,0.18)';
-  ctx.fillRect(46, 76 + bob, 4, 22);
+  ctx.fillStyle = kind === 'noble' ? '#eab308' : 'rgba(0,0,0,0.22)';
+  ctx.fillRect(46, 76 + bob, 4, 23);
 
-  // Upper body: Thai cotton shirt / monk robe / Sabai wrap
-  ctx.fillStyle = p.shirt;
+  // Torso (bare skin with Sabai/tattoos OR tied traditional tunic / Khrui robe)
+  ctx.fillStyle = p.bareChest ? p.skin : p.shirt;
   ctx.beginPath();
   ctx.roundRect(28, 43 + bob, 40, 34, 8);
   ctx.fill();
 
-  // Sash / Sabai diagonal wrap
+  // Chest tattooing (สักยันต์เกราะเพชร) or Yantra Jacket lines (เสื้อยันต์ทหาร)
+  if (p.tattooed) {
+    ctx.strokeStyle = 'rgba(15, 23, 42, 0.55)';
+    ctx.lineWidth = 1.6;
+    ctx.strokeRect(36, 48 + bob, 24, 18);
+    ctx.beginPath();
+    ctx.moveTo(36, 48 + bob);
+    ctx.lineTo(60, 66 + bob);
+    ctx.moveTo(60, 48 + bob);
+    ctx.lineTo(36, 66 + bob);
+    ctx.stroke();
+  } else if (p.isSoldier) {
+    ctx.strokeStyle = '#fde047';
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(35, 47 + bob, 26, 20);
+  }
+
+  // Sabai wrap (women & monks), gold sash (nobles), or Pha Khao Ma waist tie
   ctx.fillStyle = p.sash;
   if (p.isFemale || p.isMonk) {
     ctx.beginPath();
-    ctx.moveTo(29, 44 + bob);
+    ctx.moveTo(28, 44 + bob);
     ctx.lineTo(44, 44 + bob);
     ctx.lineTo(68, 76 + bob);
     ctx.lineTo(52, 76 + bob);
     ctx.closePath();
     ctx.fill();
+    if (p.isFemale) {
+      // Decorative floral Sabai fold border
+      ctx.fillStyle = '#fde047';
+      ctx.fillRect(32, 72 + bob, 32, 3);
+    }
   } else {
     ctx.fillRect(28, 69 + bob, 40, 6);
+    if (kind === 'noble') {
+      // Gold trim collar down front of Phraya Khrui robe
+      ctx.fillStyle = '#eab308';
+      ctx.fillRect(45, 44 + bob, 6, 28);
+    }
   }
 
-  // Zombie blood stains
   if (p.isZombie) {
     ctx.fillStyle = '#7f1d1d';
     ctx.beginPath();
@@ -107,7 +148,6 @@ export function drawCh4CharacterCanvas(
     ctx.fill();
   }
 
-  // Arms
   const armSwing = stride * 0.7;
   ctx.fillStyle = p.skin;
   ctx.beginPath();
@@ -115,7 +155,6 @@ export function drawCh4CharacterCanvas(
   ctx.roundRect(68, 46 + bob + armSwing * 0.4, 9, 28, 4);
   ctx.fill();
 
-  // Optional sword slung on back/hand
   if (p.hasSword) {
     ctx.strokeStyle = '#cbd5e1';
     ctx.lineWidth = 4;
@@ -127,30 +166,54 @@ export function drawCh4CharacterCanvas(
     ctx.fillRect(70, 65 + bob + armSwing * 0.4, 8, 4);
   }
 
-  // Neck & Head
+  // Head
   ctx.fillStyle = p.skin;
   ctx.fillRect(43, 34 + bob, 10, 12);
   ctx.beginPath();
   ctx.ellipse(48, 25 + bob, 15, 16, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  // Hair / Thai Mahatthai cut / Bun / Headband
+  // Authentic Ayutthaya Hairstyles & Headwear!
   if (!p.isMonk) {
     ctx.fillStyle = p.hair;
-    ctx.beginPath();
-    ctx.ellipse(48, 13 + bob, 15, 8, 0, Math.PI, Math.PI * 2);
-    ctx.fill();
-    if (p.isFemale) {
+    if (p.lomphok) {
+      // Nobleman Tall Pointed White Lomphok Crown Hat (ลอมพอกขุนนาง)!
+      ctx.fillStyle = '#f8fafc';
       ctx.beginPath();
-      ctx.arc(48, 7 + bob, 6, 0, Math.PI * 2);
+      ctx.moveTo(33, 18 + bob);
+      ctx.lineTo(48, 1 + bob);
+      ctx.lineTo(63, 18 + bob);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = '#eab308';
+      ctx.fillRect(33, 15 + bob, 30, 4);
+    } else if (p.wingHair) {
+      // Traditional Ayutthaya Lady "Phom Peek" winged crown + gold hairpin (ผมปีกสตรีอยุธยา)
+      ctx.beginPath();
+      ctx.ellipse(48, 13 + bob, 17, 7, 0, Math.PI, Math.PI * 2);
+      ctx.fill();
+      ctx.fillRect(30, 13 + bob, 7, 10);
+      ctx.fillRect(59, 13 + bob, 7, 10);
+      ctx.fillStyle = '#facc15';
+      ctx.beginPath();
+      ctx.arc(62, 12 + bob, 3, 0, Math.PI * 2);
       ctx.fill();
     } else if (kind === 'child_kla') {
-      // Traditional Thai topknot (ผมจุก)
+      // Topknot (ผมจุกเด็กอยุธยา)
       ctx.beginPath();
-      ctx.arc(48, 7 + bob, 5, 0, Math.PI * 2);
+      ctx.arc(48, 7 + bob, 5.5, 0, Math.PI * 2);
       ctx.fill();
       ctx.fillStyle = '#fde047';
       ctx.fillRect(44, 10 + bob, 8, 2.5);
+    } else if (p.mahatthaiHair) {
+      // Iconic Men's Mahatthai Tuft (ทรงมหาดไทยไถข้างไว้หย่อมบนกระหม่อม)!
+      ctx.beginPath();
+      ctx.ellipse(48, 12 + bob, 10, 5.5, 0, Math.PI, Math.PI * 2);
+      ctx.fill();
+    } else {
+      ctx.beginPath();
+      ctx.ellipse(48, 13 + bob, 15, 8, 0, Math.PI, Math.PI * 2);
+      ctx.fill();
     }
   }
   if (p.headband) {
